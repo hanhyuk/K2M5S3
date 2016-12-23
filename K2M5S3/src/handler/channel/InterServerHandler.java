@@ -293,7 +293,8 @@ public class InterServerHandler {
         }
         
         if (GameConstants.isBlaster(player.getJob())) {
-            player.giveBulletGauge(0, false);
+        	//FIXME hyuk. giveBulletGauge 메소드가 정의된 부분이 없어서 일단 주석으로 막음. 이후 구현이 가능하다면 수정해야할듯.
+            //player.giveBulletGauge(0, false);
         }
         
         if (GameConstants.isDemonAvenger(player.getJob())) {
