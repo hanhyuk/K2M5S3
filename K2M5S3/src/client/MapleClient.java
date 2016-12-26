@@ -76,7 +76,8 @@ public class MapleClient {
 	private transient String secondPassword, tempIP = "";// To be used only on
 															// login
 	private boolean usingSecondPassword = false;
-	private final transient Lock mutex = new ReentrantLock(true);
+	private final transient Lock encodeMutex = new ReentrantLock(true);
+	private final transient Lock decodeMutex = new ReentrantLock(true);
 	private final transient Lock npc_mutex = new ReentrantLock();
 	private int idcode1, idcode2;
 	private long lastNpcClick = 0;
@@ -182,8 +183,12 @@ public class MapleClient {
 		return session;
 	}
 
-	public final Lock getLock() {
-		return mutex;
+	public final Lock getEncodeLock() {
+		return encodeMutex;
+	}
+	
+	public final Lock getDecodeLock() {
+		return decodeMutex;
 	}
 
 	public final Lock getNPCLock() {

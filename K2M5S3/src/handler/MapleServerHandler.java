@@ -79,7 +79,6 @@ public class MapleServerHandler extends IoHandlerAdapter {
 	
 	@Override
 	public void sessionCreated(IoSession session) throws Exception {
-		System.out.println("MapleServerHandler - sessionCreated");
 	}
 	
 	@Override

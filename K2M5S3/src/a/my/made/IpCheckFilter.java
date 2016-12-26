@@ -5,11 +5,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.apache.mina.core.filterchain.IoFilter;
-import org.apache.mina.core.filterchain.IoFilterChain;
-import org.apache.mina.core.session.IdleStatus;
+import org.apache.mina.core.filterchain.IoFilterAdapter;
 import org.apache.mina.core.session.IoSession;
-import org.apache.mina.core.write.WriteRequest;
 
 import tools.Pair;
 
@@ -17,8 +14,7 @@ import tools.Pair;
  * 클라이언트에서 로그인 서버로 접근 할때, 접근주기가 너무 빠를 경우 접속차단하도록 처리.
  * 차단 된 아이피는 서버를 리붓하기 전에는 접속 할 수 없다.
  */
-public class IpCheckFilter implements IoFilter {
-
+public class IpCheckFilter extends IoFilterAdapter {
 	/**
 	 * 접속 시도 간격 
 	 */
@@ -67,88 +63,7 @@ public class IpCheckFilter implements IoFilter {
 		}
 		
 		tracker.put(address, new Pair<Long, Byte>(System.currentTimeMillis(), count));
+		
+		nextFilter.sessionOpened(session);
 	}
-	
-	@Override
-	public void sessionClosed(NextFilter nextFilter, IoSession session) throws Exception {
-		nextFilter.sessionClosed(session);
-	}
-	
-	@Override
-	public void sessionCreated(NextFilter nextFilter, IoSession session) throws Exception {
-		System.out.println("IpCheckFilter");
-	}
-	
-	@Override
-	public void init() throws Exception {
-	}
-
-	@Override
-	public void destroy() throws Exception {
-	}
-
-	@Override
-	public void onPreAdd(IoFilterChain parent, String name, NextFilter nextFilter) throws Exception {
-	}
-
-	@Override
-	public void onPostAdd(IoFilterChain parent, String name, NextFilter nextFilter) throws Exception {
-		
-		
-	}
-
-	@Override
-	public void onPreRemove(IoFilterChain parent, String name, NextFilter nextFilter) throws Exception {
-		
-		
-	}
-
-	@Override
-	public void onPostRemove(IoFilterChain parent, String name, NextFilter nextFilter) throws Exception {
-		
-		
-	}
-
-	@Override
-	public void sessionIdle(NextFilter nextFilter, IoSession session, IdleStatus status) throws Exception {
-		
-		
-	}
-
-	@Override
-	public void exceptionCaught(NextFilter nextFilter, IoSession session, Throwable cause) throws Exception {
-		
-		
-	}
-
-	@Override
-	public void inputClosed(NextFilter nextFilter, IoSession session) throws Exception {
-		
-		
-	}
-
-	@Override
-	public void messageReceived(NextFilter nextFilter, IoSession session, Object message) throws Exception {
-		
-		
-	}
-
-	@Override
-	public void messageSent(NextFilter nextFilter, IoSession session, WriteRequest writeRequest) throws Exception {
-		
-		
-	}
-
-	@Override
-	public void filterClose(NextFilter nextFilter, IoSession session) throws Exception {
-		
-		
-	}
-
-	@Override
-	public void filterWrite(NextFilter nextFilter, IoSession session, WriteRequest writeRequest) throws Exception {
-		
-		
-	}
-
 }

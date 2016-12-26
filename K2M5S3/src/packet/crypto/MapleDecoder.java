@@ -1,5 +1,7 @@
 package packet.crypto;
 
+import java.util.concurrent.locks.Lock;
+
 import org.apache.mina.core.buffer.IoBuffer;
 import org.apache.mina.core.session.IoSession;
 import org.apache.mina.filter.codec.CumulativeProtocolDecoder;
@@ -19,7 +21,7 @@ public class MapleDecoder extends CumulativeProtocolDecoder {
 	protected boolean doDecode(IoSession session, IoBuffer in, ProtocolDecoderOutput out) throws Exception {
 		final DecoderState decoderState = (DecoderState) session.getAttribute(DECODER_STATE_KEY);
 		final MapleClient client = (MapleClient) session.getAttribute(MapleClient.CLIENT_KEY);
-
+		
 		if (decoderState.packetlength == -1) {
 			if (in.remaining() >= 4) {
 				final int packetHeader = in.getInt();
@@ -33,11 +35,18 @@ public class MapleDecoder extends CumulativeProtocolDecoder {
 			}
 		}
 		if (in.remaining() >= decoderState.packetlength) {
-			final byte decryptedPacket[] = new byte[decoderState.packetlength];
-			in.get(decryptedPacket, 0, decoderState.packetlength);
-			decoderState.packetlength = -1;
-			client.getReceiveCrypto().crypt(decryptedPacket);
-			out.write(decryptedPacket);
+			final Lock mutex = client.getDecodeLock();
+			try {
+				mutex.lock();
+				
+				final byte decryptedPacket[] = new byte[decoderState.packetlength];
+				in.get(decryptedPacket, 0, decoderState.packetlength);
+				decoderState.packetlength = -1;
+				client.getReceiveCrypto().crypt(decryptedPacket);
+				out.write(decryptedPacket);
+			} finally {
+				mutex.unlock();
+			}
 			return true;
 		}
 		return false;

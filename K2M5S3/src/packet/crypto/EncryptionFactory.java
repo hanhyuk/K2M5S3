@@ -12,13 +12,11 @@ public class EncryptionFactory implements ProtocolCodecFactory {
 
 	@Override
 	public ProtocolEncoder getEncoder(IoSession is) throws Exception {
-		System.out.println("getEncoder");
 		return encoder;
 	}
 
 	@Override
 	public ProtocolDecoder getDecoder(IoSession is) throws Exception {
-		System.out.println("getDecoder");
 		return decoder;
 	}
 }

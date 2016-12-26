@@ -92,7 +92,7 @@ public class ServerConstants {
     public static String hp_skillid_dummy = ""; 
     public static String hp_skillid_real[]; 
     
-    public static int basePorts = (isLocal ? 100 : 0) + (ChannelPort);
+    public static int basePorts;
     
     public static String getRootPath() {
     	if( isLocal ) {
@@ -117,7 +117,7 @@ public class ServerConstants {
             Host = new String(prop.getProperty(toUni("아이피")).getBytes("ISO-8859-1"), "euc-kr");
             serverCount = Integer.parseInt(prop.getProperty(toUni("서버개수")));
             LoginPort = Integer.parseInt(prop.getProperty(toUni("로그인포트")));
-            ChannelPort = Integer.parseInt(prop.getProperty(toUni("채널포트")));
+            ChannelPort = Integer.parseInt(prop.getProperty(toUni("채널포트"))); basePorts = ChannelPort;
             CashShopPort = Integer.parseInt(prop.getProperty(toUni("캐시샵포트")));
             BuddyChatPort = Integer.parseInt(prop.getProperty(toUni("친구서버포트")));
             

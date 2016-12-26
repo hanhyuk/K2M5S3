@@ -30,17 +30,18 @@ public class MapleEncoder implements ProtocolEncoder {
 						.append(HexTool.toStringFromAscii(((Packet) message).getBytes())).append("\n\n");
 				System.out.println(sb.toString());
 			}
-			final Lock mutex = client.getLock();
-			mutex.lock();
+			final Lock mutex = client.getEncodeLock();
 			try {
+				mutex.lock();
+				
 				final byte[] header = send_crypto.getPacketHeader(unencrypted.length);
 				send_crypto.crypt(unencrypted);
 				System.arraycopy(header, 0, ret, 0, 4);
+				System.arraycopy(unencrypted, 0, ret, 4, unencrypted.length);
+				out.write(IoBuffer.wrap(ret));
 			} finally {
 				mutex.unlock();
 			}
-			System.arraycopy(unencrypted, 0, ret, 4, unencrypted.length);
-			out.write(IoBuffer.wrap(ret));
 		} else {
 			out.write(IoBuffer.wrap(((Packet) message).getBytes()));
 		}
