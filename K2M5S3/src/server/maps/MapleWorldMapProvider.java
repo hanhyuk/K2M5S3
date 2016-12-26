@@ -31,8 +31,8 @@ import java.util.Map;
 
 public class MapleWorldMapProvider {
 
-    private static final MapleDataProvider source = MapleDataProviderFactory.getDataProvider(new File("wz/Map.wz"));
-    private static final MapleData nameData = MapleDataProviderFactory.getDataProvider(new File("wz/String.wz")).getData("Map.img");
+    private static final MapleDataProvider source = MapleDataProviderFactory.getDataProvider("Map.wz");
+    private static final MapleData nameData = MapleDataProviderFactory.getDataProvider("String.wz").getData("Map.img");
     private final Map<Integer, MapleMap> maps = new HashMap<Integer, MapleMap>();
     private int channel;
 

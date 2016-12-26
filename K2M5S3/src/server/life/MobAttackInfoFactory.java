@@ -22,7 +22,7 @@ import tools.StringUtil;
 public class MobAttackInfoFactory {
 
     private static final MobAttackInfoFactory instance = new MobAttackInfoFactory();
-    private static final MapleDataProvider dataSource = MapleDataProviderFactory.getDataProvider(new File("wz/Mob.wz"));
+    private static final MapleDataProvider dataSource = MapleDataProviderFactory.getDataProvider("Mob.wz");
     private static Map<Pair<Integer, Integer>, MobAttackInfo> mobAttacks = new HashMap<Pair<Integer, Integer>, MobAttackInfo>();
 
     public static MobAttackInfoFactory getInstance() {

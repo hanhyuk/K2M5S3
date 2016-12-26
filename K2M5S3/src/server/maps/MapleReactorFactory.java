@@ -23,7 +23,7 @@ import tools.StringUtil;
 
 public class MapleReactorFactory {
 
-    private static final MapleDataProvider data = MapleDataProviderFactory.getDataProvider(new File("wz/Reactor.wz"));
+    private static final MapleDataProvider data = MapleDataProviderFactory.getDataProvider("Reactor.wz");
     private static Map<Integer, MapleReactorStats> reactorStats = new HashMap<Integer, MapleReactorStats>();
 
     public static final MapleReactorStats getReactor(int rid) {

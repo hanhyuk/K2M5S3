@@ -1477,7 +1477,7 @@ public class NPCConversationManager extends AbstractPlayerInteraction {
     }
     
     public String getHyperSkills(byte type) {
-            MapleData data = MapleDataProviderFactory.getDataProvider(MapleDataProviderFactory.fileInWZPath("Skill.wz")).getData(StringUtil.getLeftPaddedStr("" + (getPlayer().getJob() == 2218 ? 2217 : getPlayer().getJob()), '0', 3) + ".img");
+            MapleData data = MapleDataProviderFactory.getDataProvider("Skill.wz").getData(StringUtil.getLeftPaddedStr("" + (getPlayer().getJob() == 2218 ? 2217 : getPlayer().getJob()), '0', 3) + ".img");
             int skillid = 0;
             String Lists = "";
             for (MapleData skill : data) {
@@ -1580,7 +1580,7 @@ public class NPCConversationManager extends AbstractPlayerInteraction {
     }
     
     public String ¸¶½ºÅÍ¸®ºÏ() {
-        MapleData data = MapleDataProviderFactory.getDataProvider(MapleDataProviderFactory.fileInWZPath("Skill.wz")).getData(StringUtil.getLeftPaddedStr("" + getJob(), '0', 3) + ".img");
+        MapleData data = MapleDataProviderFactory.getDataProvider("Skill.wz").getData(StringUtil.getLeftPaddedStr("" + getJob(), '0', 3) + ".img");
         int a = 0;
         StringBuilder str = new StringBuilder();
         for (MapleData skill : data) {if (skill != null) {for (MapleData skillId : skill.getChildren()) {if (!skillId.getName().equals("icon")) {byte maxlevel = (byte) MapleDataTool.getIntConvert("maxLevel", skillId.getChildByPath("common"), 0);if (MapleDataTool.getIntConvert("invisible", skillId, 0) == 0 && !(MapleDataTool.getIntConvert("reqLev", skillId, 0) > 0) && Integer.parseInt(skillId.getName()) != 12110025 && Integer.parseInt(skillId.getName()) != 12101022) {try {if (getPlayer().getSkillLevel(Integer.parseInt(skillId.getName())) < maxlevel) {
@@ -1678,7 +1678,7 @@ public class NPCConversationManager extends AbstractPlayerInteraction {
     }
    
     public void HyperSkillMax() {
-        MapleData data = MapleDataProviderFactory.getDataProvider(MapleDataProviderFactory.fileInWZPath("Skill.wz")).getData(StringUtil.getLeftPaddedStr(""+c.getPlayer().getJob(), '0', 3) + ".img");
+        MapleData data = MapleDataProviderFactory.getDataProvider("Skill.wz").getData(StringUtil.getLeftPaddedStr(""+c.getPlayer().getJob(), '0', 3) + ".img");
         final ISkill skills = null;
         byte maxLevel = 0;
         for (MapleData skill : data) {

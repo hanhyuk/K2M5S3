@@ -65,7 +65,7 @@ public class InterServerHandler {
         }
         final ChannelServer ch = ChannelServer.getInstance(c.getChannel());
 
-        String ip = ServerConstants.getServerHost(c);
+        String ip = ServerConstants.Host;
 
         if (ip == null) { // Cash Shop not init yet
             c.getSession().write(MainPacketCreator.serverNotice(5, "캐시샵을 현재 사용할 수 없습니다."));

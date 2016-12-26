@@ -1,95 +1,47 @@
-/*
- * ArcStory Project
- * 최주원 sch2307@naver.com
- * 이준 junny_adm@naver.com
- * 우지훈 raccoonfox69@gmail.com
- * 강정규 ku3135@nate.com
- * 김진홍 designer@inerve.kr
- */
-
 package launch.helpers;
 
-import java.io.File;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
-import java.util.HashMap;
-import java.util.Map;
 import provider.MapleData;
 import provider.MapleDataProvider;
 import provider.MapleDataProviderFactory;
 import provider.MapleDataTool;
-import provider.WzXML.MapleDataType;
-
 
 public class MapleLoginHelper {
 
-    private final static MapleLoginHelper instance = new MapleLoginHelper();
-    protected final List<String> ForbiddenName = new ArrayList<String>();
-    protected final List<Integer> makeCharInfo = new ArrayList<Integer>();
+	private static MapleLoginHelper instance = new MapleLoginHelper();
+	private List<String> forbiddenNameList = new ArrayList<String>();
 
-    public static MapleLoginHelper getInstance() {
-	return instance;
-    }
-
-    protected MapleLoginHelper() {
-        final MapleDataProvider prov = MapleDataProviderFactory.getDataProvider(new File("wz/Etc.wz"));
-        MapleData nameData = prov.getData("ForbiddenName.img");
-	for (final MapleData data : nameData.getChildren()) {
-	    ForbiddenName.add(MapleDataTool.getString(data));
+	public static MapleLoginHelper getInstance() {
+		return instance;
 	}
-        final MapleData infoData = prov.getData("MakeCharInfo.img");
-        final MapleData data = infoData.getChildByPath("Info");
-        for (MapleData dat : infoData) {
-            try {
-                final int type = 0;
-                for (MapleData d : dat) {
-                    int val;
-                    if (d.getName().endsWith("male") || d.getName().endsWith("male0")) {
-                        val = 0;
-                    } else if (d.getName().endsWith("female") || d.getName().endsWith("female0")) {
-                        val = 1;
-                    } else {
-                        continue;
-                    }
-                    for (MapleData da : d) {
-                        for (MapleData dd : da) {
-                            if (dd.getType() != MapleDataType.STRING) {
-                                if (MapleDataTool.getInt(dd, -1) > 1000000) {
-                                    makeCharInfo.add(MapleDataTool.getInt(dd, -1));
-                                }
-                            }
-                        }
-                    }
-                }
-            } catch (NumberFormatException e) {
-            }
-        }
-        
-        final MapleData uA = infoData.getChildByPath("UltimateAdventurer");
-        for (MapleData dat : uA) {
-            for (MapleData d : dat) {
-                makeCharInfo.add(MapleDataTool.getInt(d, -1));
-            }
-        }
-    }
-
-    public final boolean isForbiddenName(final String in) {
-	for (final String name : ForbiddenName) {
-	    if (in.contains(name)) {
-		return true;
-	    }
+	
+	/**
+	 * 사용 불가능한 캐릭터명 리스트를 wz 파일에서 로딩한다.
+	 */
+	public void loadForbiddenNames() {
+		final MapleDataProvider provider = MapleDataProviderFactory.getDataProvider("Etc.wz");
+		final MapleData nameData = provider.getData("ForbiddenName.img");
+		
+		for( MapleData data : nameData.getChildren() ) {
+			forbiddenNameList.add(MapleDataTool.getString(data));
+		}
 	}
-	return false;
-    }
-    
-    public final boolean isEligibleItem(final int item) {
-        if (item < 0) {
-            return false;
-        }
-        if (item == 0) {
-            return true;
-        }
-        return makeCharInfo.contains(item);
-    }
+
+	/**
+	 * true : 사용불가 캐릭명 false : 사용가능 캐릭명
+	 */
+	public boolean isForbiddenName(final String in) {
+		for (final String name : forbiddenNameList) {
+			if (in.contains(name)) {
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	public List<String> getForbiddenNameList() {
+		return forbiddenNameList;
+	}
 }

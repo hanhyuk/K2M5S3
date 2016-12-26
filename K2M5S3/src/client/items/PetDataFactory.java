@@ -20,7 +20,7 @@ import tools.Pair;
 
 public class PetDataFactory {
 
-    private static MapleDataProvider dataRoot = MapleDataProviderFactory.getDataProvider(new File("wz/Item.wz"));
+    private static MapleDataProvider dataRoot = MapleDataProviderFactory.getDataProvider("Item.wz");
     private static Map<Pair<Integer, Integer>, PetCommand> petCommands = new HashMap<Pair<Integer, Integer>, PetCommand>();
     private static Map<Integer, Integer> petHunger = new HashMap<Integer, Integer>();
 

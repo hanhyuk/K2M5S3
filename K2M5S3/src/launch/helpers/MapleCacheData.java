@@ -277,8 +277,8 @@ class LoadSkillDataThread extends Thread {
     }
     
     public static void cacheSkillData() {
-        final MapleData stringData = MapleDataProviderFactory.getDataProvider(new File("WZ/String.wz")).getData("Skill.img");
-        final MapleDataProvider datasource = MapleDataProviderFactory.getDataProvider(MapleDataProviderFactory.fileInWZPath("Skill.wz"));
+        final MapleData stringData = MapleDataProviderFactory.getDataProvider("String.wz").getData("Skill.img");
+        final MapleDataProvider datasource = MapleDataProviderFactory.getDataProvider("Skill.wz");
         final MapleDataDirectoryEntry root = datasource.getRoot();
 
         int skillid = 0;

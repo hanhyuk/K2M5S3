@@ -27,7 +27,7 @@ import java.util.Random;
 public class MakerItemFactory {
     private static MakerItemFactory instance = new MakerItemFactory();
     private static Map<Integer, MakerItemFactory.MakerItemCreateEntry> recipes = new HashMap<Integer, MakerItemFactory.MakerItemCreateEntry>();
-    private static MapleDataProvider datasource = MapleDataProviderFactory.getDataProvider(MapleDataProviderFactory.fileInWZPath("Etc.wz"));
+    private static MapleDataProvider datasource = MapleDataProviderFactory.getDataProvider("Etc.wz");
     private static MapleData makerData;
 
     public static MakerItemFactory.MakerItemCreateEntry getItemCreateEntry(int toCreate) {

@@ -9,11 +9,23 @@
 
 package constants.programs;
 
-import provider.*;
+import java.io.BufferedReader;
+import java.io.Console;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+
+import provider.MapleData;
+import provider.MapleDataProvider;
+import provider.MapleDataProviderFactory;
 import server.items.ItemInformation;
 import tools.Triple;
-import java.io.*;
-import java.util.*;
 
 /**
 *
@@ -69,26 +81,18 @@ public class CheckItemExist {
             }
         } else if (type == 2 || type == 3 || type == 4) {
             try {
-            File source = new File("wz/Item.wz");
-            MapleDataProvider sourceData;// = MapleDataProviderFactory.getDataProvider(source);
-            List<Triple<Integer, Integer, Integer>> list = new ArrayList<Triple<Integer, Integer,Integer>>();
-            String[] category = {"","", "Consume", "Install", "Etc", "Cash", "Pet", "Special"};
-            String cat = category[type];
-        //    for (String cat : category) {
-                
-                File path = new File(source.getAbsolutePath() + "/" + cat);
-                sourceData = MapleDataProviderFactory.getDataProvider(path);
+	            String[] category = {"","", "Consume", "Install", "Etc", "Cash", "Pet", "Special"};
+	            String cat = category[type];
+	            MapleDataProvider sourceData = MapleDataProviderFactory.getDataProvider("Item.wz" + "/" + cat);
                 MapleData dd = sourceData.getData("0" + itemid / 10000 + ".img");
-              //  for (MapleData d : dd.getChildren()) {
-                   if (dd.getChildByPath("0" + itemid) != null) isExist = true;
-            //    }
-           // }
+                if( dd.getChildByPath("0" + itemid) != null ) {
+                	isExist = true;
+                }
             } catch (Exception ex) {
-          //      ex.printStackTrace();
+            	ex.printStackTrace();
             }
         }
         if (!isExist) {
-         //   itemList.put(itemid, 0);
             System.out.println(itemid);
         }
     }

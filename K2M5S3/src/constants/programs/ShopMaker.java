@@ -9,11 +9,25 @@
 
 package constants.programs;
 
-import provider.*;
+import java.io.Console;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
+import provider.MapleData;
+import provider.MapleDataProvider;
+import provider.MapleDataProviderFactory;
+import provider.MapleDataTool;
 import server.items.ItemInformation;
 import tools.Triple;
-import java.io.*;
-import java.util.*;
 
 /**
 *
@@ -163,14 +177,16 @@ public class ShopMaker {
     }
 
     private static List<Triple<Integer, Integer, Integer>> getAllItems() { //아이템, 상점, 가격
-        File source = new File("wz/Character.wz");
-        MapleDataProvider sourceData;// = MapleDataProviderFactory.getDataProvider(source);
         List<Triple<Integer, Integer, Integer>> list = new ArrayList<Triple<Integer, Integer,Integer>>();
         String[] category = {"Accessory", "Cap", "Cape", "Coat", "Glove", "Longcoat", "Pants", "Shield", "Shoes", "Weapon"};
+        
         for (String cat : category) {
-            File path = new File(source.getAbsolutePath() + "/" + cat);
-            sourceData = MapleDataProviderFactory.getDataProvider(path);
-            filefor: for (File file : path.listFiles()) {
+            
+        	String filePath = "Character.wz" + "/" + cat;
+        	File path = MapleDataProviderFactory.fileInWZPath(filePath);
+        	MapleDataProvider sourceData = MapleDataProviderFactory.getDataProvider(filePath);
+            
+            for (File file : path.listFiles()) {
                 int job = 0, level = 0;
                 boolean isCash = false;
                 String islot = "";

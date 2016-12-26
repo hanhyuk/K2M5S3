@@ -261,25 +261,6 @@ public class CharLoginHandler {
 	}
     }
     
-    public static void newConnection(MapleClient c) {
-        Connection con = MYSQL.getConnection();
-        if (ServerConstants.Host.equals(c.getSessionIPAddress().replace("/", "")) || ServerConstants.showPackets) {
-            c.allowLoggin = true;
-            return;
-        } try {
-            PreparedStatement ps = con.prepareStatement("SELECT * FROM acceptip where ip = ?");
-            ps.setString(1, c.getSession().getRemoteAddress().toString().split(":")[0]);
-            ResultSet rs = ps.executeQuery();
-            if (rs.next()) {
-                c.allowLoggin = true;
-            }
-            rs.close();
-            ps.close();
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-        }
-    }
-
     public static void CheckCharName(String name, MapleClient c) {
 	c.getSession().write(LoginPacket.charNameResponse(name, !MapleCharacterUtil.canCreateChar(name) || MapleLoginHelper.getInstance().isForbiddenName(name)));
     }

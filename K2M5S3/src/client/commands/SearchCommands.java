@@ -34,7 +34,7 @@ public class SearchCommands implements Command {
 	    String type = splitted[1];
 	    String search = StringUtil.joinStringFrom(splitted, 2);
 	    MapleData data = null;
-	    MapleDataProvider dataProvider = MapleDataProviderFactory.getDataProvider(new File("wz/String.wz"));
+	    MapleDataProvider dataProvider = MapleDataProviderFactory.getDataProvider("String.wz");
 	    c.getPlayer().dropMessage(6, "<<타입: " + type + " | 검색어: " + search + ">>");
 
 	    if (type.equalsIgnoreCase("엔피시")) {

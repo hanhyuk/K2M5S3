@@ -9,7 +9,6 @@
 
 package server.quest;
 
-import java.io.File;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -17,12 +16,12 @@ import java.util.Map;
 
 import client.MapleCharacter;
 import client.MapleQuestStatus;
-import scripting.NPCScriptManager;
+import packet.creators.MainPacketCreator;
 import provider.MapleData;
 import provider.MapleDataProvider;
 import provider.MapleDataProviderFactory;
 import provider.MapleDataTool;
-import packet.creators.MainPacketCreator;
+import scripting.NPCScriptManager;
 
 public class MapleQuest {
 
@@ -37,7 +36,7 @@ public class MapleQuest {
     public boolean autoPreComplete;
     public boolean repeatable = false, customend = false;
     public int medalItem = 0;
-    public static final MapleDataProvider questData = MapleDataProviderFactory.getDataProvider(new File("wz/Quest.wz"));
+    public static final MapleDataProvider questData = MapleDataProviderFactory.getDataProvider("Quest.wz");
     public static final MapleData actions = questData.getData("Act.img");
     public static final MapleData requirements = questData.getData("Check.img");
     public static final MapleData info = questData.getData("QuestInfo.img");

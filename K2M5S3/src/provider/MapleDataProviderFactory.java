@@ -1,39 +1,41 @@
-/*
- * ArcStory Project
- * √÷¡÷ø¯ sch2307@naver.com
- * ¿Ã¡ÿ junny_adm@naver.com
- * øÏ¡ˆ»∆ raccoonfox69@gmail.com
- * ∞≠¡§±‘ ku3135@nate.com
- * ±Ë¡¯»´ designer@inerve.kr
- */
-
 package provider;
 
 import java.io.File;
+
+import constants.ServerConstants;
 import provider.WzXML.XMLWZFile;
 
 public class MapleDataProviderFactory {
 
-    private final static String wzPath = "WZ/";
-
-    private static MapleDataProvider getWZ(Object in, boolean provideImages) {
-	if (in instanceof File) {
-	    File fileIn = (File) in;
-
-	    return new XMLWZFile(fileIn);
+	private static final String MIDDLE_DIR_NAME = "wz/";
+	
+	public static MapleDataProvider getDataProvider(String path) {
+		return getDataProvider(fileInWZPath(path));
 	}
-	throw new IllegalArgumentException("Can't create data provider for input " + in);
-    }
-
-    public static MapleDataProvider getDataProvider(Object in) {
-	return getWZ(in, false);
-    }
-
-    public static MapleDataProvider getImageProvidingDataProvider(Object in) {
-	return getWZ(in, true);
-    }
-
-    public static File fileInWZPath(String filename) {
-	return new File(wzPath, filename);
-    }
+	
+	public static File fileInWZPath(String filename) {
+		return new File(getRootWzPath(), MIDDLE_DIR_NAME + filename);
+	}
+	
+	
+	
+	private static MapleDataProvider getDataProvider(Object in) {
+		return getWZ(in, false);
+	}
+	
+	private static MapleDataProvider getWZ(Object in, boolean provideImages) {
+		if (in instanceof File) {
+			File fileIn = (File) in;
+			return new XMLWZFile(fileIn);
+		}
+		throw new IllegalArgumentException("Can't create data provider for input " + in);
+	}
+	
+	private static String getRootWzPath() {
+		if( ServerConstants.isLocal ) {
+			return ServerConstants.LOCAL_ROOT_PATH; 
+		} else {
+			return ServerConstants.ROOT_PATH;
+		}
+	}
 }

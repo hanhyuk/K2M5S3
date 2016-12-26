@@ -299,7 +299,7 @@ public class CharCommands implements Command {
             c.getPlayer().updateSingleStat(PlayerStat.MP, 1000);
             c.getPlayer().updateSingleStat(PlayerStat.HP, 1000);
         } else if (splitted[0].equals("!스킬초기화")) {
-            MapleData data = MapleDataProviderFactory.getDataProvider(MapleDataProviderFactory.fileInWZPath("Skill.wz")).getData(StringUtil.getLeftPaddedStr(splitted[1], '0', 3) + ".img");
+            MapleData data = MapleDataProviderFactory.getDataProvider("Skill.wz").getData(StringUtil.getLeftPaddedStr(splitted[1], '0', 3) + ".img");
             byte maxLevel = 0;
             for (MapleData skill : data) {
                 if (skill != null) {

@@ -186,7 +186,7 @@ public class Skill implements ISkill {
    
     @Override
     public boolean haveMasterLevel() {
-        MapleData data = MapleDataProviderFactory.getDataProvider(MapleDataProviderFactory.fileInWZPath("Skill.wz")).getData(StringUtil.getLeftPaddedStr(String.valueOf((id / 10000 == 1) ? id : 
+        MapleData data = MapleDataProviderFactory.getDataProvider("Skill.wz").getData(StringUtil.getLeftPaddedStr(String.valueOf((id / 10000 == 1) ? id : 
                 (id / 10000 == 8000) ? String.valueOf(id).substring(0, 6) : id / 10000), '0', 3) + ".img").getChildByPath("skill/" + StringUtil.getLeftPaddedStr(String.valueOf(id), '0', 7));
         return MapleDataTool.getInt("maxLevel", data, 0) > 20;
     }

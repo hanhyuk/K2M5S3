@@ -9,14 +9,22 @@
 
 package constants;
 
-import client.MapleClient;
 import java.io.FileInputStream;
 import java.io.UnsupportedEncodingException;
-import java.net.InetAddress;
 import java.util.Properties;
 
 public class ServerConstants {
-    
+	
+	/*
+     * 서버가 로컬 환경인지 여부
+     */
+	public static boolean isLocal = true; //TODO log4j 설정으로 변경필요
+	public static boolean realese = false; //TODO log4j 설정으로 변경필요
+    public static String ROOT_PATH = "";
+    public static String LOCAL_ROOT_PATH = "D:/KMS_PROJECT/KMS_253_SERVER/";
+	
+	
+	
     /* 서버 설정 */
     public static String Host;
     public static int startMap;
@@ -27,7 +35,8 @@ public class ServerConstants {
     public static int CashShopPort;
     public static int BuddyChatPort;
     
-    public static boolean isLocal = false;
+    
+    
         
     public static int defaultExpRate;
     public static int defaultMesoRate;
@@ -71,7 +80,6 @@ public class ServerConstants {
     public static boolean useMaxDrop;
     public static boolean useBossMaxDrop;
     public static boolean showPackets; 
-    public static boolean realese = true; 
     public static String path = ""; 
     public static String windowsDumpPath = ""; 
     
@@ -83,63 +91,77 @@ public class ServerConstants {
     /* 기타 설정 2 */
     public static String hp_skillid_dummy = ""; 
     public static String hp_skillid_real[]; 
-     
-    static {
+    
+    public static int basePorts = (isLocal ? 100 : 0) + (ChannelPort);
+    
+    /**
+     * 서버 관리용 프로퍼티 설정값 로딩처리 
+     */
+    public static void loadServerSetProp() {
         try {
-            FileInputStream setting = new FileInputStream("Settings/ServerSettings.properties");
-            Properties setting_ = new Properties();
-            setting_.load(setting);
-            setting.close();
-            defaultFlag = Byte.parseByte(setting_.getProperty(toUni("Flag")));
-            Host = new String(setting_.getProperty(toUni("아이피")).getBytes("ISO-8859-1"), "euc-kr");
-            serverCount = Integer.parseInt(setting_.getProperty(toUni("서버개수")));
-            LoginPort = Integer.parseInt(setting_.getProperty(toUni("로그인포트")));
-            ChannelPort = Integer.parseInt(setting_.getProperty(toUni("채널포트")));
-            CashShopPort = Integer.parseInt(setting_.getProperty(toUni("캐시샵포트")));
-            BuddyChatPort = Integer.parseInt(setting_.getProperty(toUni("친구서버포트")));
+        	
+            FileInputStream fis = null;
+        	
+        	if( isLocal ) {
+        		fis = new FileInputStream(LOCAL_ROOT_PATH + "Settings/ServerSettings.properties");
+        	} else {
+        		fis = new FileInputStream(ROOT_PATH + "Settings/ServerSettings.properties");
+        	}
+        	
+            Properties prop = new Properties();
+            prop.load(fis);
+            fis.close(); fis = null;
             
-            defaultExpRate = Integer.parseInt(setting_.getProperty(toUni("경험치배율")));
-            defaultDropRate = Integer.parseInt(setting_.getProperty(toUni("드롭배율")));
-            defaultMesoRate = Integer.parseInt(setting_.getProperty(toUni("메소배율")));
-            defaultCashRate = Integer.parseInt(setting_.getProperty(toUni("캐시배율")));
-            defaultBossCashRate = Integer.parseInt(setting_.getProperty(toUni("보스캐시배율")));
+            defaultFlag = Byte.parseByte(prop.getProperty(toUni("Flag")));
+            Host = new String(prop.getProperty(toUni("아이피")).getBytes("ISO-8859-1"), "euc-kr");
+            serverCount = Integer.parseInt(prop.getProperty(toUni("서버개수")));
+            LoginPort = Integer.parseInt(prop.getProperty(toUni("로그인포트")));
+            ChannelPort = Integer.parseInt(prop.getProperty(toUni("채널포트")));
+            CashShopPort = Integer.parseInt(prop.getProperty(toUni("캐시샵포트")));
+            BuddyChatPort = Integer.parseInt(prop.getProperty(toUni("친구서버포트")));
             
-            cshopNpc = Integer.parseInt(setting_.getProperty(toUni("캐시샵NPC")));
+            defaultExpRate = Integer.parseInt(prop.getProperty(toUni("경험치배율")));
+            defaultDropRate = Integer.parseInt(prop.getProperty(toUni("드롭배율")));
+            defaultMesoRate = Integer.parseInt(prop.getProperty(toUni("메소배율")));
+            defaultCashRate = Integer.parseInt(prop.getProperty(toUni("캐시배율")));
+            defaultBossCashRate = Integer.parseInt(prop.getProperty(toUni("보스캐시배율")));
             
-            serverName = new String(setting_.getProperty(toUni("서버이름")).getBytes("ISO-8859-1"), "euc-kr");
-            serverMessage = new String(setting_.getProperty(toUni("서버메세지")).getBytes("ISO-8859-1"), "euc-kr");
-            serverWelcome = new String(setting_.getProperty(toUni("서버환영메세지")).getBytes("ISO-8859-1"), "euc-kr");
-            eventMessage = new String(setting_.getProperty(toUni("이벤트메세지")).getBytes("ISO-8859-1"), "euc-kr");
-            beginner = new String(setting_.getProperty(toUni("처음시작공지")).getBytes("ISO-8859-1"), "euc-kr");
-            serverNotice = new String(setting_.getProperty(toUni("서버알림메세지")).getBytes("ISO-8859-1"), "euc-kr"); 
-            serverNotititle = new String(setting_.getProperty(toUni("서버공지제목")).getBytes("ISO-8859-1"), "euc-kr");
-            serverNotification = new String(setting_.getProperty(toUni("서버공지내용")).getBytes("ISO-8859-1"), "euc-kr");
-            recommendMessage = new String(setting_.getProperty(toUni("추천메세지")).getBytes("ISO-8859-1"), "euc-kr");
-            serverHint = new String(setting_.getProperty(toUni("서버힌트")).getBytes("ISO-8859-1"), "euc-kr");
+            cshopNpc = Integer.parseInt(prop.getProperty(toUni("캐시샵NPC")));
             
-            dbHost = new String(setting_.getProperty(toUni("Arc.dbHost")).getBytes("ISO-8859-1"), "euc-kr");
-            dbPort = Integer.parseInt(setting_.getProperty(toUni("Arc.dbPort")));
-            dbUser = new String(setting_.getProperty(toUni("Arc.dbUser")).getBytes("ISO-8859-1"), "euc-kr");
-            dbPassword = new String(setting_.getProperty(toUni("Arc.dbPassword")).getBytes("ISO-8859-1"), "euc-kr");
+            serverName = new String(prop.getProperty(toUni("서버이름")).getBytes("ISO-8859-1"), "euc-kr");
+            serverMessage = new String(prop.getProperty(toUni("서버메세지")).getBytes("ISO-8859-1"), "euc-kr");
+            serverWelcome = new String(prop.getProperty(toUni("서버환영메세지")).getBytes("ISO-8859-1"), "euc-kr");
+            eventMessage = new String(prop.getProperty(toUni("이벤트메세지")).getBytes("ISO-8859-1"), "euc-kr");
+            beginner = new String(prop.getProperty(toUni("처음시작공지")).getBytes("ISO-8859-1"), "euc-kr");
+            serverNotice = new String(prop.getProperty(toUni("서버알림메세지")).getBytes("ISO-8859-1"), "euc-kr"); 
+            serverNotititle = new String(prop.getProperty(toUni("서버공지제목")).getBytes("ISO-8859-1"), "euc-kr");
+            serverNotification = new String(prop.getProperty(toUni("서버공지내용")).getBytes("ISO-8859-1"), "euc-kr");
+            recommendMessage = new String(prop.getProperty(toUni("추천메세지")).getBytes("ISO-8859-1"), "euc-kr");
+            serverHint = new String(prop.getProperty(toUni("서버힌트")).getBytes("ISO-8859-1"), "euc-kr");
             
-            events = new String(setting_.getProperty(toUni("이벤트")).getBytes("ISO-8859-1"), "euc-kr");
+            dbHost = new String(prop.getProperty(toUni("Arc.dbHost")).getBytes("ISO-8859-1"), "euc-kr");
+            dbPort = Integer.parseInt(prop.getProperty(toUni("Arc.dbPort")));
+            dbUser = new String(prop.getProperty(toUni("Arc.dbUser")).getBytes("ISO-8859-1"), "euc-kr");
+            dbPassword = new String(prop.getProperty(toUni("Arc.dbPassword")).getBytes("ISO-8859-1"), "euc-kr");
             
-            startMap = Integer.parseInt(setting_.getProperty(toUni("시작맵")));
-            serverHint = new String(setting_.getProperty(toUni("서버힌트")).getBytes("ISO-8859-1"), "euc-kr");
+            events = new String(prop.getProperty(toUni("이벤트")).getBytes("ISO-8859-1"), "euc-kr");
             
-            MAPLE_VERSION = Short.parseShort(setting_.getProperty(toUni("클라이언트버전")));
-            subVersion = Byte.parseByte(setting_.getProperty(toUni("마이너버전")));
+            startMap = Integer.parseInt(prop.getProperty(toUni("시작맵")));
+            serverHint = new String(prop.getProperty(toUni("서버힌트")).getBytes("ISO-8859-1"), "euc-kr");
             
-            path = new String(setting_.getProperty(toUni("옵션경로지정")).getBytes("ISO-8859-1"), "euc-kr");
-            windowsDumpPath = new String(setting_.getProperty(toUni("덤프경로지정")).getBytes("ISO-8859-1"), "euc-kr");
+            MAPLE_VERSION = Short.parseShort(prop.getProperty(toUni("클라이언트버전")));
+            subVersion = Byte.parseByte(prop.getProperty(toUni("마이너버전")));
             
-            serverCheck = Boolean.parseBoolean(setting_.getProperty(toUni("서버점검")));
-            showPackets = Boolean.parseBoolean(setting_.getProperty(toUni("패킷출력")));
-            useMaxDrop = Boolean.parseBoolean(setting_.getProperty(toUni("최대드랍사용")));
-            useBossMaxDrop = Boolean.parseBoolean(setting_.getProperty(toUni("최대보스드랍사용")));
+            path = new String(prop.getProperty(toUni("옵션경로지정")).getBytes("ISO-8859-1"), "euc-kr");
+            windowsDumpPath = new String(prop.getProperty(toUni("덤프경로지정")).getBytes("ISO-8859-1"), "euc-kr");
+            
+            serverCheck = Boolean.parseBoolean(prop.getProperty(toUni("서버점검")));
+            showPackets = Boolean.parseBoolean(prop.getProperty(toUni("패킷출력")));
+            useMaxDrop = Boolean.parseBoolean(prop.getProperty(toUni("최대드랍사용")));
+            useBossMaxDrop = Boolean.parseBoolean(prop.getProperty(toUni("최대보스드랍사용")));
                         
-            bossMaxDrop = Integer.parseInt(setting_.getProperty(toUni("최대보스드랍아이템개수")));
-            maxDrop = Integer.parseInt(setting_.getProperty(toUni("최대드랍아이템개수")));
+            bossMaxDrop = Integer.parseInt(prop.getProperty(toUni("최대보스드랍아이템개수")));
+            maxDrop = Integer.parseInt(prop.getProperty(toUni("최대드랍아이템개수")));
                         
         } catch (Exception e) {
             System.err.println("[오류] 서버 세팅파일을 불러오는데 실패하였습니다.");
@@ -148,21 +170,8 @@ public class ServerConstants {
             }
         }
     }
-    
-    public static int basePorts = (isLocal ? 100 : 0) + (ChannelPort); 
 
-    protected static String toUni(String kor)
-            throws UnsupportedEncodingException {
+    protected static String toUni(String kor) throws UnsupportedEncodingException {
         return new String(kor.getBytes("KSC5601"), "8859_1");
     }
-    
-    public static String getServerHost(MapleClient ha) {
-        try {
-            return InetAddress.getByName(ServerConstants.Host).getHostAddress().replace("/", "");
-        } catch (Exception e) {
-            if (!ServerConstants.realese)
-                e.printStackTrace();
-        }
-        return ServerConstants.Host;
-    } 
 }
