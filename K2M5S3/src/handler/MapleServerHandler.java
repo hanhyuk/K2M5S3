@@ -79,7 +79,7 @@ public class MapleServerHandler extends IoHandlerAdapter {
 	
 	@Override
 	public void sessionCreated(IoSession session) throws Exception {
-		System.out.println("MapleServerHandler");
+		System.out.println("MapleServerHandler - sessionCreated");
 	}
 	
 	@Override
@@ -200,7 +200,7 @@ public class MapleServerHandler extends IoHandlerAdapter {
 			if (pLocale != ServerConstants.check && pVersion != ServerConstants.MAPLE_VERSION
 					&& pString != ServerConstants.subVersion) {
 				System.err.println("Client Checksum Failed: " + c.getSessionIPAddress());
-				c.getSession().close(true);
+				c.getSession().closeNow();
 			}
 			break;
 		case BUDDY_HELLO:

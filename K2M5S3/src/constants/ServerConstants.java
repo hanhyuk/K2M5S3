@@ -94,20 +94,21 @@ public class ServerConstants {
     
     public static int basePorts = (isLocal ? 100 : 0) + (ChannelPort);
     
+    public static String getRootPath() {
+    	if( isLocal ) {
+    		return LOCAL_ROOT_PATH;
+    	} else {
+    		return ROOT_PATH;
+    	}
+    }
+    
     /**
      * 서버 관리용 프로퍼티 설정값 로딩처리 
      */
     public static void loadServerSetProp() {
         try {
         	
-            FileInputStream fis = null;
-        	
-        	if( isLocal ) {
-        		fis = new FileInputStream(LOCAL_ROOT_PATH + "Settings/ServerSettings.properties");
-        	} else {
-        		fis = new FileInputStream(ROOT_PATH + "Settings/ServerSettings.properties");
-        	}
-        	
+            FileInputStream fis = new FileInputStream(getRootPath() + "Settings/ServerSettings.properties");
             Properties prop = new Properties();
             prop.load(fis);
             fis.close(); fis = null;

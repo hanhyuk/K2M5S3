@@ -313,14 +313,14 @@ public enum SendPacketOpcode {
     
     public static void loadOpcode() {
         try {
-            IniFileProcess storage = new IniFileProcess(new File("Settings/Packet/SendPacket.ini"));
+            IniFileProcess storage = new IniFileProcess(new File(ServerConstants.getRootPath() + "Settings/Packet/SendPacket.ini"));
             for (SendPacketOpcode packet : SendPacketOpcode.values()) {
                 short value = -2;
                 try {
                     value = Short.parseShort(storage.getString("Send", packet.name()));
                 } catch (NumberFormatException error) {
                     if (!ServerConstants.realese) {
-                        System.out.println(storage.getString("Send", packet.name()) + " :: " + packet.name());
+                        System.out.println("´©¶ôµÈ SendPacket Name : " + packet.name());
                     }
                 }
                 packet.setValue(value);

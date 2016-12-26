@@ -70,6 +70,11 @@ public class IpCheckFilter implements IoFilter {
 	}
 	
 	@Override
+	public void sessionClosed(NextFilter nextFilter, IoSession session) throws Exception {
+		nextFilter.sessionClosed(session);
+	}
+	
+	@Override
 	public void sessionCreated(NextFilter nextFilter, IoSession session) throws Exception {
 		System.out.println("IpCheckFilter");
 	}
@@ -100,12 +105,6 @@ public class IpCheckFilter implements IoFilter {
 
 	@Override
 	public void onPostRemove(IoFilterChain parent, String name, NextFilter nextFilter) throws Exception {
-		
-		
-	}
-
-	@Override
-	public void sessionClosed(NextFilter nextFilter, IoSession session) throws Exception {
 		
 		
 	}

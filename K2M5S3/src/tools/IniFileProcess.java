@@ -23,7 +23,6 @@ public class IniFileProcess {
         try {
             String line, section;
             int index;
-            //TODO : ini 한글깨짐 수정 - 최용재
             BufferedReader input = new BufferedReader(new InputStreamReader(new FileInputStream(file), "EUC-KR"));
             this.inner = new IniFileProcess.InnerData();
             while ((line = input.readLine()) != null) {

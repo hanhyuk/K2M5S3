@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.util.HashMap;
 
+import constants.ServerConstants;
 import tools.Randomizer;
 
 
@@ -18,7 +19,7 @@ public class RewardScroll {
 
     protected RewardScroll() {
         try {
-        FileReader fl = new FileReader("Settings/RewardScroll.properties");
+        FileReader fl = new FileReader(ServerConstants.getRootPath() + "Settings/RewardScroll.properties");
         BufferedReader br = new BufferedReader(fl);
         String[] readSplit = new String[2];
         String readLine = null;

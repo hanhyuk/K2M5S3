@@ -9,14 +9,14 @@
 
 package tools;
 
-import constants.ServerConstants;
-import client.MapleCharacter;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Locale;
 import java.util.TimeZone;
+
+import client.MapleCharacter;
+import constants.ServerConstants;
 
 /**
  *
@@ -29,7 +29,7 @@ public class LoggerChatting {
     public static void writeLog(String log, String text) {
         try {
             Calendar currentTime = Calendar.getInstance(TimeZone.getTimeZone("KST"), Locale.KOREAN);
-            File file = new File("Settings/Logs/"+ log);
+            File file = new File(ServerConstants.getRootPath() + "Settings/Logs/"+ log);
             
             FileOutputStream fos = new FileOutputStream(file, true);
             

@@ -9,10 +9,12 @@
 
 package packet.opcode;
 
-import tools.IniFileProcess;
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
+
+import constants.ServerConstants;
+import tools.IniFileProcess;
 
 public enum RecvPacketOpcode {
     //퐁, 클라이언트.
@@ -262,7 +264,7 @@ public enum RecvPacketOpcode {
     
     public static void loadOpcode() {
         try {
-            IniFileProcess storage = new IniFileProcess(new File("Settings/Packet/RecvPacket.ini"));
+            IniFileProcess storage = new IniFileProcess(new File(ServerConstants.getRootPath() + "Settings/Packet/RecvPacket.ini"));
             for (RecvPacketOpcode packet : RecvPacketOpcode.values()) {
                 short value = -2;
                 try {
