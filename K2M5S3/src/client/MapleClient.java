@@ -49,12 +49,23 @@ import server.shops.IMapleCharacterShop;
 
 public class MapleClient {
 
+	/**
+	 * 비로그인 상태
+	 */
 	public static final transient byte LOGIN_NOTLOGGEDIN = 0;
+	/**
+	 * 로그인 성공 이후 2차 비밀번호까지 인증이 완료 된 상태 
+	 */
 	public static final transient byte LOGIN_SERVER_TRANSITION = 1; 
+	/**
+	 * 1.로그인 성공 상태
+	 * 2.캐시샵 입장 상태(CashShopOperation.EnterCS())
+	 * 3.ingame(채널) 입장 상태
+	 */
 	public static final transient byte LOGIN_LOGGEDIN = 2;
-	public static final transient byte LOGIN_WAITING = 3;
-	public static final transient byte CASH_SHOP_TRANSITION = 4;
-	public static final transient byte LOGIN_CS_LOGGEDIN = 5;
+	/**
+	 * 채널 변경 중 상태(InterServerHandler.EnterCS())
+	 */
 	public static final transient byte CHANGE_CHANNEL = 6;
 	
 	public static final int DEFAULT_CHARSLOT = 6;
@@ -115,7 +126,7 @@ public class MapleClient {
 	 * decoder 에서 사용되는 lock
 	 */
 	private final transient Lock decodeMutex = new ReentrantLock(true);
-	private final transient Lock npc_mutex = new ReentrantLock();
+	private final transient Lock accountStatusMutex = new ReentrantLock();
 	private long lastNpcClick = 0;
 	private int chrslot;
 
@@ -226,8 +237,8 @@ public class MapleClient {
 		return decodeMutex;
 	}
 
-	public final Lock getNPCLock() {
-		return npc_mutex;
+	public final Lock getAccountStatusMutex() {
+		return accountStatusMutex;
 	}
 
 	public MapleCharacter getPlayer() {
@@ -397,15 +408,22 @@ public class MapleClient {
 	 * @return The state of the login.
 	 */
 	public int finishLogin() {
-		synchronized (MapleClient.class) {
+		
+		final Lock mutex = getAccountStatusMutex();
+		try {
+			mutex.lock();
+			
 			final byte state = getLoginState();
-			if (state > MapleClient.LOGIN_NOTLOGGEDIN && state != MapleClient.LOGIN_WAITING) { // already
-																								// loggedin
+			if (state > MapleClient.LOGIN_NOTLOGGEDIN) {
 				loggedIn = false;
 				return 7;
 			}
 			updateLoginState(MapleClient.LOGIN_LOGGEDIN, null);
+			
+		} finally {
+			mutex.unlock();
 		}
+		
 		return 0;
 	}
 
@@ -467,6 +485,15 @@ public class MapleClient {
 				if (rs.getInt("banned") > 0) {
 					result = CommonTypeCheck.ACCOUNT_BAN;
 				} else if( rs.getByte("loggedin") != MapleClient.LOGIN_NOTLOGGEDIN ) {
+					//TODO 로그인 중인지 아닌지 판단한는 기준을 좀더 명확히 해야함
+					//아래 항목들에 대해 어떠한 상황에서 사용되는지 부터 확인하고 로그인 중인지 여부를 판단해야 한다.
+//					public static final transient byte LOGIN_NOTLOGGEDIN = 0;
+//					public static final transient byte LOGIN_SERVER_TRANSITION = 1; 
+//					public static final transient byte LOGIN_LOGGEDIN = 2;
+//					public static final transient byte LOGIN_WAITING = 3;
+//					public static final transient byte CASH_SHOP_TRANSITION = 4;
+//					public static final transient byte LOGIN_CS_LOGGEDIN = 5;
+//					public static final transient byte CHANGE_CHANNEL = 6;
 					result = CommonTypeCheck.LOGIN_ING;
 				} else {
 					accId = rs.getInt("id");
@@ -596,8 +623,7 @@ public class MapleClient {
 																						// hide?
 		try {
 			Connection con = MYSQL.getConnection();
-			PreparedStatement ps = con
-					.prepareStatement("UPDATE accounts SET loggedin = ?, SessionIP = ?, lastlogin = ? WHERE id = ?");
+			PreparedStatement ps = con.prepareStatement("UPDATE accounts SET loggedin = ?, SessionIP = ?, lastlogin = ? WHERE id = ?");
 			ps.setInt(1, newstate);
 			ps.setString(2, SessionID);
 			ps.setTimestamp(3, new Timestamp(System.currentTimeMillis()));
@@ -607,7 +633,7 @@ public class MapleClient {
 		} catch (SQLException e) {
 			System.err.println("error updating login state" + e);
 		}
-		if (newstate == MapleClient.LOGIN_NOTLOGGEDIN || newstate == MapleClient.LOGIN_WAITING) {
+		if (newstate == MapleClient.LOGIN_NOTLOGGEDIN) {
 			loggedIn = false;
 			serverTransition = false;
 		} else {

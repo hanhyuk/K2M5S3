@@ -46,7 +46,6 @@ import packet.transfer.read.ByteStream;
 import packet.transfer.read.ReadingMaple;
 import packet.transfer.write.Packet;
 import server.items.EnforceSystem;
-import tools.HexTool;
 import tools.Randomizer;
 import tools.StringUtil;
 
@@ -138,15 +137,6 @@ public class MapleServerHandler extends IoHandlerAdapter {
 	public void messageReceived(final IoSession session, final Object message) throws Exception {
 		final ReadingMaple rh = new ReadingMaple(new ByteStream((byte[]) message));
 		final short header_num = rh.readShort();
-		
-		if (header_num != RecvPacketOpcode.MOVE_LIFE.getValue() && header_num != RecvPacketOpcode.MOVE_PLAYER.getValue()) {
-			if (ServerConstants.showPackets) {
-				final StringBuilder sb = new StringBuilder("RECV - [" + RecvPacketOpcode.getOpcodeName(header_num) + "] : ");
-				sb.append(HexTool.toString((byte[]) message)).append("\n")
-						.append(HexTool.toStringFromAscii((byte[]) message)).append("\n\n");
-				System.out.println(sb.toString());
-			}
-		}
 		RecvPacketOpcode recv = RecvPacketOpcode.getRecvOpcodes().get(header_num);
 		if (recv != null) {
 			final MapleClient c = (MapleClient) session.getAttribute(MapleClient.CLIENT_KEY);
@@ -182,6 +172,10 @@ public class MapleServerHandler extends IoHandlerAdapter {
 	public static final void handlePacket(final RecvPacketOpcode header, final ReadingMaple rh, final MapleClient c,
 			final ServerType type) throws InterruptedException {
 		switch (header) {
+		case SERVER_MESSAGE_RESPONSE:
+			//TODO MainPacketCreator.serverNotice(1, ...) 옵션으로 클라에 팝업창 띄우고, 유저가 확인 버튼 눌렀을때 응답 패킷
+			//구현필요.
+			break;
 		case CLIENT_HELLO:
 			byte pLocale = rh.readByte();
 			short pVersion = rh.readShort();
@@ -223,7 +217,10 @@ public class MapleServerHandler extends IoHandlerAdapter {
 			CharLoginHandler.getDisplayChannel(false, c);
 			break;
 		case ENTER_CREATE_CHAR:
-			CharLoginHandler.getIPRequest(rh, c);
+			System.out.println("----------- 경고 ---------");
+			System.out.println("ENTER_CREATE_CHAR 패킷 발견!");
+			System.out.println("--------------------------");
+			//CharLoginHandler.getIPRequest(rh, c);
 			break;
 		case SECONDPW_RESULT_R:
 			CharLoginHandler.getSPCheck(rh, c);
@@ -301,10 +298,18 @@ public class MapleServerHandler extends IoHandlerAdapter {
 			if (type == ServerType.CHANNEL) {
 				InterServerHandler.Loggedin(playerid, c);
 			} else {
+				System.out.println("----------- 경고 ---------");
+				System.out.println("PLAYER_LOGGEDIN EnterCs 호출!");
+				System.out.println("--------------------------");
+				
 				CashShopOperation.EnterCS(playerid, c);
 			}
 			break;
 		case ENTER_CASH_SHOP:
+			System.out.println("----------- 경고 ---------");
+			System.out.println("ENTER_CASH_SHOP EnterCs 호출!");
+			System.out.println("--------------------------");
+			
 			InterServerHandler.EnterCS(c, c.getPlayer(), true);
 			break;
 		case ENTER_MTS:

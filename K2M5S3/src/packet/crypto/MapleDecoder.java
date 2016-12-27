@@ -8,6 +8,11 @@ import org.apache.mina.filter.codec.CumulativeProtocolDecoder;
 import org.apache.mina.filter.codec.ProtocolDecoderOutput;
 
 import client.MapleClient;
+import constants.ServerConstants;
+import packet.opcode.RecvPacketOpcode;
+import packet.transfer.read.ByteStream;
+import packet.transfer.read.ReadingMaple;
+import tools.HexTool;
 
 public class MapleDecoder extends CumulativeProtocolDecoder {
 
@@ -44,6 +49,21 @@ public class MapleDecoder extends CumulativeProtocolDecoder {
 				decoderState.packetlength = -1;
 				client.getReceiveCrypto().crypt(decryptedPacket);
 				out.write(decryptedPacket);
+				
+				if (ServerConstants.showPackets) {
+					final byte[] data = decryptedPacket;
+					final ReadingMaple rh = new ReadingMaple(new ByteStream(data));
+					final short header_num = rh.readShort();
+					
+					if (header_num != RecvPacketOpcode.MOVE_LIFE.getValue() && header_num != RecvPacketOpcode.MOVE_PLAYER.getValue()) {
+						final StringBuilder sb = new StringBuilder("RECV - [" + RecvPacketOpcode.getOpcodeName(header_num) + "] : ");
+						sb.append(HexTool.toString(data)).append("\n")
+								.append(HexTool.toStringFromAscii(data)).append("\n\n");
+						System.out.println(sb.toString());
+					}
+				}
+				
+				
 			} finally {
 				mutex.unlock();
 			}

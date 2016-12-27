@@ -82,7 +82,7 @@ public class CashShopOperation {
 		}
 		if (!allowLogin) {
 			ha.setPlayer(null);
-			ha.getSession().close();
+			ha.getSession().closeNow();
 			return;
 		}
 		ha.updateLoginState(MapleClient.LOGIN_LOGGEDIN, ha.getSessionIPAddress());

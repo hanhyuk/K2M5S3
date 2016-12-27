@@ -1,12 +1,3 @@
-/*
- * ArcStory Project
- * 최주원 sch2307@naver.com
- * 이준 junny_adm@naver.com
- * 우지훈 raccoonfox69@gmail.com
- * 강정규 ku3135@nate.com
- * 김진홍 designer@inerve.kr
- */
-
 package packet.opcode;
 
 import java.io.File;
@@ -17,6 +8,10 @@ import constants.ServerConstants;
 import tools.IniFileProcess;
 
 public enum RecvPacketOpcode {
+	
+	//hyuk. 추가
+	SERVER_MESSAGE_RESPONSE,
+	
     //퐁, 클라이언트.
     PONG,
     BUDDY_PING,

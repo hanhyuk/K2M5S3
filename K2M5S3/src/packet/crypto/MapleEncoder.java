@@ -9,6 +9,9 @@ import org.apache.mina.filter.codec.ProtocolEncoderOutput;
 
 import client.MapleClient;
 import constants.ServerConstants;
+import packet.opcode.SendPacketOpcode;
+import packet.transfer.read.ByteStream;
+import packet.transfer.read.ReadingMaple;
 import packet.transfer.write.Packet;
 import tools.HexTool;
 
@@ -18,18 +21,22 @@ public class MapleEncoder implements ProtocolEncoder {
 	public void encode(final IoSession session, final Object message, final ProtocolEncoderOutput out) throws Exception {
 		final MapleClient client = (MapleClient) session.getAttribute(MapleClient.CLIENT_KEY);
 
+		if (ServerConstants.showPackets) {
+			final byte[] data = ((Packet) message).getBytes();
+			final ReadingMaple rh = new ReadingMaple(new ByteStream(data));
+			final short header_num = rh.readShort();
+			final StringBuilder sb = new StringBuilder("SEND - [" + SendPacketOpcode.getOpcodeName(header_num) + "] : ");
+			sb.append(HexTool.toString(data)).append("\n").append(HexTool.toStringFromAscii(data)).append("\n\n");
+			System.out.println(sb.toString());
+		}
+		
 		if (client != null) {
 			final MapleCrypto send_crypto = client.getSendCrypto();
 			final byte[] inputInitialPacket = ((Packet) message).getBytes();
 			final byte[] unencrypted = new byte[inputInitialPacket.length];
 			System.arraycopy(inputInitialPacket, 0, unencrypted, 0, inputInitialPacket.length);
 			final byte[] ret = new byte[unencrypted.length + 4];
-			if (ServerConstants.showPackets) {
-				final StringBuilder sb = new StringBuilder("S : ");
-				sb.append(HexTool.toString(((Packet) message).getBytes())).append("\n")
-						.append(HexTool.toStringFromAscii(((Packet) message).getBytes())).append("\n\n");
-				System.out.println(sb.toString());
-			}
+			
 			final Lock mutex = client.getEncodeLock();
 			try {
 				mutex.lock();

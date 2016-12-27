@@ -33,68 +33,75 @@ public class CharLoginHandler {
 	 * 클라이언트에서 로그인 요청시
 	 */
 	public static void login(ReadingMaple rh, MapleClient c) {
-		
-		//FIXME 서버가 오픈 될 준비가 되었는지 체크하는 로직인데, 마음에 안듬. 좀더 개선할수 있는지 확인 필요.
+
+		// FIXME 서버가 오픈 될 준비가 되었는지 체크하는 로직인데, 마음에 안듬. 좀더 개선할수 있는지 확인 필요.
 		if (!GameConstants.isServerReady()) {
 			c.send(MainPacketCreator.serverNotice(1, "서버데이터를 불러오는 중입니다. 잠시만 기다려주세요."));
 			c.send(LoginPacket.getLoginFailed(20));
 			c.addLoginTryCount();
-		} else if( ServerConstants.serverCheck && !c.isGm() ) {
+		} else if (ServerConstants.serverCheck && !c.isGm()) {
 			c.send(MainPacketCreator.serverNotice(1, ServerConstants.serverCheckMessage));
 			c.send(LoginPacket.getLoginFailed(20));
 			c.addLoginTryCount();
 		} else {
 			rh.skip(22);
-			
-			String login = rh.readMapleAsciiString(); 	//로그인 ID
-			String pwd = rh.readMapleAsciiString();		//비밀번호
-			
+
+			String login = rh.readMapleAsciiString(); // 로그인 ID
+			String pwd = rh.readMapleAsciiString(); // 비밀번호
+
 			CommonTypeCheck checkType = AutoRegister.checkAccount(login);
-			
-			if (CommonTypeCheck.ACCOUNT_YES == checkType ) {
-				AutoRegister.registerAccount(c, login, pwd);
-				c.send(MainPacketCreator.serverNotice(1, "계정이 생성 되었습니다.\r\n다시 로그인 하세요."));
+
+			if (CommonTypeCheck.ACCOUNT_YES == checkType) {
+				c.send(MainPacketCreator.serverNotice(1, "test11 한글 ㅁㅁ"));
 				c.send(LoginPacket.getLoginFailed(20));
-				c.addLoginTryCount();
-			} else if( CommonTypeCheck.ACCOUNT_OVER == checkType ) {
+//				AutoRegister.registerAccount(c, login, pwd);
+//				c.send(MainPacketCreator.serverNotice(1, "계정이 생성 되었습니다.\r\n다시 로그인 하세요."));
+//				c.send(LoginPacket.getLoginFailed(20));
+//				c.addLoginTryCount();
+			} else if (CommonTypeCheck.ACCOUNT_OVER == checkType) {
+				//TODO 현재 ACCOUNT_OVER 값이 반환이 안되는데. 그 이유는 
+				//유저가 다수의 계정을 생성했다고 판단할수 있는 기준이 현재 없다. 생각해볼 문제이다.
 				c.send(MainPacketCreator.serverNotice(1, "더 이상 계정을 생성 할 수 없습니다."));
 				c.send(LoginPacket.getLoginFailed(20));
 				c.addLoginTryCount();
 			} else {
 				CommonTypeCheck commonType = c.login(login, pwd);
-				
-				if( CommonTypeCheck.LOGIN_SUCCESS == commonType ) {
-					//마지막으로 로그인이 성공한 날짜를 업데이트 한다.
-					//실제 ingame 했을때(MapleClient.LOGIN_LOGGEDIN 상태) lastlogin 컬럼에 타임스템프를 찍는다.
-					//TODO 위 설명과 같이 마지막 로그인 날짜를 업데이트 하는건 불필요한 것이 아닌가 고민됨.
+
+				if (CommonTypeCheck.LOGIN_SUCCESS == commonType) {
+					// 마지막으로 로그인이 성공한 날짜를 업데이트 한다.
+					// 실제 ingame 했을때(MapleClient.LOGIN_LOGGEDIN 상태) lastlogin
+					// 컬럼에 타임스템프를 찍는다.
+					// TODO 위 설명과 같이 마지막 로그인 날짜를 업데이트 하는건 불필요한 것이 아닌가 고민됨.
 					SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHH");
 					c.updateLastConnection(sdf.format(Calendar.getInstance().getTime()));
 					c.clearLoginTryCount();
-				} else if( CommonTypeCheck.ACCOUNT_BAN == commonType ) {
+					
+					MapleLoginWorker.registerClient(c);
+				} else if (CommonTypeCheck.ACCOUNT_BAN == commonType) {
 					c.send(MainPacketCreator.serverNotice(1, "현재 중지 된 계정 입니다."));
 					c.send(LoginPacket.getLoginFailed(20));
 					c.addLoginTryCount();
-				} else if( CommonTypeCheck.LOGIN_ING == commonType ) {
+				} else if (CommonTypeCheck.LOGIN_ING == commonType) {
 					c.send(MainPacketCreator.serverNotice(1, "현재 접속 중입니다."));
 					c.send(LoginPacket.getLoginFailed(20));
 					c.addLoginTryCount();
 				}
+
 				
-				MapleLoginWorker.registerClient(c);
 			}
-			
-			if( c.getLoginTryCount() >= ServerConstants.loginTryMaxCount ) { //연속해서 로그인에 실패 할 경우 접속 종료 처리
+
+			//연속해서 로그인에 실패 할 경우 접속 종료 처리
+			if (c.getLoginTryCount() >= ServerConstants.loginTryMaxCount) { 
 				c.getSession().closeNow();
 			}
 		}
-		
-		
+
 	}
 
 	public static void CharlistRequest(ReadingMaple rh, MapleClient c) {
 		if (!GameConstants.isServerReady()) {
-			c.send(MainPacketCreator.serverNotice(1, "[" + ServerConstants.serverName
-					+ "] 현재 서버가 준비되지 않았습니다.\r\n\r\n필요한 데이터를 불러오는 중이므로 아직 서버에 접속하실 수 없습니다.\r\n\r\n잠시 후 재접속 해주시기 바랍니다."));
+			c.send(MainPacketCreator.serverNotice(1,
+					"[" + ServerConstants.serverName + "] 현재 서버가 준비되지 않았습니다.\r\n\r\n필요한 데이터를 불러오는 중이므로 아직 서버에 접속하실 수 없습니다.\r\n\r\n잠시 후 재접속 해주시기 바랍니다."));
 			return;
 		}
 		final boolean isFirstLogin = rh.readByte() == 0;
@@ -154,26 +161,27 @@ public class CharLoginHandler {
 	}
 
 	/**
-	 * @deprecated 실제 클라에서 쓰는게 아니라 접속기를 통한 로그인 처리 같아 보여서 일단 사용하지 않도록 함.
-	 * 삭제는 추후에 정말 사용하지 않는지 확인 후에 제거. 
+	 * @deprecated 실제 클라에서 쓰는게 아니라 접속기를 통한 로그인 처리 같아 보여서 일단 사용하지 않도록 함. 삭제는 추후에
+	 *             정말 사용하지 않는지 확인 후에 제거.
 	 */
 	public static void getLoginRequest(ReadingMaple rh, MapleClient c) {
-//		rh.skip(2);
-//		final String account = rh.readMapleAsciiString();
-//		final String login = account.split(",")[0];
-//		final String pwd = account.split(",")[1];
-//		int loginok = c.login(login, pwd);
-//		if (loginok != 0) { // hack
-//			c.getSession().closeNow();
-//			return;
-//		}
-//		if (c.finishLogin() == 0) {
-//			c.setAccountName(login);
-//			c.getSession().write(LoginPacket.getRelogResponse());
-//			c.getSession().write(LoginPacket.getCharEndRequest(c, login, pwd, false));
-//		} else {
-//			c.getSession().write(LoginPacket.getLoginFailed(20));
-//		}
+		// rh.skip(2);
+		// final String account = rh.readMapleAsciiString();
+		// final String login = account.split(",")[0];
+		// final String pwd = account.split(",")[1];
+		// int loginok = c.login(login, pwd);
+		// if (loginok != 0) { // hack
+		// c.getSession().closeNow();
+		// return;
+		// }
+		// if (c.finishLogin() == 0) {
+		// c.setAccountName(login);
+		// c.getSession().write(LoginPacket.getRelogResponse());
+		// c.getSession().write(LoginPacket.getCharEndRequest(c, login, pwd,
+		// false));
+		// } else {
+		// c.getSession().write(LoginPacket.getLoginFailed(20));
+		// }
 	}
 
 	public static void getXignCodeResponse(boolean response, MapleClient c) {
@@ -182,13 +190,18 @@ public class CharLoginHandler {
 		}
 	}
 
+	/**
+	 * @deprecated 게임 클라에서 사용하는 건지 확신할수 없다. 그래서 사용하지 않도록 하고, 이후 확인해서 삭제를 하던가 하자.
+	 * 
+	 * @param rh
+	 * @param c
+	 */
 	public static void getIPRequest(ReadingMaple rh, MapleClient c) {
 		if (!c.isLoggedIn()) { // hack
 			return;
 		}
 		c.updateLoginState(MapleClient.LOGIN_SERVER_TRANSITION, c.getSessionIPAddress());
-		c.getSession().write(MainPacketCreator.getServerIP(c, ServerConstants.basePorts + c.getChannel(),
-				ServerConstants.BuddyChatPort, rh.readInt()));
+		c.getSession().write(MainPacketCreator.getServerIP(c, ServerConstants.basePorts + c.getChannel(), ServerConstants.BuddyChatPort, rh.readInt()));
 	}
 
 	/**
@@ -239,8 +252,8 @@ public class CharLoginHandler {
 	}
 
 	public static void CheckCharName(String name, MapleClient c) {
-		c.getSession().write(LoginPacket.charNameResponse(name,
-				!MapleCharacterUtil.canCreateChar(name) || MapleLoginHelper.getInstance().isForbiddenName(name)));
+		c.getSession()
+				.write(LoginPacket.charNameResponse(name, !MapleCharacterUtil.canCreateChar(name) || MapleLoginHelper.getInstance().isForbiddenName(name)));
 	}
 
 	public static void CreateChar(ReadingMaple rh, MapleClient c) {
@@ -274,13 +287,13 @@ public class CharLoginHandler {
 				&& JobType != MapleNewCharJobType.카이저.getValue() && JobType != MapleNewCharJobType.엔젤릭버스터.getValue()
 				&& JobType != MapleNewCharJobType.제논.getValue() && JobType != MapleNewCharJobType.모험가.getValue()
 				&& JobType != MapleNewCharJobType.캐논슈터.getValue() && JobType != MapleNewCharJobType.듀얼블레이더.getValue()
-				&& JobType != MapleNewCharJobType.팬텀.getValue() && JobType != MapleNewCharJobType.제로.getValue()
-				&& JobType != MapleNewCharJobType.핑크빈.getValue() && JobType != MapleNewCharJobType.키네시스.getValue()) {
+				&& JobType != MapleNewCharJobType.팬텀.getValue() && JobType != MapleNewCharJobType.제로.getValue() && JobType != MapleNewCharJobType.핑크빈.getValue()
+				&& JobType != MapleNewCharJobType.키네시스.getValue()) {
 			bottom = rh.readInt();
 		}
 		int cape = 0;
-		if (JobType == MapleNewCharJobType.팬텀.getValue() || JobType == MapleNewCharJobType.루미너스.getValue()
-				|| JobType == MapleNewCharJobType.제로.getValue() || JobType == MapleNewCharJobType.은월.getValue()) {
+		if (JobType == MapleNewCharJobType.팬텀.getValue() || JobType == MapleNewCharJobType.루미너스.getValue() || JobType == MapleNewCharJobType.제로.getValue()
+				|| JobType == MapleNewCharJobType.은월.getValue()) {
 			cape = rh.readInt();
 		}
 		int shoes = rh.readInt();
@@ -480,24 +493,24 @@ public class CharLoginHandler {
 				&& JobType != MapleNewCharJobType.카이저.getValue() && JobType != MapleNewCharJobType.엔젤릭버스터.getValue()
 				&& JobType != MapleNewCharJobType.제논.getValue() && JobType != MapleNewCharJobType.모험가.getValue()
 				&& JobType != MapleNewCharJobType.캐논슈터.getValue() && JobType != MapleNewCharJobType.듀얼블레이더.getValue()
-				&& JobType != MapleNewCharJobType.팬텀.getValue() && JobType != MapleNewCharJobType.제로.getValue()
-				&& JobType != MapleNewCharJobType.핑크빈.getValue() && JobType != MapleNewCharJobType.키네시스.getValue()) { // 데몬슬레이어,
-																														// 레지스탕스,
-																														// 메르세데스,
-																														// 루미너스,
-																														// 카이저,
-																														// 엔버,
-																														// 제논,
-																														// 키네시스는
-																														// 한벌옷.
+				&& JobType != MapleNewCharJobType.팬텀.getValue() && JobType != MapleNewCharJobType.제로.getValue() && JobType != MapleNewCharJobType.핑크빈.getValue()
+				&& JobType != MapleNewCharJobType.키네시스.getValue()) { // 데몬슬레이어,
+																		// 레지스탕스,
+																		// 메르세데스,
+																		// 루미너스,
+																		// 카이저,
+																		// 엔버,
+																		// 제논,
+																		// 키네시스는
+																		// 한벌옷.
 			Equip bottome = new Equip(bottom, (short) -6, (byte) 0);
 			bottome.setWdef((short) 2);
 			bottome.setUpgradeSlots((byte) 7);
 			bottome.setExpiration(-1);
 			equip.addFromDB(bottome.copy());
 		}
-		if (JobType == MapleNewCharJobType.팬텀.getValue() || JobType == MapleNewCharJobType.루미너스.getValue()
-				|| JobType == MapleNewCharJobType.제로.getValue() || JobType == MapleNewCharJobType.은월.getValue()) {
+		if (JobType == MapleNewCharJobType.팬텀.getValue() || JobType == MapleNewCharJobType.루미너스.getValue() || JobType == MapleNewCharJobType.제로.getValue()
+				|| JobType == MapleNewCharJobType.은월.getValue()) {
 			Equip capee = new Equip(cape, (short) -9, (byte) 0);
 			capee.setWdef((short) 5);
 			capee.setMdef((short) 5);
@@ -541,8 +554,7 @@ public class CharLoginHandler {
 		}
 		byte state = 0;
 		if (chr.getMeso() < 5000000) {
-			c.getSession().write(
-					MainPacketCreator.serverNotice(1, "캐릭터 삭제를 하기위해선 삭제하고자 하는 캐릭터에 5,000,000 메소를 소지하고 있어야 합니다."));
+			c.getSession().write(MainPacketCreator.serverNotice(1, "캐릭터 삭제를 하기위해선 삭제하고자 하는 캐릭터에 5,000,000 메소를 소지하고 있어야 합니다."));
 			c.getSession().write(LoginPacket.getLoginFailed(20));
 			return;
 		}
@@ -566,17 +578,20 @@ public class CharLoginHandler {
 		String password = rh.readMapleAsciiString();
 		int charId = rh.readInt();
 
-		if( c.getSecondPassword() == null || !c.login_Auth(charId)) {
+		if (c.getSecondPassword() == null || !c.login_Auth(charId)) {
 			c.getSession().closeNow();
 			return;
 		}
 		if (c.CheckSecondPassword(password)) {
-			if (c.getIdleTask() != null) {
-				c.getIdleTask().cancel(true);
-			}
+			//TODO 로그인이 성공하고 나면 아래 로직의 의해 일정 주기 이후에 클라를 종료시킨다.2
+			//알고 보니 로그인 이후 ingame 하려면 2차 비밀번호를 입력해야 하는데
+			//해당 2차번호 인증이 성공할 경우 아래 종료처리 로직을 cancel 시킨다.
+			//내가 궁금한건 굳이 그렇게 해야 하는가 인데... 일단 사용하지 않도록 처리한다.
+//			if (c.getIdleTask() != null) {
+//				c.getIdleTask().cancel(true);
+//			}
 			c.updateLoginState(MapleClient.LOGIN_SERVER_TRANSITION, c.getSessionIPAddress());
-			c.getSession().write(MainPacketCreator.getServerIP(c, ServerConstants.ChannelPort + c.getChannel(),
-					ServerConstants.BuddyChatPort, charId));
+			c.getSession().write(MainPacketCreator.getServerIP(c, ServerConstants.ChannelPort + c.getChannel(), ServerConstants.BuddyChatPort, charId));
 		} else {
 			c.getSession().write(LoginPacket.secondPwError((byte) 0x14));
 		}

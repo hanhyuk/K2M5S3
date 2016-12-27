@@ -304,7 +304,6 @@ public enum SendPacketOpcode {
 
         for (SendPacketOpcode opcode : values()) {
             if (opcode.getValue() == value) {
-                System.out.println("DEBUG[SEND]: " + opcode.name());
                 return opcode.name();
             }
         }

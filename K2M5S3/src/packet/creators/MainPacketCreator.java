@@ -566,7 +566,7 @@ public class MainPacketCreator {
     private static Packet serverMessage(int type, int channel, String message, boolean servermessage, boolean megaEar, int itemid) {
         WritingPacket packet = new WritingPacket();
 
-        /*	* 0: [Notice]<br>
+        /* 0: [Notice]<br>
          * 1: Popup<br>
          * 2: Megaphone<br>
          * 3: Super Megaphone<br>
