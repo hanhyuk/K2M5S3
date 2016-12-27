@@ -320,7 +320,6 @@ public class InterServerHandler {
         } else {
             c.getPlayer().getStat().ChDelay = System.currentTimeMillis();
         }
-       c.sendProcessCheck();
     }
     
     public static final void ChangeChannel(final ReadingMaple rh, final MapleClient c, final MapleCharacter chr) {

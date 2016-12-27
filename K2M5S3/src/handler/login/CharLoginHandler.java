@@ -41,512 +41,587 @@ import tools.KoreanDateUtil;
 import tools.Randomizer;
 
 public class CharLoginHandler {
-    
-    public static int canjoin = 1;
-    
-    private static boolean loginFailCount(MapleClient c) {
-	c.loginAttempt++;
-	if (c.loginAttempt > 5) {
-	    return true;
-	}
-	return false;
-    }
 
-    public static void login(ReadingMaple rh, MapleClient c) {
-        rh.skip(22);
-	String login = rh.readMapleAsciiString();
-	String pwd = rh.readMapleAsciiString();
-       
-	c.setAccountName(login);
-	boolean ipBan = c.hasBannedIP();
-	boolean macBan = false;
+	public static int canjoin = 1;
 
-        int checkId = AutoRegister.checkAccount(c, login, pwd);
-        if (!GameConstants.isServerReady()) {
-            c.send(MainPacketCreator.serverNotice(1, "서버데이터를 불러오는 중입니다. 잠시만 기다려주세요."));
-            c.send(LoginPacket.getLoginFailed(20));
-            return;
-        }
-       if (checkId == 0) { //생성 가능한 아이디일때
-            if (canjoin == 1) {
-                AutoRegister.registerAccount(c, login, pwd);
-                c.send(MainPacketCreator.serverNotice(1, ServerConstants.serverName + " 계정생성을 성공적으로 완료하였습니다 !\r\n다시한번 로그인 해주시기 바랍니다."));
-                c.send(LoginPacket.getLoginFailed(20));
-                return;
-            } else {
-                c.send(MainPacketCreator.serverNotice(1, "서버 리붓중입니다, 잠시 후에 다시시도 해주세요."));
-                c.send(LoginPacket.getLoginFailed(20));
-            }
-        } else if (checkId == 1) { //계정 찾기 실패
-            c.send(MainPacketCreator.serverNotice(1, "해당하는 계정이 없습니다.\r\n" + ServerConstants.serverName + " 홈페이지에\r\n먼저 접속하셔서 회원가입을\r\n해주시기 바랍니다."));
-            c.send(LoginPacket.getLoginFailed(20));
-            return;
-        } else if (checkId == 2) { //php오류
-            c.send(MainPacketCreator.serverNotice(1, "페이지 오류가 발생했습니다, 잠시 후에 다시시도 해주세요."));
-            c.send(LoginPacket.getLoginFailed(20));
-            return;
-        } else if (checkId == 3) { //레벨
-            c.send(MainPacketCreator.serverNotice(1, "사이트의 레벨이 맞지 않습니다. 계정을 등급업을 받으신 후 이용해 주시기 바랍니다."));
-            c.send(LoginPacket.getLoginFailed(20));
-            return;
-        } else if (checkId == 6) { //횟수초과
-            c.send(MainPacketCreator.serverNotice(1, "한 아이피당 가능한 계정생성 최대횟수를 초과했습니다."));
-            c.send(LoginPacket.getLoginFailed(20));
-            return;
-        }
+	private static boolean loginFailCount(MapleClient c) {
+		c.loginAttempt++;
+		if (c.loginAttempt > 5) {
+			return true;
+		}
+		return false;
+	}
 
-	int loginok = c.login(login, pwd, ipBan || macBan);
-	Calendar tempbannedTill = c.getTempBanCalendar();
-	if (loginok == 0 && (ipBan || macBan)) {
-	    loginok = 3;
-	    if (ipBan || macBan) {
-		MapleCharacter.ban(c.getSession().getRemoteAddress().toString().split(":")[0], "Enforcing account ban, account " + login, false);
-	    }
-	}
-        if (ServerConstants.serverCheck && !c.isGm()) {
-            c.send(MainPacketCreator.serverNotice(1, ServerConstants.serverCheckMessage));
-            c.send(LoginPacket.getLoginFailed(20));
-            return;
-        }
-        if (loginok != 0) {
-            if (!loginFailCount(c)) {
-                c.getSession().write(LoginPacket.getLoginFailed(loginok));
-            }
-        } else if (tempbannedTill.getTimeInMillis() != 0) {
-	    if (!loginFailCount(c)) {
-		c.getSession().write(LoginPacket.getTempBan(KoreanDateUtil.getTempBanTimestamp(tempbannedTill.getTimeInMillis()), c.getBanReason()));
-	    }
-	} else {
-	    c.loginAttempt = 0;
-	    MapleLoginWorker.registerClient(c);
-	}
-    }
-    
-    public static void CharlistRequest(ReadingMaple rh, MapleClient c) {
-        if (!GameConstants.isServerReady()) {
-            c.send(MainPacketCreator.serverNotice(1, "["+ServerConstants.serverName+"] 현재 서버가 준비되지 않았습니다.\r\n\r\n필요한 데이터를 불러오는 중이므로 아직 서버에 접속하실 수 없습니다.\r\n\r\n잠시 후 재접속 해주시기 바랍니다."));
-            return;
-        }
-        final boolean isFirstLogin = rh.readByte() == 0;
-        if (!isFirstLogin) { //1.2.239+ 게임 종료 대응.
-            rh.skip(1);
-            final String account = rh.readMapleAsciiString();
-            final String login = account.split(",")[0];
-            final String pwd = account.split(",")[1];
-            rh.skip(21);
-            c.getSession().write(LoginPacket.getCharEndRequest(c, login, pwd, true));
-            c.getSession().write(LoginPacket.getSelectedWorld());
-        }
-        int server = rh.readByte();
-        int channel = rh.readByte();
-        c.setWorld(server);
-        c.setChannel(channel);
-        System.out.println("[알림] "+ c.getSessionIPAddress().toString() +" 에서 "+ c.getAccountName() +" 계정으로 " + 
-                (channel == 0 ? 1 : channel == 1 ? "20세이상" : channel) + " 채널로 연결을 시도중입니다.");
-        try {
-            List<MapleCharacter> chars = c.loadCharacters();
-            c.getSession().write(LoginPacket.charlist(c, c.isUsing2ndPassword(), chars));
-            chars.clear();
-            chars = null;
-        } catch (Exception e) {
-            if (!ServerConstants.realese) { 
-                e.printStackTrace();
-            }
-        }
-    }       
-    
-    public static void onlyRegisterSecondPassword(ReadingMaple rh, MapleClient c) {
-        String secondpw = rh.readMapleAsciiString();
-        c.setSecondPassword(secondpw);
-        c.updateSecondPassword();
-        c.send(LoginPacket.getSecondPasswordResult(true));
-    }
-     
-    public static void registerSecondPassword(ReadingMaple rh, MapleClient c) {
-        String originalPassword = rh.readMapleAsciiString(); 
-        String changePassword = rh.readMapleAsciiString(); 
-         
-        if (!originalPassword.equals(c.getSecondPassword())) { 
-            c.send(LoginPacket.getSecondPasswordResult(false));
-        } else {
-            c.setSecondPassword(changePassword);
-            c.updateSecondPassword();
-            c.send(LoginPacket.getSecondPasswordResult(true));
-        }
-    }
+	public static void login(ReadingMaple rh, MapleClient c) {
+		rh.skip(22);
+		String login = rh.readMapleAsciiString();
+		String pwd = rh.readMapleAsciiString();
 
-    public static void getSPCheck(ReadingMaple rh,  MapleClient c) {
-        if (c.getSecondPassword() != null) { 
-            c.getSession().write(LoginPacket.getSecondPasswordCheck(true, false, true));
-        } else {
-            c.getSession().write(LoginPacket.getSecondPasswordCheck(false, false, false));
-        }
-    }
-    
-    public static void getLoginRequest(ReadingMaple rh, MapleClient c) {
-        /* 로그인 시작 */
-        rh.skip(2);
-        final String account = rh.readMapleAsciiString();
-        final String login = account.split(",")[0];
-        final String pwd = account.split(",")[1];
-        int loginok = c.login(login, pwd, c.hasBannedIP());
-        if (loginok != 0) { // hack
-            c.getSession().close(true);
-            return;
-        }
-        if (c.finishLogin() == 0) {
-            c.setAccountName(login);
-            c.getSession().write(LoginPacket.getRelogResponse());
-            c.getSession().write(LoginPacket.getCharEndRequest(c, login, pwd, false));
-        } else {
-            c.getSession().write(LoginPacket.getLoginFailed(20));
-        }
-    }
-    
-    public static void getXignCodeResponse(boolean response, MapleClient c) {
-        if (response) {
-            c.getSession().write(LoginPacket.getXignCodeResponse());
-        }
-    }
-    
-    public static void getIPRequest(ReadingMaple rh, MapleClient c) {
-        if (!c.isLoggedIn()) { // hack
-            return;
-        }
-        c.updateLoginState(MapleClient.LOGIN_SERVER_TRANSITION, c.getSessionIPAddress());
-        c.getSession().write(MainPacketCreator.getServerIP(c, ServerConstants.basePorts + c.getChannel(), ServerConstants.BuddyChatPort, rh.readInt()));
-    }
-    
-    public static void getDisplayChannel(final boolean first_login, MapleClient c) {
-        c.getSession().write(LoginPacket.getChannelBackImg(first_login, (byte) (byte) Randomizer.rand(0, 1)));
-        /* 겉 멀티월드 시작*/
-        int[] world = new int[] {0, 1, 3, 4, 5, 10, 16, 29, 43, 44, 45};
-        for (int i = 0; i < world.length; i++) {
-            c.getSession().write(LoginPacket.getServerList(world[i], WorldConnected.getConnected()));
-        }
-        /* 겉 멀티월드 종료 */
-        c.getSession().write(LoginPacket.recommendWorld());
-        c.getSession().write(LoginPacket.getEndOfServerList());
-        c.getSession().write(LoginPacket.getLastWorld());
-    }
-    
-    public static void getSessionCheck(ReadingMaple rh, MapleClient c) {
-        int pRequest = rh.readInt();
-        int pResponse;
-        pResponse = ((pRequest >> 5) << 5) + (((((pRequest & 0x1F) >> 3) ^ 2) << 3) + (7 - (pRequest & 7)));
-        pResponse |= ((pRequest >> 7) << 7);
-        c.getSession().write(LoginPacket.getSessionResponse(pResponse));
-    }
-    
-    public static void setBurningCharacter(ReadingMaple rh, MapleClient c) {
-        rh.skip(1);
-        int accountId = rh.readInt();
-        int charId = rh.readInt();
-        if (!c.isLoggedIn() || c.getAccID() != accountId) { // hack
-            return;
-        }
-        if (!c.setBurningCharacter(accountId, charId)) {
-            c.getSession().write(MainPacketCreator.serverNotice(1, "잘못된 요청입니다."));
-            return;
-        }
-        c.send(LoginPacket.setBurningEffect(charId));
-    }
-    
-    public static void checkSecondPassword(ReadingMaple rh, MapleClient c) {
-        String code = rh.readMapleAsciiString();
-	if (!code.equals(c.getSecondPassword())) {
-            c.send(LoginPacket.getSecondPasswordConfirm(false));
-	} else {
-            c.send(LoginPacket.getSecondPasswordConfirm(true));
-	}
-    }
-    
-    public static void CheckCharName(String name, MapleClient c) {
-	c.getSession().write(LoginPacket.charNameResponse(name, !MapleCharacterUtil.canCreateChar(name) || MapleLoginHelper.getInstance().isForbiddenName(name)));
-    }
-    
-    public static void CreateChar(ReadingMaple rh, MapleClient c) {
-         String name = rh.readMapleAsciiString();
-         MapleCharacter newchar = MapleCharacter.getDefault(c);
-         rh.skip(8);
-         int JobType = rh.readInt(); // 1 = Adventurer, 0 = Cygnus, 2 = Aran
-         short subCategory = rh.readShort();
-         if (JobType == MapleNewCharJobType.제로.getValue()) {
-             newchar.setSecondGender(rh.readByte());
-         } else {
-            newchar.setGender(rh.readByte());
-         }
-         newchar.setSkinColor(rh.readByte());
-         rh.skip(1); 
-         newchar.setFace(rh.readInt());
-         newchar.setHair(rh.readInt());
-        if (JobType == MapleNewCharJobType.데몬슬레이어.getValue() || JobType == MapleNewCharJobType.제논.getValue()) {
-            newchar.setSecondFace(rh.readInt());
-        }
-        if (JobType == MapleNewCharJobType.제로.getValue()) {
-            newchar.setGender((byte) 1);
-            newchar.setSecondSkinColor((byte) 0);
-            newchar.setSecondFace(21290);
-            newchar.setSecondHair(37623);
-        }
-        int top = rh.readInt();
-        int bottom = 0;
-        if (JobType != MapleNewCharJobType.레지스탕스.getValue() && JobType != MapleNewCharJobType.메르세데스.getValue() && JobType != MapleNewCharJobType.데몬슬레이어.getValue() && JobType != MapleNewCharJobType.루미너스.getValue() && JobType != MapleNewCharJobType.카이저.getValue() && JobType != MapleNewCharJobType.엔젤릭버스터.getValue() && JobType != MapleNewCharJobType.제논.getValue() && JobType != MapleNewCharJobType.모험가.getValue() && JobType != MapleNewCharJobType.캐논슈터.getValue() && JobType != MapleNewCharJobType.듀얼블레이더.getValue() && JobType != MapleNewCharJobType.팬텀.getValue() && JobType != MapleNewCharJobType.제로.getValue() && JobType != MapleNewCharJobType.핑크빈.getValue() && JobType != MapleNewCharJobType.키네시스.getValue()) {
-            bottom = rh.readInt();
-        }
-        int cape = 0;
-        if (JobType == MapleNewCharJobType.팬텀.getValue() || JobType == MapleNewCharJobType.루미너스.getValue() || JobType == MapleNewCharJobType.제로.getValue() || JobType == MapleNewCharJobType.은월.getValue()) {
-            cape = rh.readInt();
-        }
-        int shoes = rh.readInt();
-        int weapon = rh.readInt();
-        int shield = 0;
-        if (JobType == MapleNewCharJobType.데몬슬레이어.getValue()) {
-            shield = rh.readInt();
-        }
-        if (!MapleCharacterUtil.canCreateChar(name) || MapleLoginHelper.getInstance().isForbiddenName(name)) { //생성 도중 중복닉네임 발견시
-            c.send(MainPacketCreator.serverNotice(1, "캐릭터 생성도중 오류가 발생했습니다!"));
-            c.send(LoginPacket.getLoginFailed(30));
-            return;
-        }
-        newchar.setSubcategory(subCategory);
-        newchar.setName(name);
-        if (c.isGm()) {
-            newchar.setGMLevel((byte) 6);
-        }
-                
-        if (JobType == MapleNewCharJobType.모험가.getValue() || JobType == MapleNewCharJobType.듀얼블레이더.getValue() || JobType == MapleNewCharJobType.캐논슈터.getValue()) { //모험가
-            newchar.setJob((short) 0);
-            newchar.getInventory(MapleInventoryType.ETC).addItem(new Item(4161001, (byte) 0, (short) 1, (byte) 0));
-        } else if (JobType == MapleNewCharJobType.레지스탕스.getValue()) { //레지스탕스
-            newchar.setJob((short) 3000);
-            newchar.getInventory(MapleInventoryType.ETC).addItem(new Item(4161054, (byte) 0, (short) 1, (byte) 0));
-            newchar.changeSkillLevel(SkillFactory.getSkill(30001061), (byte) 1, (byte) 1);
-        } else if (JobType == MapleNewCharJobType.시그너스.getValue()) { //시그너스
-            newchar.setJob((short) 1000);
-            newchar.getInventory(MapleInventoryType.ETC).addItem(new Item(4161047, (byte) 0, (short) 1, (byte) 0));
-            newchar.changeSkillLevel(SkillFactory.getSkill(10001003), (byte) 1, (byte) 1); //장인의 혼
-            newchar.changeSkillLevel(SkillFactory.getSkill(10001244), (byte) 1, (byte) 1); //엘리멘탈 슬래시
-            newchar.changeSkillLevel(SkillFactory.getSkill(10001245), (byte) 1, (byte) 1); //져니 홈
-            newchar.changeSkillLevel(SkillFactory.getSkill(10000246), (byte) 1, (byte) 1); //엘리멘탈 하모니
-            newchar.changeSkillLevel(SkillFactory.getSkill(10000252), (byte) 1, (byte) 1); //엘리멘탈 쉬프트
-        } else if (JobType == MapleNewCharJobType.아란.getValue()) { //아란
-            newchar.getInventory(MapleInventoryType.ETC).addItem(new Item(4161048, (byte) 0, (short) 1, (byte) 0));
-            newchar.setJob((short) 2000);
-        } else if (JobType == MapleNewCharJobType.에반.getValue()) { //에반
-            newchar.getInventory(MapleInventoryType.ETC).addItem(new Item(4161052, (byte) 0, (short) 1, (byte) 0));
-            newchar.setJob((short) 2001);
-        } else if (JobType == MapleNewCharJobType.메르세데스.getValue()) { //메르세데스
-            newchar.setJob((short) 2002);
-            newchar.changeSkillLevel(SkillFactory.getSkill(20020109), (byte) 1, (byte) 1); //엘프의 회복
-            newchar.changeSkillLevel(SkillFactory.getSkill(20021110), (byte) 1, (byte) 1); //엘프의 축복
-            newchar.changeSkillLevel(SkillFactory.getSkill(20020111), (byte) 1, (byte) 1); //스타일리쉬 무브
-            newchar.changeSkillLevel(SkillFactory.getSkill(20020112), (byte) 1, (byte) 1); //왕의 자격
-            newchar.getInventory(MapleInventoryType.ETC).addItem(new Item(4161079, (byte) 0, (short) 1, (byte) 0));
-        } else if (JobType == MapleNewCharJobType.데몬슬레이어.getValue()) { //데몬슬레이어
-            newchar.setJob((short) 3001);
-            newchar.changeSkillLevel(SkillFactory.getSkill(30011109), (byte) 1, (byte) 1); //데빌 윙즈
-            newchar.changeSkillLevel(SkillFactory.getSkill(30010110), (byte) 1, (byte) 1); //데몬 점프
-        } else if (JobType == MapleNewCharJobType.제논.getValue()) { //제논
-            newchar.setJob((short) 3002);
-            newchar.changeSkillLevel(SkillFactory.getSkill(30020232), (byte) 1, (byte) 1); //서플러스 서플라이
-            newchar.changeSkillLevel(SkillFactory.getSkill(30020233), (byte) 1, (byte) 1); //하이브리드 로직
-            newchar.changeSkillLevel(SkillFactory.getSkill(30020234), (byte) 1, (byte) 1); //멀티래터럴 I
-            newchar.changeSkillLevel(SkillFactory.getSkill(30021235), (byte) 1, (byte) 1); //프로멧사 어썰트
-            newchar.changeSkillLevel(SkillFactory.getSkill(30021236), (byte) 1, (byte) 1); //멀티 모드 링커
-            newchar.changeSkillLevel(SkillFactory.getSkill(30021237), (byte) 1, (byte) 1); //에비에이션 리버티
-            newchar.changeSkillLevel(SkillFactory.getSkill(30020240), (byte) 1, (byte) 1); //카모플라쥬
-        } else if (JobType == MapleNewCharJobType.팬텀.getValue()) { //팬텀
-            newchar.setJob((short) 2003);
-            newchar.changeSkillLevel(SkillFactory.getSkill(20031203), (byte) 1, (byte) 1); //리턴 오브 팬텀
-            newchar.changeSkillLevel(SkillFactory.getSkill(20030204), (byte) 1, (byte) 1); //데들리 인스팅트
-            newchar.changeSkillLevel(SkillFactory.getSkill(20031205), (byte) 1, (byte) 1); //팬텀 슈라우드
-            newchar.changeSkillLevel(SkillFactory.getSkill(20030206), (byte) 1, (byte) 1); //하이 덱스터러티
-            newchar.changeSkillLevel(SkillFactory.getSkill(20031207), (byte) 1, (byte) 1); //스틸 스킬
-            newchar.changeSkillLevel(SkillFactory.getSkill(20031208), (byte) 1, (byte) 1); //스킬 매니지먼트
-            newchar.changeSkillLevel(SkillFactory.getSkill(20031209), (byte) 1, (byte) 1); //저지먼트
-            newchar.changeSkillLevel(SkillFactory.getSkill(20031260), (byte) 1, (byte) 1); //저지먼트 AUTO / MANUAL
-        } else if (JobType == MapleNewCharJobType.미하일.getValue()) { //미하일
-            newchar.setJob((short) 5000);
-            newchar.changeSkillLevel(SkillFactory.getSkill(50001214), (byte) 1, (byte) 1); //빛의 수호
-        } else if (JobType == MapleNewCharJobType.루미너스.getValue()) { //루미너스
-            newchar.setJob((short) 2004);
-            newchar.changeSkillLevel(SkillFactory.getSkill(20040219), (byte) 1, (byte) 1);  //이퀄리브리엄
-            newchar.changeSkillLevel(SkillFactory.getSkill(20040216), (byte) 1, (byte) 1); //선파이어
-            newchar.changeSkillLevel(SkillFactory.getSkill(20040217), (byte) 1, (byte) 1); //이클립스
-            newchar.changeSkillLevel(SkillFactory.getSkill(20040218), (byte) 1, (byte) 1); //퍼미에이트
-            newchar.changeSkillLevel(SkillFactory.getSkill(20040221), (byte) 1, (byte) 1); //파워오브라이트
-            newchar.changeSkillLevel(SkillFactory.getSkill(20041222), (byte) 1, (byte) 1); //라이트 블링크
-        } else if (JobType == MapleNewCharJobType.카이저.getValue()) { //카이저
-            newchar.setJob((short) 6000);
-            newchar.changeSkillLevel(SkillFactory.getSkill(60001216), (byte) 1, (byte) 1); //리셔플 스위치 : 방어모드
-            newchar.changeSkillLevel(SkillFactory.getSkill(60001217), (byte) 1, (byte) 1); //리셔플 스위치 : 공격모드
-            newchar.changeSkillLevel(SkillFactory.getSkill(60001218), (byte) 1, (byte) 1); //바티컬커넥트
-            newchar.changeSkillLevel(SkillFactory.getSkill(60001219), (byte) 1, (byte) 1); //아이언 윌
-            newchar.changeSkillLevel(SkillFactory.getSkill(60001220), (byte) 1, (byte) 1); //트랜스피규레이션
-            newchar.changeSkillLevel(SkillFactory.getSkill(60001225), (byte) 1, (byte) 1); //커맨드
-        } else if (JobType == MapleNewCharJobType.엔젤릭버스터.getValue()) { //카이저
-            newchar.setJob((short) 6001);
-            newchar.changeSkillLevel(SkillFactory.getSkill(60011216), (byte) 1, (byte) 1); //석세서
-            newchar.changeSkillLevel(SkillFactory.getSkill(60011218), (byte) 1, (byte) 1); //매지컬 리프트
-            newchar.changeSkillLevel(SkillFactory.getSkill(60011219), (byte) 1, (byte) 1); //소울 컨트랙트
-            newchar.changeSkillLevel(SkillFactory.getSkill(60011220), (byte) 1, (byte) 1); //데이드림
-            newchar.changeSkillLevel(SkillFactory.getSkill(60011221), (byte) 1, (byte) 1); //코디네이트
-            newchar.changeSkillLevel(SkillFactory.getSkill(60011222), (byte) 1, (byte) 1); //드레스 업
-        } else if (JobType == MapleNewCharJobType.제로.getValue()) {
-            newchar.setJob((short) 10112);
-            newchar.setLevel(100);
-            newchar.changeSkillLevel(SkillFactory.getSkill(100001262), (byte) 1, (byte) 1);
-            newchar.changeSkillLevel(SkillFactory.getSkill(100000282), (byte) 1, (byte) 1);
-            newchar.changeSkillLevel(SkillFactory.getSkill(100001263), (byte) 1, (byte) 1);
-            newchar.changeSkillLevel(SkillFactory.getSkill(100001264), (byte) 1, (byte) 1);
-            newchar.changeSkillLevel(SkillFactory.getSkill(100001265), (byte) 1, (byte) 1);
-            newchar.changeSkillLevel(SkillFactory.getSkill(100001266), (byte) 1, (byte) 1);
-            newchar.changeSkillLevel(SkillFactory.getSkill(100001268), (byte) 1, (byte) 1);
-            newchar.changeSkillLevel(SkillFactory.getSkill(100000279), (byte) 5, (byte) 5);
-        } else if (JobType == MapleNewCharJobType.은월.getValue()) {
-            newchar.setJob((short) 2005);
-        } else if (JobType == MapleNewCharJobType.핑크빈.getValue()) {
-            newchar.setJob((short) 13100);
-        } else if (JobType == MapleNewCharJobType.키네시스.getValue()) {
-            newchar.setJob((short) 14000);
-        }
-        newchar.setMap(ServerConstants.startMap);
-        MapleInventory equip = newchar.getInventory(MapleInventoryType.EQUIPPED);
-        Equip eq_top = new Equip(top, (short) -5 , (byte) 0);
-        eq_top.setWdef((short) 3);
-        eq_top.setUpgradeSlots((byte) 7);
-        eq_top.setExpiration(-1);
-        equip.addFromDB(eq_top.copy());
-        if (JobType == MapleNewCharJobType.데몬슬레이어.getValue()) {
-            Equip shielde = new Equip(shield, (short) -10 , (byte) 0);
-            shielde.setMp((short) 110);
-            shielde.setHp((short) 200);
-            shielde.setUpgradeSlots((byte) 7);
-            shielde.setExpiration(-1);
-            equip.addFromDB(shielde.copy());
-        }
-         if (JobType == MapleNewCharJobType.카이저.getValue() || JobType == MapleNewCharJobType.엔젤릭버스터.getValue()) {
-             Equip js = new Equip(1352504, (short) -10, (byte) 0);
-             if (JobType == MapleNewCharJobType.카이저.getValue()) {
-                 js = null;
-                 js = new Equip(1352504, (short) -10, (byte) 0);
-             } else if (JobType == MapleNewCharJobType.엔젤릭버스터.getValue()) {
-                 js = null;
-                 js = new Equip(1352600, (short) -10, (byte) 0);
-             }
-            js.setWdef((short) 5);
-            js.setMdef((short) 5);
-            js.setUpgradeSlots((byte) 7);
-            js.setExpiration(-1);
-            equip.addFromDB(js.copy());
-        }
-        Equip shoese = new Equip(shoes, (short) -7 , (byte) 0);
-        shoese.setWdef((short) 2);
-        shoese.setUpgradeSlots((byte) 7);
-        shoese.setExpiration(-1);
-        equip.addFromDB(shoese.copy());
-        if (JobType != MapleNewCharJobType.레지스탕스.getValue() && JobType != MapleNewCharJobType.메르세데스.getValue() && JobType != MapleNewCharJobType.데몬슬레이어.getValue() && JobType != MapleNewCharJobType.루미너스.getValue() && JobType != MapleNewCharJobType.카이저.getValue() && JobType != MapleNewCharJobType.엔젤릭버스터.getValue() && JobType != MapleNewCharJobType.제논.getValue() && JobType != MapleNewCharJobType.모험가.getValue() && JobType != MapleNewCharJobType.캐논슈터.getValue() && JobType != MapleNewCharJobType.듀얼블레이더.getValue() && JobType != MapleNewCharJobType.팬텀.getValue() && JobType != MapleNewCharJobType.제로.getValue() && JobType != MapleNewCharJobType.핑크빈.getValue() && JobType != MapleNewCharJobType.키네시스.getValue()) { //데몬슬레이어, 레지스탕스, 메르세데스, 루미너스, 카이저, 엔버, 제논, 키네시스는 한벌옷.
-            Equip bottome = new Equip(bottom, (short) -6, (byte) 0);
-            bottome.setWdef((short) 2);
-            bottome.setUpgradeSlots((byte) 7);
-            bottome.setExpiration(-1);
-            equip.addFromDB(bottome.copy());
-        }
-        if (JobType == MapleNewCharJobType.팬텀.getValue() || JobType == MapleNewCharJobType.루미너스.getValue() || JobType == MapleNewCharJobType.제로.getValue() || JobType == MapleNewCharJobType.은월.getValue()) {
-            Equip capee = new Equip(cape, (short) -9, (byte) 0);
-            capee.setWdef((short) 5);
-            capee.setMdef((short) 5);
-            capee.setUpgradeSlots((byte) 7);
-            capee.setExpiration(-1);
-            equip.addFromDB(capee.copy());
-        }
-        Equip weapone = new Equip(weapon, (short) -11, (byte) 0);
-        if (JobType == MapleNewCharJobType.루미너스.getValue()) {
-            weapone.setMatk((short) 17);
-        } else {
-            weapone.setWatk((short) 17);
-        }
-        weapone.setUpgradeSlots((byte) 7);
-        weapone.setExpiration(-1);
-        equip.addFromDB(weapone.copy());
-        if (JobType == MapleNewCharJobType.제로.getValue()) {
-            Equip js = new Equip(1562000, (short) -10, (byte) 0);
-            weapone.setUpgradeSlots((byte) 7);
-            weapone.setExpiration(-1);
-            equip.addFromDB(js.copy());
-        }
-        if (MapleCharacterUtil.canCreateChar(name) && !MapleLoginHelper.getInstance().isForbiddenName(name)) {
-            MapleCharacter.saveNewCharToDB(newchar);
-            MapleItempotMain.getInstance().newCharDB(newchar.getId());
-            c.getSession().write(LoginPacket.addNewCharacterEntry(newchar, true));
-            c.createdChar(newchar.getId());
-        } else {
-            c.getSession().write(LoginPacket.addNewCharacterEntry(newchar, false));
-        }
-        newchar = null;
-    } 
+		c.setAccountName(login);
+		boolean ipBan = c.hasBannedIP();
+		boolean macBan = false;
 
-    public static void DeleteChar(ReadingMaple rh, MapleClient c) {
-	String Secondpw_Client = rh.readMapleAsciiString();
-	int Character_ID = rh.readInt();
-        MapleCharacter chr = MapleCharacter.loadCharFromDB(Character_ID, c, false);
-	if (!c.login_Auth(Character_ID)) {
-	    c.getSession().close(true);
-	    return; // Attempting to delete other character
-	}
-	byte state = 0;
-        if (chr.getMeso() < 5000000) {
-            c.getSession().write(MainPacketCreator.serverNotice(1, "캐릭터 삭제를 하기위해선 삭제하고자 하는 캐릭터에 5,000,000 메소를 소지하고 있어야 합니다."));
-            c.getSession().write(LoginPacket.getLoginFailed(20));
-            return;
-        }
-        if (Secondpw_Client == null) { // Client's hacking
-            c.getSession().close(true);
-            return;
-        } else {
-            if (!c.CheckSecondPassword(Secondpw_Client)) { // Wrong Password
-                state = 0x14;
-            }
-        }
-	if (state == 0) {
-	    if (!c.deleteCharacter(Character_ID)) {
-		state = 1; //actually something else would be good o.o
-	    }
-	}
-	c.getSession().write(LoginPacket.deleteCharResponse(Character_ID, state));
-    }
+		int checkId = AutoRegister.checkAccount(c, login, pwd);
+		if (!GameConstants.isServerReady()) {
+			c.send(MainPacketCreator.serverNotice(1, "서버데이터를 불러오는 중입니다. 잠시만 기다려주세요."));
+			c.send(LoginPacket.getLoginFailed(20));
+			return;
+		}
+		if (checkId == 0) { // 생성 가능한 아이디일때
+			if (canjoin == 1) {
+				AutoRegister.registerAccount(c, login, pwd);
+				c.send(MainPacketCreator.serverNotice(1,
+						ServerConstants.serverName + " 계정생성을 성공적으로 완료하였습니다 !\r\n다시한번 로그인 해주시기 바랍니다."));
+				c.send(LoginPacket.getLoginFailed(20));
+				return;
+			} else {
+				c.send(MainPacketCreator.serverNotice(1, "서버 리붓중입니다, 잠시 후에 다시시도 해주세요."));
+				c.send(LoginPacket.getLoginFailed(20));
+			}
+		} else if (checkId == 1) { // 계정 찾기 실패
+			c.send(MainPacketCreator.serverNotice(1,
+					"해당하는 계정이 없습니다.\r\n" + ServerConstants.serverName + " 홈페이지에\r\n먼저 접속하셔서 회원가입을\r\n해주시기 바랍니다."));
+			c.send(LoginPacket.getLoginFailed(20));
+			return;
+		} else if (checkId == 2) { // php오류
+			c.send(MainPacketCreator.serverNotice(1, "페이지 오류가 발생했습니다, 잠시 후에 다시시도 해주세요."));
+			c.send(LoginPacket.getLoginFailed(20));
+			return;
+		} else if (checkId == 3) { // 레벨
+			c.send(MainPacketCreator.serverNotice(1, "사이트의 레벨이 맞지 않습니다. 계정을 등급업을 받으신 후 이용해 주시기 바랍니다."));
+			c.send(LoginPacket.getLoginFailed(20));
+			return;
+		} else if (checkId == 6) { // 횟수초과
+			c.send(MainPacketCreator.serverNotice(1, "한 아이피당 가능한 계정생성 최대횟수를 초과했습니다."));
+			c.send(LoginPacket.getLoginFailed(20));
+			return;
+		}
 
-    public static void Character_WithSecondPassword(ReadingMaple rh, MapleClient c) {
-	String password = rh.readMapleAsciiString();
-	int charId = rh.readInt();
+		int loginok = c.login(login, pwd, ipBan || macBan);
+		Calendar tempbannedTill = c.getTempBanCalendar();
+		if (loginok == 0 && (ipBan || macBan)) {
+			loginok = 3;
+			if (ipBan || macBan) {
+				MapleCharacter.ban(c.getSession().getRemoteAddress().toString().split(":")[0],
+						"Enforcing account ban, account " + login, false);
+			}
+		}
+		if (ServerConstants.serverCheck && !c.isGm()) {
+			c.send(MainPacketCreator.serverNotice(1, ServerConstants.serverCheckMessage));
+			c.send(LoginPacket.getLoginFailed(20));
+			return;
+		}
+		if (loginok != 0) {
+			if (!loginFailCount(c)) {
+				c.getSession().write(LoginPacket.getLoginFailed(loginok));
+			}
+		} else if (tempbannedTill.getTimeInMillis() != 0) {
+			if (!loginFailCount(c)) {
+				c.getSession().write(LoginPacket.getTempBan(
+						KoreanDateUtil.getTempBanTimestamp(tempbannedTill.getTimeInMillis()), c.getBanReason()));
+			}
+		} else {
+			c.loginAttempt = 0;
+			MapleLoginWorker.registerClient(c);
+		}
+	}
 
-	if (loginFailCount(c) || c.getSecondPassword() == null || !c.login_Auth(charId)) { // This should not happen unless player is hacking
-	    c.getSession().close(true);
-	    return;
+	public static void CharlistRequest(ReadingMaple rh, MapleClient c) {
+		if (!GameConstants.isServerReady()) {
+			c.send(MainPacketCreator.serverNotice(1, "[" + ServerConstants.serverName
+					+ "] 현재 서버가 준비되지 않았습니다.\r\n\r\n필요한 데이터를 불러오는 중이므로 아직 서버에 접속하실 수 없습니다.\r\n\r\n잠시 후 재접속 해주시기 바랍니다."));
+			return;
+		}
+		final boolean isFirstLogin = rh.readByte() == 0;
+		if (!isFirstLogin) { // 1.2.239+ 게임 종료 대응.
+			rh.skip(1);
+			final String account = rh.readMapleAsciiString();
+			final String login = account.split(",")[0];
+			final String pwd = account.split(",")[1];
+			rh.skip(21);
+			c.getSession().write(LoginPacket.getCharEndRequest(c, login, pwd, true));
+			c.getSession().write(LoginPacket.getSelectedWorld());
+		}
+		int server = rh.readByte();
+		int channel = rh.readByte();
+		c.setWorld(server);
+		c.setChannel(channel);
+		System.out.println("[알림] " + c.getSessionIPAddress().toString() + " 에서 " + c.getAccountName() + " 계정으로 "
+				+ (channel == 0 ? 1 : channel == 1 ? "20세이상" : channel) + " 채널로 연결을 시도중입니다.");
+		try {
+			List<MapleCharacter> chars = c.loadCharacters();
+			c.getSession().write(LoginPacket.charlist(c, c.isUsing2ndPassword(), chars));
+			chars.clear();
+			chars = null;
+		} catch (Exception e) {
+			if (!ServerConstants.realese) {
+				e.printStackTrace();
+			}
+		}
 	}
-	if (c.CheckSecondPassword(password)) {
-            if (c.getIdleTask() != null) {
-                c.getIdleTask().cancel(true);
-            }
-            c.updateLoginState(MapleClient.LOGIN_SERVER_TRANSITION, c.getSessionIPAddress());
-            c.getSession().write(MainPacketCreator.getServerIP(c, ServerConstants.ChannelPort + c.getChannel(), ServerConstants.BuddyChatPort, charId));
-	} else {
-	    c.getSession().write(LoginPacket.secondPwError((byte) 0x14));
+
+	public static void onlyRegisterSecondPassword(ReadingMaple rh, MapleClient c) {
+		String secondpw = rh.readMapleAsciiString();
+		c.setSecondPassword(secondpw);
+		c.updateSecondPassword();
+		c.send(LoginPacket.getSecondPasswordResult(true));
 	}
-    }
-    
-    public static void updateCharCard(ReadingMaple rh, MapleClient c) {
-        if(!c.isLoggedIn()) { 
-            c.getSession().close(true); 
-            return;
-        }
-        Map<Integer, Integer> cid = new LinkedHashMap<Integer, Integer>();
-        
-        for(int i = 1; i <= 6; i++) {
-            int charid = rh.readInt();
-            cid.put(i, charid);
-        }
-        c.updateCharCard(cid);
-    }
+
+	public static void registerSecondPassword(ReadingMaple rh, MapleClient c) {
+		String originalPassword = rh.readMapleAsciiString();
+		String changePassword = rh.readMapleAsciiString();
+
+		if (!originalPassword.equals(c.getSecondPassword())) {
+			c.send(LoginPacket.getSecondPasswordResult(false));
+		} else {
+			c.setSecondPassword(changePassword);
+			c.updateSecondPassword();
+			c.send(LoginPacket.getSecondPasswordResult(true));
+		}
+	}
+
+	public static void getSPCheck(ReadingMaple rh, MapleClient c) {
+		if (c.getSecondPassword() != null) {
+			c.getSession().write(LoginPacket.getSecondPasswordCheck(true, false, true));
+		} else {
+			c.getSession().write(LoginPacket.getSecondPasswordCheck(false, false, false));
+		}
+	}
+
+	public static void getLoginRequest(ReadingMaple rh, MapleClient c) {
+		/* 로그인 시작 */
+		rh.skip(2);
+		final String account = rh.readMapleAsciiString();
+		final String login = account.split(",")[0];
+		final String pwd = account.split(",")[1];
+		int loginok = c.login(login, pwd, c.hasBannedIP());
+		if (loginok != 0) { // hack
+			c.getSession().close(true);
+			return;
+		}
+		if (c.finishLogin() == 0) {
+			c.setAccountName(login);
+			c.getSession().write(LoginPacket.getRelogResponse());
+			c.getSession().write(LoginPacket.getCharEndRequest(c, login, pwd, false));
+		} else {
+			c.getSession().write(LoginPacket.getLoginFailed(20));
+		}
+	}
+
+	public static void getXignCodeResponse(boolean response, MapleClient c) {
+		if (response) {
+			c.getSession().write(LoginPacket.getXignCodeResponse());
+		}
+	}
+
+	public static void getIPRequest(ReadingMaple rh, MapleClient c) {
+		if (!c.isLoggedIn()) { // hack
+			return;
+		}
+		c.updateLoginState(MapleClient.LOGIN_SERVER_TRANSITION, c.getSessionIPAddress());
+		c.getSession().write(MainPacketCreator.getServerIP(c, ServerConstants.basePorts + c.getChannel(),
+				ServerConstants.BuddyChatPort, rh.readInt()));
+	}
+
+	public static void getDisplayChannel(final boolean first_login, MapleClient c) {
+		c.getSession().write(LoginPacket.getChannelBackImg(first_login, (byte) (byte) Randomizer.rand(0, 1)));
+		/* 겉 멀티월드 시작 */
+		int[] world = new int[] { 0, 1, 3, 4, 5, 10, 16, 29, 43, 44, 45 };
+		for (int i = 0; i < world.length; i++) {
+			c.getSession().write(LoginPacket.getServerList(world[i], WorldConnected.getConnected()));
+		}
+		/* 겉 멀티월드 종료 */
+		c.getSession().write(LoginPacket.recommendWorld());
+		c.getSession().write(LoginPacket.getEndOfServerList());
+		c.getSession().write(LoginPacket.getLastWorld());
+	}
+
+	public static void getSessionCheck(ReadingMaple rh, MapleClient c) {
+		int pRequest = rh.readInt();
+		int pResponse;
+		pResponse = ((pRequest >> 5) << 5) + (((((pRequest & 0x1F) >> 3) ^ 2) << 3) + (7 - (pRequest & 7)));
+		pResponse |= ((pRequest >> 7) << 7);
+		c.getSession().write(LoginPacket.getSessionResponse(pResponse));
+	}
+
+	public static void setBurningCharacter(ReadingMaple rh, MapleClient c) {
+		rh.skip(1);
+		int accountId = rh.readInt();
+		int charId = rh.readInt();
+		if (!c.isLoggedIn() || c.getAccID() != accountId) { // hack
+			return;
+		}
+		if (!c.setBurningCharacter(accountId, charId)) {
+			c.getSession().write(MainPacketCreator.serverNotice(1, "잘못된 요청입니다."));
+			return;
+		}
+		c.send(LoginPacket.setBurningEffect(charId));
+	}
+
+	public static void checkSecondPassword(ReadingMaple rh, MapleClient c) {
+		String code = rh.readMapleAsciiString();
+		if (!code.equals(c.getSecondPassword())) {
+			c.send(LoginPacket.getSecondPasswordConfirm(false));
+		} else {
+			c.send(LoginPacket.getSecondPasswordConfirm(true));
+		}
+	}
+
+	public static void CheckCharName(String name, MapleClient c) {
+		c.getSession().write(LoginPacket.charNameResponse(name,
+				!MapleCharacterUtil.canCreateChar(name) || MapleLoginHelper.getInstance().isForbiddenName(name)));
+	}
+
+	public static void CreateChar(ReadingMaple rh, MapleClient c) {
+		String name = rh.readMapleAsciiString();
+		MapleCharacter newchar = MapleCharacter.getDefault(c);
+		rh.skip(8);
+		int JobType = rh.readInt(); // 1 = Adventurer, 0 = Cygnus, 2 = Aran
+		short subCategory = rh.readShort();
+		if (JobType == MapleNewCharJobType.제로.getValue()) {
+			newchar.setSecondGender(rh.readByte());
+		} else {
+			newchar.setGender(rh.readByte());
+		}
+		newchar.setSkinColor(rh.readByte());
+		rh.skip(1);
+		newchar.setFace(rh.readInt());
+		newchar.setHair(rh.readInt());
+		if (JobType == MapleNewCharJobType.데몬슬레이어.getValue() || JobType == MapleNewCharJobType.제논.getValue()) {
+			newchar.setSecondFace(rh.readInt());
+		}
+		if (JobType == MapleNewCharJobType.제로.getValue()) {
+			newchar.setGender((byte) 1);
+			newchar.setSecondSkinColor((byte) 0);
+			newchar.setSecondFace(21290);
+			newchar.setSecondHair(37623);
+		}
+		int top = rh.readInt();
+		int bottom = 0;
+		if (JobType != MapleNewCharJobType.레지스탕스.getValue() && JobType != MapleNewCharJobType.메르세데스.getValue()
+				&& JobType != MapleNewCharJobType.데몬슬레이어.getValue() && JobType != MapleNewCharJobType.루미너스.getValue()
+				&& JobType != MapleNewCharJobType.카이저.getValue() && JobType != MapleNewCharJobType.엔젤릭버스터.getValue()
+				&& JobType != MapleNewCharJobType.제논.getValue() && JobType != MapleNewCharJobType.모험가.getValue()
+				&& JobType != MapleNewCharJobType.캐논슈터.getValue() && JobType != MapleNewCharJobType.듀얼블레이더.getValue()
+				&& JobType != MapleNewCharJobType.팬텀.getValue() && JobType != MapleNewCharJobType.제로.getValue()
+				&& JobType != MapleNewCharJobType.핑크빈.getValue() && JobType != MapleNewCharJobType.키네시스.getValue()) {
+			bottom = rh.readInt();
+		}
+		int cape = 0;
+		if (JobType == MapleNewCharJobType.팬텀.getValue() || JobType == MapleNewCharJobType.루미너스.getValue()
+				|| JobType == MapleNewCharJobType.제로.getValue() || JobType == MapleNewCharJobType.은월.getValue()) {
+			cape = rh.readInt();
+		}
+		int shoes = rh.readInt();
+		int weapon = rh.readInt();
+		int shield = 0;
+		if (JobType == MapleNewCharJobType.데몬슬레이어.getValue()) {
+			shield = rh.readInt();
+		}
+		if (!MapleCharacterUtil.canCreateChar(name) || MapleLoginHelper.getInstance().isForbiddenName(name)) { // 생성
+																												// 도중
+																												// 중복닉네임
+																												// 발견시
+			c.send(MainPacketCreator.serverNotice(1, "캐릭터 생성도중 오류가 발생했습니다!"));
+			c.send(LoginPacket.getLoginFailed(30));
+			return;
+		}
+		newchar.setSubcategory(subCategory);
+		newchar.setName(name);
+		if (c.isGm()) {
+			newchar.setGMLevel((byte) 6);
+		}
+
+		if (JobType == MapleNewCharJobType.모험가.getValue() || JobType == MapleNewCharJobType.듀얼블레이더.getValue()
+				|| JobType == MapleNewCharJobType.캐논슈터.getValue()) { // 모험가
+			newchar.setJob((short) 0);
+			newchar.getInventory(MapleInventoryType.ETC).addItem(new Item(4161001, (byte) 0, (short) 1, (byte) 0));
+		} else if (JobType == MapleNewCharJobType.레지스탕스.getValue()) { // 레지스탕스
+			newchar.setJob((short) 3000);
+			newchar.getInventory(MapleInventoryType.ETC).addItem(new Item(4161054, (byte) 0, (short) 1, (byte) 0));
+			newchar.changeSkillLevel(SkillFactory.getSkill(30001061), (byte) 1, (byte) 1);
+		} else if (JobType == MapleNewCharJobType.시그너스.getValue()) { // 시그너스
+			newchar.setJob((short) 1000);
+			newchar.getInventory(MapleInventoryType.ETC).addItem(new Item(4161047, (byte) 0, (short) 1, (byte) 0));
+			newchar.changeSkillLevel(SkillFactory.getSkill(10001003), (byte) 1, (byte) 1); // 장인의
+																							// 혼
+			newchar.changeSkillLevel(SkillFactory.getSkill(10001244), (byte) 1, (byte) 1); // 엘리멘탈
+																							// 슬래시
+			newchar.changeSkillLevel(SkillFactory.getSkill(10001245), (byte) 1, (byte) 1); // 져니
+																							// 홈
+			newchar.changeSkillLevel(SkillFactory.getSkill(10000246), (byte) 1, (byte) 1); // 엘리멘탈
+																							// 하모니
+			newchar.changeSkillLevel(SkillFactory.getSkill(10000252), (byte) 1, (byte) 1); // 엘리멘탈
+																							// 쉬프트
+		} else if (JobType == MapleNewCharJobType.아란.getValue()) { // 아란
+			newchar.getInventory(MapleInventoryType.ETC).addItem(new Item(4161048, (byte) 0, (short) 1, (byte) 0));
+			newchar.setJob((short) 2000);
+		} else if (JobType == MapleNewCharJobType.에반.getValue()) { // 에반
+			newchar.getInventory(MapleInventoryType.ETC).addItem(new Item(4161052, (byte) 0, (short) 1, (byte) 0));
+			newchar.setJob((short) 2001);
+		} else if (JobType == MapleNewCharJobType.메르세데스.getValue()) { // 메르세데스
+			newchar.setJob((short) 2002);
+			newchar.changeSkillLevel(SkillFactory.getSkill(20020109), (byte) 1, (byte) 1); // 엘프의
+																							// 회복
+			newchar.changeSkillLevel(SkillFactory.getSkill(20021110), (byte) 1, (byte) 1); // 엘프의
+																							// 축복
+			newchar.changeSkillLevel(SkillFactory.getSkill(20020111), (byte) 1, (byte) 1); // 스타일리쉬
+																							// 무브
+			newchar.changeSkillLevel(SkillFactory.getSkill(20020112), (byte) 1, (byte) 1); // 왕의
+																							// 자격
+			newchar.getInventory(MapleInventoryType.ETC).addItem(new Item(4161079, (byte) 0, (short) 1, (byte) 0));
+		} else if (JobType == MapleNewCharJobType.데몬슬레이어.getValue()) { // 데몬슬레이어
+			newchar.setJob((short) 3001);
+			newchar.changeSkillLevel(SkillFactory.getSkill(30011109), (byte) 1, (byte) 1); // 데빌
+																							// 윙즈
+			newchar.changeSkillLevel(SkillFactory.getSkill(30010110), (byte) 1, (byte) 1); // 데몬
+																							// 점프
+		} else if (JobType == MapleNewCharJobType.제논.getValue()) { // 제논
+			newchar.setJob((short) 3002);
+			newchar.changeSkillLevel(SkillFactory.getSkill(30020232), (byte) 1, (byte) 1); // 서플러스
+																							// 서플라이
+			newchar.changeSkillLevel(SkillFactory.getSkill(30020233), (byte) 1, (byte) 1); // 하이브리드
+																							// 로직
+			newchar.changeSkillLevel(SkillFactory.getSkill(30020234), (byte) 1, (byte) 1); // 멀티래터럴
+																							// I
+			newchar.changeSkillLevel(SkillFactory.getSkill(30021235), (byte) 1, (byte) 1); // 프로멧사
+																							// 어썰트
+			newchar.changeSkillLevel(SkillFactory.getSkill(30021236), (byte) 1, (byte) 1); // 멀티
+																							// 모드
+																							// 링커
+			newchar.changeSkillLevel(SkillFactory.getSkill(30021237), (byte) 1, (byte) 1); // 에비에이션
+																							// 리버티
+			newchar.changeSkillLevel(SkillFactory.getSkill(30020240), (byte) 1, (byte) 1); // 카모플라쥬
+		} else if (JobType == MapleNewCharJobType.팬텀.getValue()) { // 팬텀
+			newchar.setJob((short) 2003);
+			newchar.changeSkillLevel(SkillFactory.getSkill(20031203), (byte) 1, (byte) 1); // 리턴
+																							// 오브
+																							// 팬텀
+			newchar.changeSkillLevel(SkillFactory.getSkill(20030204), (byte) 1, (byte) 1); // 데들리
+																							// 인스팅트
+			newchar.changeSkillLevel(SkillFactory.getSkill(20031205), (byte) 1, (byte) 1); // 팬텀
+																							// 슈라우드
+			newchar.changeSkillLevel(SkillFactory.getSkill(20030206), (byte) 1, (byte) 1); // 하이
+																							// 덱스터러티
+			newchar.changeSkillLevel(SkillFactory.getSkill(20031207), (byte) 1, (byte) 1); // 스틸
+																							// 스킬
+			newchar.changeSkillLevel(SkillFactory.getSkill(20031208), (byte) 1, (byte) 1); // 스킬
+																							// 매니지먼트
+			newchar.changeSkillLevel(SkillFactory.getSkill(20031209), (byte) 1, (byte) 1); // 저지먼트
+			newchar.changeSkillLevel(SkillFactory.getSkill(20031260), (byte) 1, (byte) 1); // 저지먼트
+																							// AUTO
+																							// /
+																							// MANUAL
+		} else if (JobType == MapleNewCharJobType.미하일.getValue()) { // 미하일
+			newchar.setJob((short) 5000);
+			newchar.changeSkillLevel(SkillFactory.getSkill(50001214), (byte) 1, (byte) 1); // 빛의
+																							// 수호
+		} else if (JobType == MapleNewCharJobType.루미너스.getValue()) { // 루미너스
+			newchar.setJob((short) 2004);
+			newchar.changeSkillLevel(SkillFactory.getSkill(20040219), (byte) 1, (byte) 1); // 이퀄리브리엄
+			newchar.changeSkillLevel(SkillFactory.getSkill(20040216), (byte) 1, (byte) 1); // 선파이어
+			newchar.changeSkillLevel(SkillFactory.getSkill(20040217), (byte) 1, (byte) 1); // 이클립스
+			newchar.changeSkillLevel(SkillFactory.getSkill(20040218), (byte) 1, (byte) 1); // 퍼미에이트
+			newchar.changeSkillLevel(SkillFactory.getSkill(20040221), (byte) 1, (byte) 1); // 파워오브라이트
+			newchar.changeSkillLevel(SkillFactory.getSkill(20041222), (byte) 1, (byte) 1); // 라이트
+																							// 블링크
+		} else if (JobType == MapleNewCharJobType.카이저.getValue()) { // 카이저
+			newchar.setJob((short) 6000);
+			newchar.changeSkillLevel(SkillFactory.getSkill(60001216), (byte) 1, (byte) 1); // 리셔플
+																							// 스위치
+																							// :
+																							// 방어모드
+			newchar.changeSkillLevel(SkillFactory.getSkill(60001217), (byte) 1, (byte) 1); // 리셔플
+																							// 스위치
+																							// :
+																							// 공격모드
+			newchar.changeSkillLevel(SkillFactory.getSkill(60001218), (byte) 1, (byte) 1); // 바티컬커넥트
+			newchar.changeSkillLevel(SkillFactory.getSkill(60001219), (byte) 1, (byte) 1); // 아이언
+																							// 윌
+			newchar.changeSkillLevel(SkillFactory.getSkill(60001220), (byte) 1, (byte) 1); // 트랜스피규레이션
+			newchar.changeSkillLevel(SkillFactory.getSkill(60001225), (byte) 1, (byte) 1); // 커맨드
+		} else if (JobType == MapleNewCharJobType.엔젤릭버스터.getValue()) { // 카이저
+			newchar.setJob((short) 6001);
+			newchar.changeSkillLevel(SkillFactory.getSkill(60011216), (byte) 1, (byte) 1); // 석세서
+			newchar.changeSkillLevel(SkillFactory.getSkill(60011218), (byte) 1, (byte) 1); // 매지컬
+																							// 리프트
+			newchar.changeSkillLevel(SkillFactory.getSkill(60011219), (byte) 1, (byte) 1); // 소울
+																							// 컨트랙트
+			newchar.changeSkillLevel(SkillFactory.getSkill(60011220), (byte) 1, (byte) 1); // 데이드림
+			newchar.changeSkillLevel(SkillFactory.getSkill(60011221), (byte) 1, (byte) 1); // 코디네이트
+			newchar.changeSkillLevel(SkillFactory.getSkill(60011222), (byte) 1, (byte) 1); // 드레스
+																							// 업
+		} else if (JobType == MapleNewCharJobType.제로.getValue()) {
+			newchar.setJob((short) 10112);
+			newchar.setLevel(100);
+			newchar.changeSkillLevel(SkillFactory.getSkill(100001262), (byte) 1, (byte) 1);
+			newchar.changeSkillLevel(SkillFactory.getSkill(100000282), (byte) 1, (byte) 1);
+			newchar.changeSkillLevel(SkillFactory.getSkill(100001263), (byte) 1, (byte) 1);
+			newchar.changeSkillLevel(SkillFactory.getSkill(100001264), (byte) 1, (byte) 1);
+			newchar.changeSkillLevel(SkillFactory.getSkill(100001265), (byte) 1, (byte) 1);
+			newchar.changeSkillLevel(SkillFactory.getSkill(100001266), (byte) 1, (byte) 1);
+			newchar.changeSkillLevel(SkillFactory.getSkill(100001268), (byte) 1, (byte) 1);
+			newchar.changeSkillLevel(SkillFactory.getSkill(100000279), (byte) 5, (byte) 5);
+		} else if (JobType == MapleNewCharJobType.은월.getValue()) {
+			newchar.setJob((short) 2005);
+		} else if (JobType == MapleNewCharJobType.핑크빈.getValue()) {
+			newchar.setJob((short) 13100);
+		} else if (JobType == MapleNewCharJobType.키네시스.getValue()) {
+			newchar.setJob((short) 14000);
+		}
+		newchar.setMap(ServerConstants.startMap);
+		MapleInventory equip = newchar.getInventory(MapleInventoryType.EQUIPPED);
+		Equip eq_top = new Equip(top, (short) -5, (byte) 0);
+		eq_top.setWdef((short) 3);
+		eq_top.setUpgradeSlots((byte) 7);
+		eq_top.setExpiration(-1);
+		equip.addFromDB(eq_top.copy());
+		if (JobType == MapleNewCharJobType.데몬슬레이어.getValue()) {
+			Equip shielde = new Equip(shield, (short) -10, (byte) 0);
+			shielde.setMp((short) 110);
+			shielde.setHp((short) 200);
+			shielde.setUpgradeSlots((byte) 7);
+			shielde.setExpiration(-1);
+			equip.addFromDB(shielde.copy());
+		}
+		if (JobType == MapleNewCharJobType.카이저.getValue() || JobType == MapleNewCharJobType.엔젤릭버스터.getValue()) {
+			Equip js = new Equip(1352504, (short) -10, (byte) 0);
+			if (JobType == MapleNewCharJobType.카이저.getValue()) {
+				js = null;
+				js = new Equip(1352504, (short) -10, (byte) 0);
+			} else if (JobType == MapleNewCharJobType.엔젤릭버스터.getValue()) {
+				js = null;
+				js = new Equip(1352600, (short) -10, (byte) 0);
+			}
+			js.setWdef((short) 5);
+			js.setMdef((short) 5);
+			js.setUpgradeSlots((byte) 7);
+			js.setExpiration(-1);
+			equip.addFromDB(js.copy());
+		}
+		Equip shoese = new Equip(shoes, (short) -7, (byte) 0);
+		shoese.setWdef((short) 2);
+		shoese.setUpgradeSlots((byte) 7);
+		shoese.setExpiration(-1);
+		equip.addFromDB(shoese.copy());
+		if (JobType != MapleNewCharJobType.레지스탕스.getValue() && JobType != MapleNewCharJobType.메르세데스.getValue()
+				&& JobType != MapleNewCharJobType.데몬슬레이어.getValue() && JobType != MapleNewCharJobType.루미너스.getValue()
+				&& JobType != MapleNewCharJobType.카이저.getValue() && JobType != MapleNewCharJobType.엔젤릭버스터.getValue()
+				&& JobType != MapleNewCharJobType.제논.getValue() && JobType != MapleNewCharJobType.모험가.getValue()
+				&& JobType != MapleNewCharJobType.캐논슈터.getValue() && JobType != MapleNewCharJobType.듀얼블레이더.getValue()
+				&& JobType != MapleNewCharJobType.팬텀.getValue() && JobType != MapleNewCharJobType.제로.getValue()
+				&& JobType != MapleNewCharJobType.핑크빈.getValue() && JobType != MapleNewCharJobType.키네시스.getValue()) { // 데몬슬레이어,
+																														// 레지스탕스,
+																														// 메르세데스,
+																														// 루미너스,
+																														// 카이저,
+																														// 엔버,
+																														// 제논,
+																														// 키네시스는
+																														// 한벌옷.
+			Equip bottome = new Equip(bottom, (short) -6, (byte) 0);
+			bottome.setWdef((short) 2);
+			bottome.setUpgradeSlots((byte) 7);
+			bottome.setExpiration(-1);
+			equip.addFromDB(bottome.copy());
+		}
+		if (JobType == MapleNewCharJobType.팬텀.getValue() || JobType == MapleNewCharJobType.루미너스.getValue()
+				|| JobType == MapleNewCharJobType.제로.getValue() || JobType == MapleNewCharJobType.은월.getValue()) {
+			Equip capee = new Equip(cape, (short) -9, (byte) 0);
+			capee.setWdef((short) 5);
+			capee.setMdef((short) 5);
+			capee.setUpgradeSlots((byte) 7);
+			capee.setExpiration(-1);
+			equip.addFromDB(capee.copy());
+		}
+		Equip weapone = new Equip(weapon, (short) -11, (byte) 0);
+		if (JobType == MapleNewCharJobType.루미너스.getValue()) {
+			weapone.setMatk((short) 17);
+		} else {
+			weapone.setWatk((short) 17);
+		}
+		weapone.setUpgradeSlots((byte) 7);
+		weapone.setExpiration(-1);
+		equip.addFromDB(weapone.copy());
+		if (JobType == MapleNewCharJobType.제로.getValue()) {
+			Equip js = new Equip(1562000, (short) -10, (byte) 0);
+			weapone.setUpgradeSlots((byte) 7);
+			weapone.setExpiration(-1);
+			equip.addFromDB(js.copy());
+		}
+		if (MapleCharacterUtil.canCreateChar(name) && !MapleLoginHelper.getInstance().isForbiddenName(name)) {
+			MapleCharacter.saveNewCharToDB(newchar);
+			MapleItempotMain.getInstance().newCharDB(newchar.getId());
+			c.getSession().write(LoginPacket.addNewCharacterEntry(newchar, true));
+			c.createdChar(newchar.getId());
+		} else {
+			c.getSession().write(LoginPacket.addNewCharacterEntry(newchar, false));
+		}
+		newchar = null;
+	}
+
+	public static void DeleteChar(ReadingMaple rh, MapleClient c) {
+		String Secondpw_Client = rh.readMapleAsciiString();
+		int Character_ID = rh.readInt();
+		MapleCharacter chr = MapleCharacter.loadCharFromDB(Character_ID, c, false);
+		if (!c.login_Auth(Character_ID)) {
+			c.getSession().close(true);
+			return; // Attempting to delete other character
+		}
+		byte state = 0;
+		if (chr.getMeso() < 5000000) {
+			c.getSession().write(
+					MainPacketCreator.serverNotice(1, "캐릭터 삭제를 하기위해선 삭제하고자 하는 캐릭터에 5,000,000 메소를 소지하고 있어야 합니다."));
+			c.getSession().write(LoginPacket.getLoginFailed(20));
+			return;
+		}
+		if (Secondpw_Client == null) { // Client's hacking
+			c.getSession().close(true);
+			return;
+		} else {
+			if (!c.CheckSecondPassword(Secondpw_Client)) { // Wrong Password
+				state = 0x14;
+			}
+		}
+		if (state == 0) {
+			if (!c.deleteCharacter(Character_ID)) {
+				state = 1; // actually something else would be good o.o
+			}
+		}
+		c.getSession().write(LoginPacket.deleteCharResponse(Character_ID, state));
+	}
+
+	public static void Character_WithSecondPassword(ReadingMaple rh, MapleClient c) {
+		String password = rh.readMapleAsciiString();
+		int charId = rh.readInt();
+
+		if (loginFailCount(c) || c.getSecondPassword() == null || !c.login_Auth(charId)) {
+			c.getSession().closeNow();
+			return;
+		}
+		if (c.CheckSecondPassword(password)) {
+			if (c.getIdleTask() != null) {
+				c.getIdleTask().cancel(true);
+			}
+			c.updateLoginState(MapleClient.LOGIN_SERVER_TRANSITION, c.getSessionIPAddress());
+			c.getSession().write(MainPacketCreator.getServerIP(c, ServerConstants.ChannelPort + c.getChannel(),
+					ServerConstants.BuddyChatPort, charId));
+		} else {
+			c.getSession().write(LoginPacket.secondPwError((byte) 0x14));
+		}
+	}
+
+	public static void updateCharCard(ReadingMaple rh, MapleClient c) {
+		if (!c.isLoggedIn()) {
+			c.getSession().close(true);
+			return;
+		}
+		Map<Integer, Integer> cid = new LinkedHashMap<Integer, Integer>();
+
+		for (int i = 1; i <= 6; i++) {
+			int charid = rh.readInt();
+			cid.put(i, charid);
+		}
+		c.updateCharCard(cid);
+	}
 }

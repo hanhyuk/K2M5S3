@@ -17,8 +17,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -42,7 +40,6 @@ import launch.ChannelServer;
 import launch.LoginServer;
 import launch.world.WorldBroadcasting;
 import launch.world.WorldCommunity;
-import packet.creators.AntiHackPacket;
 import packet.creators.MainPacketCreator;
 import packet.crypto.MapleCrypto;
 import packet.transfer.write.Packet;
@@ -82,7 +79,6 @@ public class MapleClient {
 	private int idcode1, idcode2;
 	private long lastNpcClick = 0;
 	private int chrslot;
-	public Timer processTimer;
 
 	public MapleClient(MapleCrypto send, MapleCrypto receive, IoSession session) {
 		this.send = send;
@@ -799,7 +795,6 @@ public class MapleClient {
 			if (player.getEventInstance() != null) {
 				player.getEventInstance().playerDisconnected(player);
 			}
-			this.processTimer.cancel();
 		} catch (final Throwable e) {
 		}
 	}
@@ -927,19 +922,6 @@ public class MapleClient {
 
 	public final int getChannel() {
 		return channel;
-	}
-
-	public void sendProcessCheck() {
-		this.session.write(AntiHackPacket.sendProcessRequest());
-	}
-
-	public void checkProcess() {
-		this.processTimer = new Timer();
-		this.processTimer.schedule(new TimerTask() {
-			public void run() {
-				MapleClient.this.sendProcessCheck();
-			}
-		}, 0L, 20000L);
 	}
 
 	public final ChannelServer getChannelServer() {

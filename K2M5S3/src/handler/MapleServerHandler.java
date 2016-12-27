@@ -15,7 +15,6 @@ import constants.subclasses.ServerType;
 import handler.cashshop.CashShopOperation;
 import handler.channel.AllianceHandler;
 import handler.channel.AngelicBusterHandler;
-import handler.channel.AntiHackHandler;
 import handler.channel.AuctionHandler;
 import handler.channel.BBSHandler;
 import handler.channel.BuddyListHandler;
@@ -879,9 +878,6 @@ public class MapleServerHandler extends IoHandlerAdapter {
 			break;
 		case COMBAT_ANALYZE:
 			c.getSession().write(MainPacketCreator.getCombatAnalyze(rh.readByte()));
-			break;
-		case PROCESS_CHECK:
-			AntiHackHandler.ProcessCheck(rh, c);
 			break;
 		default:
 			System.out.println("[UNHANDLED] Recv [" + header.toString() + "] found");
