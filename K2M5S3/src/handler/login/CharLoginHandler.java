@@ -76,6 +76,7 @@ public class CharLoginHandler {
 					c.updateLastConnection(sdf.format(Calendar.getInstance().getTime()));
 					c.clearLoginTryCount();
 					
+					//hh
 					//TODO finishLogin 메소드의 내용을 밖으로 빼고, 해당 메소드를 삭제 하도록 로직을 수정하자.
 					int result = c.finishLogin();
 					if( result == 0 ) {

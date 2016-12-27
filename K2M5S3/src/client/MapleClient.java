@@ -405,6 +405,7 @@ public class MapleClient {
 	 */
 	public int finishLogin() {
 		
+		//TODO 이거 mutex 걸어야 하는지 좀더 생각해보자.
 		final Lock mutex = accountStatusMutex;
 		try {
 			mutex.lock();
