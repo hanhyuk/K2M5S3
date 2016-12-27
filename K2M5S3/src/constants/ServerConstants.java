@@ -18,12 +18,12 @@ public class ServerConstants {
 	/*
      * 서버가 로컬 환경인지 여부
      */
-	public static boolean isLocal = true; //TODO log4j 설정으로 변경필요
-	public static boolean realese = false; //TODO log4j 설정으로 변경필요
-    public static String ROOT_PATH = "";
-    public static String LOCAL_ROOT_PATH = "D:/KMS_PROJECT/KMS_253_SERVER/";
-	
-	
+	public static final boolean isLocal = true; //TODO log4j 설정으로 변경필요
+	public static final boolean realese = false; //TODO log4j 설정으로 변경필요
+    public static final String ROOT_PATH = "";
+    public static final String LOCAL_ROOT_PATH = "D:/KMS_PROJECT/KMS_253_SERVER/";
+	public static int createMaxAccount = 2;
+	public static int loginTryMaxCount = 7;
 	
     /* 서버 설정 */
     public static String Host;
@@ -52,10 +52,10 @@ public class ServerConstants {
     public static int chatlimit = 0;
     
     /* DB 설정 */ 
-    public static int dbPort;
-    public static String dbHost;
-    public static String dbUser;
-    public static String dbPassword;
+    public static int dbPort = 3306;
+    public static String dbHost = "127.0.0.1";
+    public static String dbUser = "root";
+    public static String dbPassword = "root";
     
     /* Message 설정 및 이벤트 설정*/
     public static String recommendMessage = "";
@@ -69,7 +69,7 @@ public class ServerConstants {
     public static String serverNotititle = "";
     public static String serverNotification = "";
     public static String events = "";
-    public static String serverCheckMessage = "현재 " + serverName + " 서버 점검 중입니다.\r\n 자세한 내용은 홈페이지를 참고하여 주십시오.\r\n [사유 : 시스템 안정화]";
+    public static String serverCheckMessage = "현재 서버 점검 중입니다.";
     
     /* 개발 설정 */    
     public static boolean serverCheck;
@@ -120,6 +120,9 @@ public class ServerConstants {
             ChannelPort = Integer.parseInt(prop.getProperty(toUni("채널포트"))); basePorts = ChannelPort;
             CashShopPort = Integer.parseInt(prop.getProperty(toUni("캐시샵포트")));
             BuddyChatPort = Integer.parseInt(prop.getProperty(toUni("친구서버포트")));
+            
+            createMaxAccount = Integer.parseInt(prop.getProperty(toUni("최대계정수")));
+            loginTryMaxCount = Integer.parseInt(prop.getProperty(toUni("로그인시도횟수")));
             
             defaultExpRate = Integer.parseInt(prop.getProperty(toUni("경험치배율")));
             defaultDropRate = Integer.parseInt(prop.getProperty(toUni("드롭배율")));

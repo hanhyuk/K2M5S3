@@ -4265,32 +4265,40 @@ public class MapleCharacter extends AnimatedHinaMapObjectExtend implements Inven
 		return skillMacros;
 	}
 
-	public void tempban(String reason, Calendar duration, int greason, boolean IPMac) {
-		if (IPMac) {
-			client.banMacs();
-		}
-
+	/**
+	 * 해당 계정을 일정 기간동안 벤 시킨다.
+	 * @param reason
+	 * @param duration
+	 * @return true : 벤 성공
+	 */
+	public boolean tempban(String reason, Calendar duration) {
+		boolean result = false;
+		
+		Connection con = null;
+		PreparedStatement ps = null;
+		
 		try {
-			Connection con = MYSQL.getConnection();
-			PreparedStatement ps = con.prepareStatement("INSERT INTO ipbans VALUES (DEFAULT, ?)");
-			ps.setString(1, client.getSession().getRemoteAddress().toString().split(":")[0]);
-			ps.execute();
-			ps.close();
-
-			client.getSession().close();
-
-			ps = con.prepareStatement("UPDATE accounts SET tempban = ?, banreason = ?, greason = ? WHERE id = ?");
-			Timestamp TS = new Timestamp(duration.getTimeInMillis());
-			ps.setTimestamp(1, TS);
+			con = MYSQL.getConnection();
+			ps = con.prepareStatement("UPDATE accounts SET tempban = ?, banreason = ? WHERE id = ?");
+			
+			ps.setTimestamp(1, new Timestamp(duration.getTimeInMillis()));
 			ps.setString(2, reason);
-			ps.setInt(3, greason);
-			ps.setInt(4, accountid);
-			ps.execute();
-			ps.close();
-		} catch (SQLException ex) {
-			System.err.println("Error while tempbanning" + ex);
+			ps.setInt(3, accountid);
+			if( ps.executeUpdate() > 0 ) {
+				result = true;
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				if( ps != null ) {
+					ps.close(); ps = null;
+				}
+			} catch (SQLException e) {
+				e.printStackTrace();
+			} 
 		}
-
+		return result;
 	}
 
 	public final boolean ban(String reason, boolean IPMac, boolean autoban) {

@@ -1,10 +1,5 @@
 package handler;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
 import org.apache.mina.core.service.IoHandlerAdapter;
 import org.apache.mina.core.session.IdleStatus;
 import org.apache.mina.core.session.IoSession;
@@ -52,7 +47,6 @@ import packet.transfer.read.ReadingMaple;
 import packet.transfer.write.Packet;
 import server.items.EnforceSystem;
 import tools.HexTool;
-import tools.Pair;
 import tools.Randomizer;
 import tools.StringUtil;
 
@@ -64,9 +58,6 @@ public class MapleServerHandler extends IoHandlerAdapter {
 	private int channel = 0;
 	private ServerType type = null;
 	
-	private final List<String> blockedIpList = new ArrayList<String>();
-	private final Map<String, Pair<Long, Byte>> tracker = new ConcurrentHashMap<String, Pair<Long, Byte>>();
-
 	public MapleServerHandler(final ServerType type) {
 		this.type = type;
 	}
@@ -150,7 +141,7 @@ public class MapleServerHandler extends IoHandlerAdapter {
 		
 		if (header_num != RecvPacketOpcode.MOVE_LIFE.getValue() && header_num != RecvPacketOpcode.MOVE_PLAYER.getValue()) {
 			if (ServerConstants.showPackets) {
-				final StringBuilder sb = new StringBuilder("[" + RecvPacketOpcode.getOpcodeName(header_num) + "] : ");
+				final StringBuilder sb = new StringBuilder("RECV - [" + RecvPacketOpcode.getOpcodeName(header_num) + "] : ");
 				sb.append(HexTool.toString((byte[]) message)).append("\n")
 						.append(HexTool.toStringFromAscii((byte[]) message)).append("\n\n");
 				System.out.println(sb.toString());
@@ -223,7 +214,10 @@ public class MapleServerHandler extends IoHandlerAdapter {
 			InterServerHandler.getGameQuitRequest(rh, c);
 			break;
 		case LOGIN_REQUEST:
-			CharLoginHandler.getLoginRequest(rh, c);
+			System.out.println("----------- 경고 ---------");
+			System.out.println("LOGIN_REQUEST 패킷 발견!");
+			System.out.println("--------------------------");
+			//CharLoginHandler.getLoginRequest(rh, c);
 			break;
 		case REDISPLAY_CHANNEL:
 			CharLoginHandler.getDisplayChannel(false, c);
@@ -239,7 +233,7 @@ public class MapleServerHandler extends IoHandlerAdapter {
 			break;
 		case NEW_CONNECTION:
 			System.out.println("----------- 경고 ---------");
-			System.out.println("!NEW_CONNECTION 패킷 발견!");
+			System.out.println("NEW_CONNECTION 패킷 발견!");
 			System.out.println("--------------------------");
 			// CharLoginHandler.newConnection(c);
 			break;

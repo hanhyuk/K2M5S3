@@ -25,6 +25,7 @@ import javax.script.ScriptEngine;
 
 import org.apache.mina.core.session.IoSession;
 
+import a.my.made.CommonTypeCheck;
 import client.stats.BuffStatsValueHolder;
 import community.MapleGuildCharacter;
 import community.MapleMultiChatCharacter;
@@ -48,35 +49,73 @@ import server.shops.IMapleCharacterShop;
 
 public class MapleClient {
 
-	public static final transient byte LOGIN_NOTLOGGEDIN = 0, LOGIN_SERVER_TRANSITION = 1, LOGIN_LOGGEDIN = 2,
-			LOGIN_WAITING = 3, CASH_SHOP_TRANSITION = 4, LOGIN_CS_LOGGEDIN = 5, CHANGE_CHANNEL = 6;
+	public static final transient byte LOGIN_NOTLOGGEDIN = 0;
+	public static final transient byte LOGIN_SERVER_TRANSITION = 1; 
+	public static final transient byte LOGIN_LOGGEDIN = 2;
+	public static final transient byte LOGIN_WAITING = 3;
+	public static final transient byte CASH_SHOP_TRANSITION = 4;
+	public static final transient byte LOGIN_CS_LOGGEDIN = 5;
+	public static final transient byte CHANGE_CHANNEL = 6;
+	
 	public static final int DEFAULT_CHARSLOT = 6;
 	public static final String CLIENT_KEY = "CLIENT";
 	private transient MapleCrypto send, receive;
 	private transient IoSession session;
 	private MapleCharacter player;
 	private MapleCharacterStat playerstat;
-	private int channel = 1, accId = 1, world;
-	private boolean loggedIn = false, serverTransition = false;
-	private transient Calendar tempban = null;
+	private int channel = 1;
+	/**
+	 * account 테이블의 id 값(AI PK)
+	 */
+	private int accId = 1;
+	private int world;
+	/**
+	 * 로그인 성공 여부 true : 성공
+	 */
+	private boolean loggedIn = false;
+	private boolean serverTransition = false;
+	/**
+	 * 계정 ID
+	 */
 	private String accountName;
 	private transient long lastPong;
+	/**
+	 * GM여부 true : 지엠
+	 */
 	private boolean gm;
-	private byte greason = 1, gender = -1;
+	/**
+	 * 성별
+	 */
+	private byte gender = -1;
 	private int charslots = DEFAULT_CHARSLOT;
-	public transient short loginAttempt = 0;
+	/**
+	 * 로그인 시도를 불필요하게 많이 한 경우를 체크하기 위한 카운팅 변수
+	 */
+	public transient short loginTryCount = 0;
 	public boolean pinged = false, isCS = false;
 	private transient List<Integer> allowedChar = new LinkedList<Integer>();
 	private transient Set<String> macs = new HashSet<String>();
 	private transient Map<String, ScriptEngine> engines = new HashMap<String, ScriptEngine>();
 	private transient ScheduledFuture<?> idleTask = null;
-	private transient String secondPassword, tempIP = "";// To be used only on
-															// login
+	/**
+	 * 2차비번
+	 */
+	private transient String secondPassword;
+	private transient String tempIP = "";// To be used only on
+											// login
+	/**
+	 * 2차비번 사용여부 true:사용
+	 */
 	private boolean usingSecondPassword = false;
+	/**
+	 * encoder 에서 사용되는 lock
+	 */
 	private final transient Lock encodeMutex = new ReentrantLock(true);
+	/**
+	 * decoder 에서 사용되는 lock
+	 */
 	private final transient Lock decodeMutex = new ReentrantLock(true);
 	private final transient Lock npc_mutex = new ReentrantLock();
-	private int idcode1, idcode2;
 	private long lastNpcClick = 0;
 	private int chrslot;
 
@@ -182,7 +221,7 @@ public class MapleClient {
 	public final Lock getEncodeLock() {
 		return encodeMutex;
 	}
-	
+
 	public final Lock getDecodeLock() {
 		return decodeMutex;
 	}
@@ -255,50 +294,6 @@ public class MapleClient {
 
 	public boolean isLoggedIn() {
 		return loggedIn;
-	}
-
-	private Calendar getTempBanCalendar(ResultSet rs) throws SQLException {
-		Calendar lTempban = Calendar.getInstance();
-		if (rs.getLong("tempban") == 0) { // basically if timestamp in db is
-											// 0000-00-00
-			lTempban.setTimeInMillis(0);
-			return lTempban;
-		}
-		Calendar today = Calendar.getInstance();
-		lTempban.setTimeInMillis(rs.getTimestamp("tempban").getTime());
-		if (today.getTimeInMillis() < lTempban.getTimeInMillis()) {
-			return lTempban;
-		}
-
-		lTempban.setTimeInMillis(0);
-		return lTempban;
-	}
-
-	public Calendar getTempBanCalendar() {
-		return tempban;
-	}
-
-	public byte getBanReason() {
-		return greason;
-	}
-
-	public boolean hasBannedIP() {
-		boolean ret = false;
-		try {
-			Connection con = MYSQL.getConnection();
-			PreparedStatement ps = con.prepareStatement("SELECT COUNT(*) FROM ipbans WHERE ? LIKE CONCAT(ip, '%')");
-			ps.setString(1, session.getRemoteAddress().toString());
-			ResultSet rs = ps.executeQuery();
-			rs.next();
-			if (rs.getInt(1) > 0) {
-				ret = true;
-			}
-			rs.close();
-			ps.close();
-		} catch (SQLException ex) {
-			System.err.println("Error checking ip bans" + ex);
-		}
-		return ret;
 	}
 
 	public boolean hasBannedMac() {
@@ -417,13 +412,11 @@ public class MapleClient {
 	public void loadAuthData() {
 		try {
 			Connection con = MYSQL.getConnection();
-			PreparedStatement ps = con.prepareStatement(
-					"SELECT idcode1, idcode2, 2ndpassword, using2ndpassword FROM accounts WHERE id = ?");
+			PreparedStatement ps = con
+					.prepareStatement("SELECT 2ndpassword, using2ndpassword FROM accounts WHERE id = ?");
 			ps.setInt(1, this.accId);
 			ResultSet rs = ps.executeQuery();
 			if (rs.next()) {
-				idcode1 = rs.getInt("idcode1");
-				idcode2 = rs.getInt("idcode2");
 				secondPassword = rs.getString("2ndpassword");
 				usingSecondPassword = rs.getByte("using2ndpassword") == 1;
 			}
@@ -451,59 +444,58 @@ public class MapleClient {
 		return password;
 	}
 
-	public int login(String login, String pwd, boolean ipMacBanned) {
-		int loginok = 5;
+	/**
+	 * 로그인 처리 수행.
+	 * 
+	 * @param loginId
+	 * @param loginPassword
+	 * @return 벤 상태, 이미 로그인 중, 성공
+	 */
+	public CommonTypeCheck login(String loginId, String loginPassword) {
+		CommonTypeCheck result = CommonTypeCheck.LOGIN_SUCCESS;
+
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+
 		try {
-			Connection con = MYSQL.getConnection();
-			PreparedStatement ps = con.prepareStatement("SELECT * FROM accounts WHERE name = ?");
-			ps.setString(1, login);
-			ResultSet rs = ps.executeQuery();
+			ps = MYSQL.getConnection().prepareStatement("SELECT * FROM accounts WHERE name = ? and password = ?");
+			ps.setString(1, loginId);
+			ps.setString(2, loginPassword);
 
+			rs = ps.executeQuery();
 			if (rs.next()) {
-				final int banned = rs.getInt("banned");
-				final String password = rs.getString("password");
-
-				accId = rs.getInt("id");
-				secondPassword = rs.getString("2ndpassword");
-				gm = rs.getInt("gm") > 0;
-				greason = rs.getByte("greason");
-				tempban = getTempBanCalendar(rs);
-				gender = rs.getByte("gender");
-				idcode1 = rs.getInt("idcode1");
-				idcode2 = rs.getInt("idcode2");
-				chrslot = rs.getInt("chrslot");
-				usingSecondPassword = rs.getByte("using2ndpassword") == 1;
-				ps.close();
-
-				if (banned > 0) {
-					loginok = 3;
+				if (rs.getInt("banned") > 0) {
+					result = CommonTypeCheck.ACCOUNT_BAN;
+				} else if( rs.getByte("loggedin") != MapleClient.LOGIN_NOTLOGGEDIN ) {
+					result = CommonTypeCheck.LOGIN_ING;
 				} else {
-					if (banned == -1) {
-						unban();
-					}
-					byte loginstate = getLoginState();
-					if (loginstate > MapleClient.LOGIN_NOTLOGGEDIN) { // already
-																		// loggedin
-						loggedIn = false;
-						loginok = 7;
-					} else {
-						if (pwd.equals(password)) {
-							loginok = 0;
-							SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHH");
-							updateLastConnection(sdf.format(Calendar.getInstance().getTime()));
-						} else {
-							loggedIn = false;
-							loginok = 4;
-						}
-					}
+					accId = rs.getInt("id");
+					secondPassword = rs.getString("2ndpassword");
+					gm = rs.getInt("gm") > 0;
+					gender = rs.getByte("gender");
+					chrslot = rs.getInt("chrslot");
+					usingSecondPassword = rs.getByte("using2ndpassword") == 1;
+					
+					result = CommonTypeCheck.LOGIN_SUCCESS;
 				}
 			}
-			rs.close();
-			ps.close();
 		} catch (SQLException e) {
-			System.err.println("ERROR" + e);
+			e.printStackTrace();
+		} finally {
+			try {
+				if (ps != null) {
+					ps.close();
+					ps = null;
+				}
+				if (rs != null) {
+					rs.close();
+					rs = null;
+				}
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
 		}
-		return loginok;
+		return result;
 	}
 
 	public boolean CheckSecondPassword(String in) {
@@ -625,6 +617,10 @@ public class MapleClient {
 		}
 	}
 
+	/**
+	 * 마지막으로 로그인 한 날짜를 업데이트 한다.
+	 * @param time
+	 */
 	public final void updateLastConnection(String time) {
 		try {
 			Connection con = MYSQL.getConnection();
@@ -685,42 +681,18 @@ public class MapleClient {
 		}
 	}
 
-	public void updateIDCodes(int id1, int id2) {
-		try {
-			final Connection con = MYSQL.getConnection();
-
-			PreparedStatement ps = con.prepareStatement("UPDATE accounts SET idcode1 = ?, idcode2 = ? WHERE id = ?");
-			ps.setInt(1, id1);
-			ps.setInt(2, id2);
-			ps.setInt(3, accId);
-			ps.executeUpdate();
-			ps.close();
-
-		} catch (SQLException e) {
-			if (!ServerConstants.realese)
-				e.printStackTrace();
-		}
-	}
-
 	public boolean isUsing2ndPassword() {
 		return usingSecondPassword;
 	}
 
-	public int getIDCode1() {
-		return idcode1;
-	}
-
-	public int getIDCode2() {
-		return idcode2;
-	}
-
 	public final byte getLoginState() { // TODO hide?
 		Connection con = MYSQL.getConnection();
+		PreparedStatement ps = null;
+		ResultSet rs = null;
 		try {
-			PreparedStatement ps;
 			ps = con.prepareStatement("SELECT loggedin, lastlogin FROM accounts WHERE id = ?");
 			ps.setInt(1, getAccID());
-			ResultSet rs = ps.executeQuery();
+			rs = ps.executeQuery();
 			if (!rs.next()) {
 				ps.close();
 				throw new MYSQLException("Everything sucks 아이디 : " + getAccID());
@@ -736,8 +708,6 @@ public class MapleClient {
 					updateLoginState(state, null);
 				}
 			}
-			rs.close();
-			ps.close();
 			if (state == MapleClient.LOGIN_LOGGEDIN) {
 				loggedIn = true;
 			} else {
@@ -747,6 +717,17 @@ public class MapleClient {
 		} catch (SQLException e) {
 			loggedIn = false;
 			throw new MYSQLException("error getting login state", e);
+		} finally {
+			try {
+				if( ps != null ) {
+					ps.close(); ps = null;
+				}
+				if( rs != null ) {
+					rs.close(); rs = null;
+				}
+			} catch(SQLException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 
@@ -1063,10 +1044,6 @@ public class MapleClient {
 		return gender == -1 ? 0 : gender;
 	}
 
-	public final byte getRGender() {
-		return gender;
-	}
-
 	public final String getSecondPassword() {
 		return secondPassword;
 	}
@@ -1320,5 +1297,26 @@ public class MapleClient {
 			}
 		}
 		return true;
+	}
+	
+	/**
+	 * 로그인 시도 횟수 반환
+	 */
+	public short getLoginTryCount() {
+		return loginTryCount;
+	}
+	
+	/**
+	 * 로그인 시도 횟수 증가 
+	 */
+	public void addLoginTryCount() {
+		loginTryCount++;
+	}
+	
+	/**
+	 * 로그인 시도 횟수 초기화
+	 */
+	public void clearLoginTryCount() {
+		loginTryCount = 0;
 	}
 }

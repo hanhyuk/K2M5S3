@@ -130,7 +130,7 @@ public class InterServerHandler {
         }
         if (!allowLogin) {
             c.setPlayer(null);
-            c.getSession().close(true);
+            c.getSession().closeNow();
             if (!ServerConstants.realese) {
                 System.out.println("not allow login - " + c.getAccountName() + " from " + c.getSessionIPAddress() + " / state : " + state);
             }
@@ -340,7 +340,7 @@ public class InterServerHandler {
         final ChannelServer toch = ChannelServer.getInstance(channel);
 
         if (FieldLimitType.ChannelSwitch.check(chr.getMap().getFieldLimit()) || channel == c.getChannel()) {
-            c.getSession().close(true);
+            c.getSession().closeNow();
             return;
         } else if (toch == null || toch.isShutdown()) {
             c.getSession().write(MainPacketCreator.serverNotice(5, "현재 접근할 수 없습니다."));
@@ -399,7 +399,7 @@ public class InterServerHandler {
     public static void getGameQuitRequest(ReadingMaple rh, MapleClient c) {
         String account = rh.readMapleAsciiString();
         if (!c.isLoggedIn() && !c.getAccountName().equals(account)) { // hack
-            c.getSession().close(true);
+            c.getSession().closeNow();
             return;
         }
         c.getSession().write(MainPacketCreator.serverNotice(4, "")); 

@@ -167,7 +167,11 @@ public class LoginPacket {
 	}
 
 	/* 핑크빈 : 17, 1.2.252 클라이언트 버그로 인해서 생성 불가능 조치 */
-
+	/**
+	 * TODO [확인필요] 생성 가능한 캐릭터 정보를 클라이언트로 전송한다? 
+	 * @param client
+	 * @return
+	 */
 	public static final Packet getAuthSuccessRequest(final MapleClient client) {
 		final WritingPacket w = new WritingPacket();
 		w.writeShort(SendPacketOpcode.LOGIN_STATUS.getValue());

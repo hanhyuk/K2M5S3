@@ -1,23 +1,12 @@
-/*
- * ArcStory Project
- * 최주원 sch2307@naver.com
- * 이준 junny_adm@naver.com
- * 우지훈 raccoonfox69@gmail.com
- * 강정규 ku3135@nate.com
- * 김진홍 designer@inerve.kr
- */
-
 package handler.login;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import a.my.made.CommonTypeCheck;
 import client.MapleCharacter;
 import client.MapleCharacterUtil;
 import client.MapleClient;
@@ -29,7 +18,6 @@ import client.items.MapleInventoryType;
 import client.skills.SkillFactory;
 import constants.GameConstants;
 import constants.ServerConstants;
-import database.MYSQL;
 import launch.helpers.MapleLoginHelper;
 import launch.helpers.MapleLoginWorker;
 import launch.helpers.MapleNewCharJobType;
@@ -37,93 +25,70 @@ import launch.world.WorldConnected;
 import packet.creators.LoginPacket;
 import packet.creators.MainPacketCreator;
 import packet.transfer.read.ReadingMaple;
-import tools.KoreanDateUtil;
 import tools.Randomizer;
 
 public class CharLoginHandler {
 
-	public static int canjoin = 1;
-
-	private static boolean loginFailCount(MapleClient c) {
-		c.loginAttempt++;
-		if (c.loginAttempt > 5) {
-			return true;
-		}
-		return false;
-	}
-
+	/**
+	 * 클라이언트에서 로그인 요청시
+	 */
 	public static void login(ReadingMaple rh, MapleClient c) {
-		rh.skip(22);
-		String login = rh.readMapleAsciiString();
-		String pwd = rh.readMapleAsciiString();
-
-		c.setAccountName(login);
-		boolean ipBan = c.hasBannedIP();
-		boolean macBan = false;
-
-		int checkId = AutoRegister.checkAccount(c, login, pwd);
+		
+		//FIXME 서버가 오픈 될 준비가 되었는지 체크하는 로직인데, 마음에 안듬. 좀더 개선할수 있는지 확인 필요.
 		if (!GameConstants.isServerReady()) {
 			c.send(MainPacketCreator.serverNotice(1, "서버데이터를 불러오는 중입니다. 잠시만 기다려주세요."));
 			c.send(LoginPacket.getLoginFailed(20));
-			return;
-		}
-		if (checkId == 0) { // 생성 가능한 아이디일때
-			if (canjoin == 1) {
-				AutoRegister.registerAccount(c, login, pwd);
-				c.send(MainPacketCreator.serverNotice(1,
-						ServerConstants.serverName + " 계정생성을 성공적으로 완료하였습니다 !\r\n다시한번 로그인 해주시기 바랍니다."));
-				c.send(LoginPacket.getLoginFailed(20));
-				return;
-			} else {
-				c.send(MainPacketCreator.serverNotice(1, "서버 리붓중입니다, 잠시 후에 다시시도 해주세요."));
-				c.send(LoginPacket.getLoginFailed(20));
-			}
-		} else if (checkId == 1) { // 계정 찾기 실패
-			c.send(MainPacketCreator.serverNotice(1,
-					"해당하는 계정이 없습니다.\r\n" + ServerConstants.serverName + " 홈페이지에\r\n먼저 접속하셔서 회원가입을\r\n해주시기 바랍니다."));
-			c.send(LoginPacket.getLoginFailed(20));
-			return;
-		} else if (checkId == 2) { // php오류
-			c.send(MainPacketCreator.serverNotice(1, "페이지 오류가 발생했습니다, 잠시 후에 다시시도 해주세요."));
-			c.send(LoginPacket.getLoginFailed(20));
-			return;
-		} else if (checkId == 3) { // 레벨
-			c.send(MainPacketCreator.serverNotice(1, "사이트의 레벨이 맞지 않습니다. 계정을 등급업을 받으신 후 이용해 주시기 바랍니다."));
-			c.send(LoginPacket.getLoginFailed(20));
-			return;
-		} else if (checkId == 6) { // 횟수초과
-			c.send(MainPacketCreator.serverNotice(1, "한 아이피당 가능한 계정생성 최대횟수를 초과했습니다."));
-			c.send(LoginPacket.getLoginFailed(20));
-			return;
-		}
-
-		int loginok = c.login(login, pwd, ipBan || macBan);
-		Calendar tempbannedTill = c.getTempBanCalendar();
-		if (loginok == 0 && (ipBan || macBan)) {
-			loginok = 3;
-			if (ipBan || macBan) {
-				MapleCharacter.ban(c.getSession().getRemoteAddress().toString().split(":")[0],
-						"Enforcing account ban, account " + login, false);
-			}
-		}
-		if (ServerConstants.serverCheck && !c.isGm()) {
+			c.addLoginTryCount();
+		} else if( ServerConstants.serverCheck && !c.isGm() ) {
 			c.send(MainPacketCreator.serverNotice(1, ServerConstants.serverCheckMessage));
 			c.send(LoginPacket.getLoginFailed(20));
-			return;
-		}
-		if (loginok != 0) {
-			if (!loginFailCount(c)) {
-				c.getSession().write(LoginPacket.getLoginFailed(loginok));
-			}
-		} else if (tempbannedTill.getTimeInMillis() != 0) {
-			if (!loginFailCount(c)) {
-				c.getSession().write(LoginPacket.getTempBan(
-						KoreanDateUtil.getTempBanTimestamp(tempbannedTill.getTimeInMillis()), c.getBanReason()));
-			}
+			c.addLoginTryCount();
 		} else {
-			c.loginAttempt = 0;
-			MapleLoginWorker.registerClient(c);
+			rh.skip(22);
+			
+			String login = rh.readMapleAsciiString(); 	//로그인 ID
+			String pwd = rh.readMapleAsciiString();		//비밀번호
+			
+			CommonTypeCheck checkType = AutoRegister.checkAccount(login);
+			
+			if (CommonTypeCheck.ACCOUNT_YES == checkType ) {
+				AutoRegister.registerAccount(c, login, pwd);
+				c.send(MainPacketCreator.serverNotice(1, "계정이 생성 되었습니다.\r\n다시 로그인 하세요."));
+				c.send(LoginPacket.getLoginFailed(20));
+				c.addLoginTryCount();
+			} else if( CommonTypeCheck.ACCOUNT_OVER == checkType ) {
+				c.send(MainPacketCreator.serverNotice(1, "더 이상 계정을 생성 할 수 없습니다."));
+				c.send(LoginPacket.getLoginFailed(20));
+				c.addLoginTryCount();
+			} else {
+				CommonTypeCheck commonType = c.login(login, pwd);
+				
+				if( CommonTypeCheck.LOGIN_SUCCESS == commonType ) {
+					//마지막으로 로그인이 성공한 날짜를 업데이트 한다.
+					//실제 ingame 했을때(MapleClient.LOGIN_LOGGEDIN 상태) lastlogin 컬럼에 타임스템프를 찍는다.
+					//TODO 위 설명과 같이 마지막 로그인 날짜를 업데이트 하는건 불필요한 것이 아닌가 고민됨.
+					SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHH");
+					c.updateLastConnection(sdf.format(Calendar.getInstance().getTime()));
+					c.clearLoginTryCount();
+				} else if( CommonTypeCheck.ACCOUNT_BAN == commonType ) {
+					c.send(MainPacketCreator.serverNotice(1, "현재 중지 된 계정 입니다."));
+					c.send(LoginPacket.getLoginFailed(20));
+					c.addLoginTryCount();
+				} else if( CommonTypeCheck.LOGIN_ING == commonType ) {
+					c.send(MainPacketCreator.serverNotice(1, "현재 접속 중입니다."));
+					c.send(LoginPacket.getLoginFailed(20));
+					c.addLoginTryCount();
+				}
+				
+				MapleLoginWorker.registerClient(c);
+			}
+			
+			if( c.getLoginTryCount() >= ServerConstants.loginTryMaxCount ) { //연속해서 로그인에 실패 할 경우 접속 종료 처리
+				c.getSession().closeNow();
+			}
 		}
+		
+		
 	}
 
 	public static void CharlistRequest(ReadingMaple rh, MapleClient c) {
@@ -188,24 +153,27 @@ public class CharLoginHandler {
 		}
 	}
 
+	/**
+	 * @deprecated 실제 클라에서 쓰는게 아니라 접속기를 통한 로그인 처리 같아 보여서 일단 사용하지 않도록 함.
+	 * 삭제는 추후에 정말 사용하지 않는지 확인 후에 제거. 
+	 */
 	public static void getLoginRequest(ReadingMaple rh, MapleClient c) {
-		/* 로그인 시작 */
-		rh.skip(2);
-		final String account = rh.readMapleAsciiString();
-		final String login = account.split(",")[0];
-		final String pwd = account.split(",")[1];
-		int loginok = c.login(login, pwd, c.hasBannedIP());
-		if (loginok != 0) { // hack
-			c.getSession().close(true);
-			return;
-		}
-		if (c.finishLogin() == 0) {
-			c.setAccountName(login);
-			c.getSession().write(LoginPacket.getRelogResponse());
-			c.getSession().write(LoginPacket.getCharEndRequest(c, login, pwd, false));
-		} else {
-			c.getSession().write(LoginPacket.getLoginFailed(20));
-		}
+//		rh.skip(2);
+//		final String account = rh.readMapleAsciiString();
+//		final String login = account.split(",")[0];
+//		final String pwd = account.split(",")[1];
+//		int loginok = c.login(login, pwd);
+//		if (loginok != 0) { // hack
+//			c.getSession().closeNow();
+//			return;
+//		}
+//		if (c.finishLogin() == 0) {
+//			c.setAccountName(login);
+//			c.getSession().write(LoginPacket.getRelogResponse());
+//			c.getSession().write(LoginPacket.getCharEndRequest(c, login, pwd, false));
+//		} else {
+//			c.getSession().write(LoginPacket.getLoginFailed(20));
+//		}
 	}
 
 	public static void getXignCodeResponse(boolean response, MapleClient c) {
@@ -223,6 +191,9 @@ public class CharLoginHandler {
 				ServerConstants.BuddyChatPort, rh.readInt()));
 	}
 
+	/**
+	 * 로그인 하고 나서 서버 선택하는 화면에 노출되는 서버 리스트를 클라이언트로 전송한다.
+	 */
 	public static void getDisplayChannel(final boolean first_login, MapleClient c) {
 		c.getSession().write(LoginPacket.getChannelBackImg(first_login, (byte) (byte) Randomizer.rand(0, 1)));
 		/* 겉 멀티월드 시작 */
@@ -565,7 +536,7 @@ public class CharLoginHandler {
 		int Character_ID = rh.readInt();
 		MapleCharacter chr = MapleCharacter.loadCharFromDB(Character_ID, c, false);
 		if (!c.login_Auth(Character_ID)) {
-			c.getSession().close(true);
+			c.getSession().closeNow();
 			return; // Attempting to delete other character
 		}
 		byte state = 0;
@@ -576,7 +547,7 @@ public class CharLoginHandler {
 			return;
 		}
 		if (Secondpw_Client == null) { // Client's hacking
-			c.getSession().close(true);
+			c.getSession().closeNow();
 			return;
 		} else {
 			if (!c.CheckSecondPassword(Secondpw_Client)) { // Wrong Password
@@ -595,7 +566,7 @@ public class CharLoginHandler {
 		String password = rh.readMapleAsciiString();
 		int charId = rh.readInt();
 
-		if (loginFailCount(c) || c.getSecondPassword() == null || !c.login_Auth(charId)) {
+		if( c.getSecondPassword() == null || !c.login_Auth(charId)) {
 			c.getSession().closeNow();
 			return;
 		}
@@ -613,7 +584,7 @@ public class CharLoginHandler {
 
 	public static void updateCharCard(ReadingMaple rh, MapleClient c) {
 		if (!c.isLoggedIn()) {
-			c.getSession().close(true);
+			c.getSession().closeNow();
 			return;
 		}
 		Map<Integer, Integer> cid = new LinkedHashMap<Integer, Integer>();
