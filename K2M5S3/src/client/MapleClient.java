@@ -303,10 +303,6 @@ public class MapleClient {
 		return chars;
 	}
 
-	public boolean isLoggedIn() {
-		return loggedIn;
-	}
-
 	public boolean hasBannedMac() {
 		if (macs.isEmpty()) {
 			return false;
@@ -409,14 +405,14 @@ public class MapleClient {
 	 */
 	public int finishLogin() {
 		
-		final Lock mutex = getAccountStatusMutex();
+		final Lock mutex = accountStatusMutex;
 		try {
 			mutex.lock();
 			
 			final byte state = getLoginState();
-			if (state > MapleClient.LOGIN_NOTLOGGEDIN) {
+			if (state != MapleClient.LOGIN_NOTLOGGEDIN) {
 				loggedIn = false;
-				return 7;
+				return state;
 			}
 			updateLoginState(MapleClient.LOGIN_LOGGEDIN, null);
 			
@@ -711,38 +707,32 @@ public class MapleClient {
 		return usingSecondPassword;
 	}
 
-	public final byte getLoginState() { // TODO hide?
-		Connection con = MYSQL.getConnection();
+	/**
+	 * 현재 계정의 loggedin 상태값을 조회한다.
+	 */
+	public final byte getLoginState() {
+		byte state = -1;
 		PreparedStatement ps = null;
 		ResultSet rs = null;
 		try {
-			ps = con.prepareStatement("SELECT loggedin, lastlogin FROM accounts WHERE id = ?");
+			ps = MYSQL.getConnection().prepareStatement("SELECT loggedin, lastlogin FROM accounts WHERE id = ?");
 			ps.setInt(1, getAccID());
 			rs = ps.executeQuery();
-			if (!rs.next()) {
-				ps.close();
-				throw new MYSQLException("Everything sucks 아이디 : " + getAccID());
-			}
-			byte state = rs.getByte("loggedin");
+			
+			if( rs.next() ) {
+				state = rs.getByte("loggedin");
 
-			if (state == MapleClient.LOGIN_SERVER_TRANSITION || state == MapleClient.CHANGE_CHANNEL) {
-				if (rs.getTimestamp("lastlogin").getTime() + 20000 < System.currentTimeMillis()) { // connecting
-																									// to
-																									// chanserver
-																									// timeout
-					state = MapleClient.LOGIN_NOTLOGGEDIN;
-					updateLoginState(state, null);
+				//TODO 20초 후에 비로그인 상태로 업데이트만 치면, 중복 로그인이 가능해 진다.
+				//업데이트도 치고, 클라이언트를 종료시켜야 한다.(세션을 끊어버려야함)
+				if (state == MapleClient.LOGIN_SERVER_TRANSITION || state == MapleClient.CHANGE_CHANNEL) {
+					if (rs.getTimestamp("lastlogin").getTime() + 20000 < System.currentTimeMillis()) {
+						state = MapleClient.LOGIN_NOTLOGGEDIN;
+						updateLoginState(state, null);
+					}
 				}
 			}
-			if (state == MapleClient.LOGIN_LOGGEDIN) {
-				loggedIn = true;
-			} else {
-				loggedIn = false;
-			}
-			return state;
 		} catch (SQLException e) {
-			loggedIn = false;
-			throw new MYSQLException("error getting login state", e);
+			e.printStackTrace();
 		} finally {
 			try {
 				if( ps != null ) {
@@ -755,6 +745,7 @@ public class MapleClient {
 				e.printStackTrace();
 			}
 		}
+		return state;
 	}
 
 	public static int isValidAccount(String name) {
@@ -1344,5 +1335,13 @@ public class MapleClient {
 	 */
 	public void clearLoginTryCount() {
 		loginTryCount = 0;
+	}
+
+	public boolean isLoggedIn() {
+		return loggedIn;
+	}
+	
+	public void setLoggedIn(boolean loggedIn) {
+		this.loggedIn = loggedIn;
 	}
 }

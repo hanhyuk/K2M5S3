@@ -5,6 +5,7 @@ import java.util.Calendar;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.locks.Lock;
 
 import a.my.made.CommonTypeCheck;
 import client.MapleCharacter;
@@ -19,7 +20,6 @@ import client.skills.SkillFactory;
 import constants.GameConstants;
 import constants.ServerConstants;
 import launch.helpers.MapleLoginHelper;
-import launch.helpers.MapleLoginWorker;
 import launch.helpers.MapleNewCharJobType;
 import launch.world.WorldConnected;
 import packet.creators.LoginPacket;
@@ -52,15 +52,15 @@ public class CharLoginHandler {
 			CommonTypeCheck checkType = AutoRegister.checkAccount(login);
 
 			if (CommonTypeCheck.ACCOUNT_YES == checkType) {
-				c.send(MainPacketCreator.serverNotice(1, "test11 한글 ㅁㅁ"));
+				AutoRegister.registerAccount(c, login, pwd);
+				c.send(MainPacketCreator.serverNotice(1, "계정이 생성 되었습니다.\r\n다시 로그인 하세요."));
 				c.send(LoginPacket.getLoginFailed(20));
-//				AutoRegister.registerAccount(c, login, pwd);
-//				c.send(MainPacketCreator.serverNotice(1, "계정이 생성 되었습니다.\r\n다시 로그인 하세요."));
-//				c.send(LoginPacket.getLoginFailed(20));
-//				c.addLoginTryCount();
+				c.addLoginTryCount();
 			} else if (CommonTypeCheck.ACCOUNT_OVER == checkType) {
 				//TODO 현재 ACCOUNT_OVER 값이 반환이 안되는데. 그 이유는 
 				//유저가 다수의 계정을 생성했다고 판단할수 있는 기준이 현재 없다. 생각해볼 문제이다.
+				//[의견] 계정 생성 횟수를 제한하는게 아니라. 일정주기로 특정 레벨 이하 계정 또는 캐릭터를 삭제하도록
+				//스케쥴링 처리하는 방법이 최선일듯 하다.
 				c.send(MainPacketCreator.serverNotice(1, "더 이상 계정을 생성 할 수 없습니다."));
 				c.send(LoginPacket.getLoginFailed(20));
 				c.addLoginTryCount();
@@ -76,22 +76,27 @@ public class CharLoginHandler {
 					c.updateLastConnection(sdf.format(Calendar.getInstance().getTime()));
 					c.clearLoginTryCount();
 					
-					MapleLoginWorker.registerClient(c);
+					//TODO finishLogin 메소드의 내용을 밖으로 빼고, 해당 메소드를 삭제 하도록 로직을 수정하자.
+					int result = c.finishLogin();
+					if( result == 0 ) {
+						c.send(LoginPacket.getAuthSuccessRequest(c));
+						CharLoginHandler.getDisplayChannel(true, c);
+					} else {
+						c.send(LoginPacket.getLoginFailed(7));
+						c.addLoginTryCount();
+					}
 				} else if (CommonTypeCheck.ACCOUNT_BAN == commonType) {
-					c.send(MainPacketCreator.serverNotice(1, "현재 중지 된 계정 입니다."));
-					c.send(LoginPacket.getLoginFailed(20));
+					c.send(LoginPacket.getLoginFailed(3));
 					c.addLoginTryCount();
 				} else if (CommonTypeCheck.LOGIN_ING == commonType) {
-					c.send(MainPacketCreator.serverNotice(1, "현재 접속 중입니다."));
-					c.send(LoginPacket.getLoginFailed(20));
+					c.send(LoginPacket.getLoginFailed(7));
 					c.addLoginTryCount();
 				}
-
-				
 			}
 
 			//연속해서 로그인에 실패 할 경우 접속 종료 처리
 			if (c.getLoginTryCount() >= ServerConstants.loginTryMaxCount) { 
+				//TODO 특이사항의 경우 로그 처리 필요.
 				c.getSession().closeNow();
 			}
 		}
