@@ -155,12 +155,7 @@ public class MapleCharacter extends AnimatedHinaMapObjectExtend implements Inven
 	private long lastCombo, lastfametime, keydown_skill, lastSummonTime, lastChannelChange = System.currentTimeMillis(),
 			exp, meso;
 	private byte gender, secondGender, skinColor, secondSkinColor, burning;
-	
-	/**
-	 * TODO GMType 클래스를 사용하는 형태로 변경이 필요함.
-	 */
 	private byte gmLevel;
-	
 	private short level, job, combo;
 	private List<MapleSummon> mines = new ArrayList<MapleSummon>();
 	public IItem cashPacketTemp = null;

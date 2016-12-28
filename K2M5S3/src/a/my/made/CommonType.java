@@ -22,17 +22,13 @@ public enum CommonType {
 	 */
 	ACCOUNT_BAN(3),
 	/**
-	 * 로그인 성공시
-	 */
-	LOGIN_SUCCESS(4),
-	/**
 	 * 이미 로그인 중인 경우
 	 */
 	LOGIN_ING(5),
 	/**
-	 * 로그인 실패시
+	 * 로그인이 불가능한 경우
 	 */
-	LOGIN_FAILD(6),
+	LOGIN_IMPOSSIBLE(6),
 	/**
 	 * 사용하지 않음
 	 */

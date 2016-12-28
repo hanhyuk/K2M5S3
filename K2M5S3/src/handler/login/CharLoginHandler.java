@@ -31,7 +31,6 @@ public class CharLoginHandler {
 	 * RECV LOGIN_PASSWORD 패킷 처리
 	 */
 	public static void login(ReadingMaple rh, MapleClient c) {
-
 		// FIXME 서버가 오픈 될 준비가 되었는지 체크하는 로직인데, 마음에 안듬. 좀더 개선할수 있는지 확인 필요.
 		if (!GameConstants.isServerReady()) {
 			c.send(MainPacketCreator.serverNotice(1, "서버데이터를 불러오는 중입니다. 잠시만 기다려주세요."));
@@ -63,10 +62,9 @@ public class CharLoginHandler {
 					if( isChanged ) {
 						c.send(LoginPacket.getAuthSuccessRequest(c));
 						CharLoginHandler.getDisplayChannel(true, c);
-						
 						c.clearLoginTryCount();
 					} else {
-						System.err.println("updateLoginState() - 사용자의 계정 접속 상태값 변경 실패. 원인 파악 필요.");
+						System.err.println("updateLoginState() - 사용자의 계정(" + login + ") 접속 상태값 변경 실패. 원인 파악 필요.");
 						c.send(LoginPacket.getLoginFailed(6));
 						c.addLoginTryCount();
 					}
@@ -76,6 +74,10 @@ public class CharLoginHandler {
 				} else if (CommonType.LOGIN_ING == commonType) {
 					c.send(LoginPacket.getLoginFailed(7));
 					c.addLoginTryCount();
+				} else if (CommonType.LOGIN_IMPOSSIBLE == commonType) {
+					System.err.println("--------------------------------"
+							+ "\n계정 정보를 확인 할 수 없습니다.\n이런 경우가 자주 발생한다면 시스템적으로 문제가 있는지 점검이 필요함.\n"
+							+ "--------------------------------");
 				}
 			}
 
@@ -85,7 +87,6 @@ public class CharLoginHandler {
 				c.getSession().closeNow();
 			}
 		}
-
 	}
 
 	public static void CharlistRequest(ReadingMaple rh, MapleClient c) {
@@ -196,7 +197,6 @@ public class CharLoginHandler {
 
 	/**
 	 * 서버 선택하는 화면에 노출되는 서버 리스트를 클라이언트로 보낸다.
-	/**
 	 * @param firstLogin 사용자가 1차 로그인을 했을 경우 true
 	 * @param c MapleClient
 	 */
@@ -215,6 +215,15 @@ public class CharLoginHandler {
 		c.getSession().write(LoginPacket.getLastWorld());
 	}
 
+	/**
+	 * RECV SESSION_CHECK_R 패킷 처리
+	 * 
+	 * 클라이언트에서 세션 유지(?)를 위해 전송하는 패킷을 처리한다.
+	 * 패킷이 전송되는 간격은 1분이다.
+	 * 
+	 * @param rh
+	 * @param c
+	 */
 	public static void getSessionCheck(ReadingMaple rh, MapleClient c) {
 		int pRequest = rh.readInt();
 		int pResponse;

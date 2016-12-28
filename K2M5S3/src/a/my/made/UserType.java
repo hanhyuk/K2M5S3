@@ -12,15 +12,15 @@ public enum UserType {
     /**
      * 후원 유저 
      */
-	SPONSOR(1),
+	SPONSOR(20),
     /**
      * 일반 관리자 
      */
-    PUBLIC_GM(10),
+    PUBLIC_GM(90),
     /**
      * 총관리자
      */
-    SUPERGM(100);
+    SUPERGM(200);
 	
 	private final int value;
 	private final int NOT_USE = 256;

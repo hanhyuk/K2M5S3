@@ -169,19 +169,19 @@ public class LoginPacket {
 	/* 핑크빈 : 17, 1.2.252 클라이언트 버그로 인해서 생성 불가능 조치 */
 	/**
 	 * TODO [테스트필요함] 생성 가능한 캐릭터 정보를 클라이언트로 전송한다? 
-	 * @param client
+	 * @param c
 	 * @return
 	 */
-	public static final Packet getAuthSuccessRequest(final MapleClient client) {
+	public static final Packet getAuthSuccessRequest(final MapleClient c) {
 		final WritingPacket w = new WritingPacket();
 		w.writeShort(SendPacketOpcode.LOGIN_STATUS.getValue());
 		w.write(0);
-		w.writeMapleAsciiString(client.getAccountName()); // 1.2.238+
-		w.writeInt(client.getAccID());
-		w.write(client.getGender());
-		w.write(client.isGm() ? 1 : 0); // Admin byte
+		w.writeMapleAsciiString(c.getAccountName()); // 1.2.238+
+		w.writeInt(c.getAccID());
+		w.write(c.getGender());
+		w.write(c.isGm() ? 1 : 0); // Admin byte
 		w.write0(23); // 1.2.240+
-		w.writeMapleAsciiString(client.getAccountName()); // Nexon ID.
+		w.writeMapleAsciiString(c.getAccountName()); // Nexon ID.
 		w.write(0);
 		w.write(0);
 		w.write(0);
@@ -353,6 +353,7 @@ public class LoginPacket {
 		int advertisement = 1; // 1.2.253(1) 기준.
 		w.write(advertisement);
 		for (int i = 0; i < advertisement; i++) {
+			//TODO 클라에서 로그인 하고 나면 월드/채널 선택 화면으로 이동하는데 이때 하단에 배너가 나오는데 거기에 사용됨.
 			w.writeMapleAsciiString("http://maplestory.nexon.com/MapleStory/news/2016/login_Banner.html");
 			w.writeMapleAsciiString("http://maplestory.nexon.com/MapleStory/news/2016/login_Banner.html");
 			w.writeInt(5000); // time
@@ -376,13 +377,13 @@ public class LoginPacket {
 		return w.getPacket();
 	}
 
-	public static final Packet getChannelBackImg(final boolean first_login, final byte status) {
+	public static final Packet getChannelBackImg(final boolean firstLogin, final byte status) {
 		final WritingPacket w = new WritingPacket();
 		w.writeShort(SendPacketOpcode.CHANNEL_BACK_IMG.getValue());
-		w.write(!first_login ? 2 : 0); // 1.2.253 대응.
-		if (!first_login) {
+		w.write(!firstLogin ? 2 : 0); // 1.2.253 대응.
+		if (!firstLogin) {
 			for (int i = 0; i < 2; i++) {
-				if (!first_login) {
+				if (!firstLogin) {
 					w.writeMapleAsciiString(i == 0 ? "main" : "sub");
 					w.write(i == 0 ? status : 0);
 					w.writeLong(0); // Decode 4 + Decode 4

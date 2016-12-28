@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration debug="false" scan="false" scanPeriod="30 seconds">
+    <!-- 
+    	로그 레벨 사용은 아래 순서대로 사용한다. 
+    	DEBUG 	(개발) 	환경에서 디버깅 할때 사용
+    	INFO 	(운영)	환경에서 정보 표시 할때
+    	WARN 	(운영) 	환경에서 경고 표시 할때
+    	ERROR 	(운영) 	환경에서 오류 발생 할때
+    -->
+    
+    <!-- 
+    	<layout>,<pattern> 관련 설정 방법에 대한 문서는 http://logback.qos.ch/manual/layouts.html 참고
+    	
+    	외부 설정파일 사용하려면
+    		<property resource="resource.properties"/>
+    	if ~ then ~ else 사용 방법은 (http://knot.tistory.com/92 참고)
+    		<if condition='property("RUN_MODE").equals("SERVICE")'>
+    			<then></then>
+    			<else></else>
+    		</if>
+     -->
+    
+    <!-- 
+    	패키지별로 level 을 지정 할 수 있는데 지정된 level 이상만 로그를 남긴다.
+    	예를 들어 root level 이 "DEBUG" 로 지정 되어 있을 경우에는 
+    	패키지별로 별도 지정된 level 이 
+    		없는 경우에는 DEBUG 레벨 이상 로그가 출력되고,
+    		있는 경우에는 지정된 레벨 이상 출력된다. 
+    -->
+    <logger name="atest" level="INFO"/>
+    
+    <appender name="Console" class="ch.qos.logback.core.ConsoleAppender">
+    	<!-- 
+    		jansi 라이브러리를 사용하여 로그에 색깔을 입힐 수 있다.
+    		"%black", "%red", "%green","%yellow","%blue", "%magenta","%cyan", "%white", "%gray", "%boldRed","%boldGreen", "%boldYellow", "%boldBlue", "%boldMagenta""%boldCyan", "%boldWhite"
+    	-->
+		<useJansi>true</useJansi>
+        <encoder>
+			<pattern>[%d{HH:mm:ss} %highlight(%-5level)] %highlight(%msg) %replace(%caller{1}){'Caller\+\d\s*at\s', ''}</pattern>
+		</encoder>
+    </appender>
+
+	<!-- 
+		패키지별로 로그 레벨을 지정하지 않은 경우, root level에 따라 로그가 출력된다.
+		root level 의 경우 기본값은 운영 "INFO", 개발 "DEBUG" 사용.
+	-->
+    <root level="DEBUG">
+        <appender-ref ref="Console" />
+    </root>
+</configuration>

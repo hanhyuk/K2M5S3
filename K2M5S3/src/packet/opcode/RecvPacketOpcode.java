@@ -267,7 +267,9 @@ public enum RecvPacketOpcode {
                         value = Short.parseShort(storage.getString("Receive", packet.name()));
                     }
                 } catch (NumberFormatException error) {
-                    error.printStackTrace();
+                	if (!ServerConstants.realese) {
+                        System.out.println("´©¶ôµÈ RecvPacket Name : " + packet.name());
+                    }
                 }
                 packet.setValue(value);
             }

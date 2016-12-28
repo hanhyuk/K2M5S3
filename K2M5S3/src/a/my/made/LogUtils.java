@@ -5,7 +5,7 @@ import client.MapleCharacterUtil;
 import client.MapleClient;
 
 public class LogUtils {
-
+	
 	public static final String getLogMessage(final MapleCharacter cfor, final String message) {
 		return getLogMessage(cfor == null ? null : cfor.getClient(), message);
 	}

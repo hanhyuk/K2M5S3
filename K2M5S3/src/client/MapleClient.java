@@ -5,9 +5,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.text.SimpleDateFormat;
 import java.util.Arrays;
-import java.util.Calendar;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -28,6 +26,7 @@ import org.apache.mina.core.session.IoSession;
 import a.my.made.AccountStatusType;
 import a.my.made.CommonType;
 import a.my.made.LogUtils;
+import a.my.made.UserType;
 import client.stats.BuffStatsValueHolder;
 import community.MapleGuildCharacter;
 import community.MapleMultiChatCharacter;
@@ -231,8 +230,7 @@ public class MapleClient {
 
 	public final boolean CheckIPAddress() {
 		try {
-			final PreparedStatement ps = MYSQL.getConnection()
-					.prepareStatement("SELECT SessionIP FROM accounts WHERE id = ?");
+			final PreparedStatement ps = MYSQL.getConnection().prepareStatement("SELECT SessionIP FROM accounts WHERE id = ?");
 			ps.setInt(1, this.accId);
 			final ResultSet rs = ps.executeQuery();
 
@@ -258,13 +256,15 @@ public class MapleClient {
 	/**
 	 * 현재 로그인을 할 수 있는 상태인지 체크 한다.
 	 * 
+	 * 로그인이 가능한 상태(CommonType.LOGIN_POSSIBLE)일 경우 일부 멤버 변수들의 값을 변경한다.
+	 * 
 	 * @param loginId 계정 아이디
 	 * @param loginPassword 계정 비밀번호
 	 * @return CommonType.LOGIN_FAILD, CommonType.ACCOUNT_BAN, CommonType.LOGIN_ING, CommonType.LOGIN_SUCCESS
 	 */
 
 	public CommonType checkLoginAvailability(final String loginId, final String loginPassword) {
-		CommonType result = CommonType.LOGIN_FAILD;
+		CommonType result = CommonType.LOGIN_IMPOSSIBLE;
 
 		PreparedStatement ps = null;
 		ResultSet rs = null;
@@ -284,10 +284,13 @@ public class MapleClient {
 				} else if( rs.getByte("loggedin") != AccountStatusType.NOT_LOGIN.getValue() ) {
 					result = CommonType.LOGIN_ING;
 				} else {
+					accountName = rs.getString("name");
 					accId = rs.getInt("id");
-					secondPassword = rs.getString("2ndpassword");
-					gm = rs.getInt("gm") > 0;
 					gender = rs.getByte("gender");
+					gm = rs.getInt("gm") >= UserType.PUBLIC_GM.getValue();
+					
+					
+					secondPassword = rs.getString("2ndpassword");
 					chrslot = rs.getInt("chrslot");
 					usingSecondPassword = rs.getByte("using2ndpassword") == 1;
 					
