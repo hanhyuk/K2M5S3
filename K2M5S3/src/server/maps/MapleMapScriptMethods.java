@@ -1,17 +1,3 @@
-/*
- Maple Team ProJect
- 제작 용도 : 서버운영용
- 팀원목록
- * 강동원 dongwon1852@nate.com 
- * 김선일 fileupload@nate.com
- * 김석현 azxcs3@nate.com
- * 김진성 m0nday_s@nate.com
- * 공준협 kkong1001@nate.com
- * 김민호 rubystory0603@nate.com
- * 이재왕 ejwj5592@nate.com
- * 최용재 virgo_s_t@nate.com
- * 서성덕 abq1239@nate.com
- */
 package server.maps;
 
 import java.awt.Point;

@@ -70,7 +70,11 @@ public class ServerConstants {
     public static boolean feverTime = true;
     public static boolean useMaxDrop;
     public static boolean useBossMaxDrop;
-    public static boolean showPackets; 
+    
+    //TODO showPackets flag 값을 사용하지 않도록 관련 로직 모두 걷어내자.
+    public static boolean showPackets;
+    
+    
     public static String path = ""; 
     public static String windowsDumpPath = ""; 
     
@@ -112,7 +116,6 @@ public class ServerConstants {
             CashShopPort = Integer.parseInt(prop.getProperty(toUni("캐시샵포트")));
             BuddyChatPort = Integer.parseInt(prop.getProperty(toUni("친구서버포트")));
             
-            createMaxAccount = Integer.parseInt(prop.getProperty(toUni("최대계정수")));
             loginTryMaxCount = Integer.parseInt(prop.getProperty(toUni("로그인시도횟수")));
             
             defaultExpRate = Integer.parseInt(prop.getProperty(toUni("경험치배율")));

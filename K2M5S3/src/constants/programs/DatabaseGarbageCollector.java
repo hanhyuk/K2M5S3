@@ -1,27 +1,19 @@
-/*
- * ArcStory Project
- * 최주원 sch2307@naver.com
- * 이준 junny_adm@naver.com
- * 우지훈 raccoonfox69@gmail.com
- * 강정규 ku3135@nate.com
- * 김진홍 designer@inerve.kr
- */
-
 package constants.programs;
 
-import database.MYSQL;
-import java.io.FileOutputStream;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- *
- * @author 에반테이르
- */
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import database.MYSQL;
+
 public class DatabaseGarbageCollector {
+	private static final Logger logger = LoggerFactory.getLogger(DatabaseGarbageCollector.class);
+	
     public static void main(String[] args) {
         int deletedrows = 0;
         List <Integer> items = new ArrayList<Integer>();
@@ -434,6 +426,6 @@ public class DatabaseGarbageCollector {
         } catch (Throwable t) {
             t.printStackTrace();
         }
-        System.out.println("[알림] 데이터베이스 정리 프로그램에서 "+ deletedrows +"개의 행을 제거하였습니다.");
+        logger.info("[알림] 데이터베이스 정리 프로그램에서 {}개의 행을 제거하였습니다.", deletedrows);
     }
 }

@@ -69,7 +69,7 @@ public class LoginServer {
 			acceptor = new NioSocketAcceptor();
 			acceptor.getSessionConfig().setReadBufferSize(2048);
 			acceptor.getSessionConfig().setIdleTime(IdleStatus.BOTH_IDLE, 10);
-			acceptor.getFilterChain().addFirst("ipCheck", new IpCheckFilter());
+//			acceptor.getFilterChain().addFirst("ipCheck", new IpCheckFilter());
 			acceptor.getFilterChain().addLast("codec", new ProtocolCodecFilter(new EncryptionFactory()));
 			acceptor.setHandler(new MapleServerHandler(ServerType.LOGIN));
 			acceptor.bind(new InetSocketAddress(LOGIN_PORT));

@@ -10,34 +10,35 @@
 package client.commands;
 
 
-import constants.ServerConstants;
-import client.items.IItem;
-import constants.GameConstants;
-import constants.programs.MedalRanking;
-import client.items.Item;
-import client.items.Equip;
-import client.MapleClient;
-import client.MapleCharacter;
-import client.items.MapleInventoryType;
-import client.stats.PlayerStat;
-import client.skills.SkillFactory;
 import static client.commands.CommandProcessor.getOptionalIntArg;
-import client.skills.ISkill;
-import launch.ChannelServer;
-import launch.world.WorldBroadcasting;
-import packet.transfer.write.Packet;
+
 import java.util.Map;
 import java.util.Map.Entry;
-import server.items.InventoryManipulator;
-import server.items.ItemInformation;
-import server.shops.MapleShopFactory;
-import server.life.MapleMonster;
-import server.maps.MapleMapObject;
-import tools.ArrayMap;
-import packet.creators.MobPacket;
+
+import client.MapleCharacter;
+import client.MapleClient;
+import client.items.Equip;
+import client.items.IItem;
+import client.items.Item;
+import client.items.MapleInventoryType;
+import client.skills.ISkill;
+import client.skills.SkillFactory;
+import client.stats.PlayerStat;
+import constants.GameConstants;
+import constants.ServerConstants;
+import launch.ChannelServer;
+import launch.world.WorldBroadcasting;
 import packet.creators.MainPacketCreator;
+import packet.creators.MobPacket;
+import packet.transfer.write.Packet;
 import provider.MapleData;
 import provider.MapleDataProviderFactory;
+import server.items.InventoryManipulator;
+import server.items.ItemInformation;
+import server.life.MapleMonster;
+import server.maps.MapleMapObject;
+import server.shops.MapleShopFactory;
+import tools.ArrayMap;
 import tools.CurrentTime;
 import tools.Pair;
 import tools.StringUtil;
@@ -207,7 +208,6 @@ public class CharCommands implements Command {
                     hp.saveToDB(false, false);
                 }
             }
-            MedalRanking.getInstance().save();
             c.getPlayer().dropMessage(6, "[시스템] 저장이 완료되었습니다.");
         } else if (splitted[0].equals("!말")) {
 	    if (splitted.length > 2) {

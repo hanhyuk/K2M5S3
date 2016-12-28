@@ -1,12 +1,3 @@
-/*
- * ArcStory Project
- * 최주원 sch2307@naver.com
- * 이준 junny_adm@naver.com
- * 우지훈 raccoonfox69@gmail.com
- * 강정규 ku3135@nate.com
- * 김진홍 designer@inerve.kr
- */
-
 package client;
 
 import java.awt.Point;
@@ -37,6 +28,9 @@ import java.util.TimerTask;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import a.my.made.AccountStatusType;
 import a.my.made.LogUtils;
@@ -147,7 +141,10 @@ import tools.Triple;
 import tools.RandomStream.PlayerRandomStream;
 
 public class MapleCharacter extends AnimatedHinaMapObjectExtend implements InventoryContainer, Serializable {
+	private static final long serialVersionUID = -8298331862123650245L;
 
+	private static final Logger logger = LoggerFactory.getLogger(MapleCharacter.class);
+	
 	private String name, chalktext, BlessOfFairy_Origin, BlessOfEmpress_Origin;
 	private boolean quickmoved = false;
 	private transient Map<Integer, Integer> linkMobIds = new HashMap<Integer, Integer>();
@@ -685,10 +682,7 @@ public class MapleCharacter extends AnimatedHinaMapObjectExtend implements Inven
 			ret.innerLevel = rs.getInt("innerLevel");
 			ret.artifactPoints = rs.getInt("artifactPoints");
 			ret.morphGage = rs.getInt("morphGage");
-			if (ServerConstants.isLocal) {
-				System.out.println("base info : " + (System.currentTimeMillis() - t) + "ms");
-				t = System.currentTimeMillis();
-			}
+			
 			if (channelserver) {
 				MapleWorldMapProvider mapFactory = ChannelServer.getInstance(client.getChannel()).getMapFactory();
 				ret.map = mapFactory.getMap(ret.mapid);
@@ -704,10 +698,7 @@ public class MapleCharacter extends AnimatedHinaMapObjectExtend implements Inven
 													// spawnpoint instead
 					ret.initialSpawnPoint = 0;
 				}
-				if (ServerConstants.isLocal) {
-					System.out.println("map info : " + (System.currentTimeMillis() - t) + "ms");
-					t = System.currentTimeMillis();
-				}
+				
 				ret.setPosition(portal.getPosition());
 
 				int partyid = rs.getInt("party");
@@ -728,10 +719,6 @@ public class MapleCharacter extends AnimatedHinaMapObjectExtend implements Inven
 					}
 				}
 
-				if (ServerConstants.isLocal) {
-					System.out.println("etc info : " + (System.currentTimeMillis() - t) + "ms");
-					t = System.currentTimeMillis();
-				}
 				/* Pet Loading... */
 				String[] pets = rs.getString("pet_id").split(",");
 				ps = con.prepareStatement("SELECT * FROM inventoryitems WHERE uniqueid = ?");
@@ -752,20 +739,12 @@ public class MapleCharacter extends AnimatedHinaMapObjectExtend implements Inven
 			rs.close();
 			ps.close();
 
-			if (ServerConstants.isLocal) {
-				System.out.println("pet info : " + (System.currentTimeMillis() - t) + "ms");
-				t = System.currentTimeMillis();
-			}
-
 			if (channelserver) {
 				ps = con.prepareStatement("SELECT * FROM queststatus WHERE characterid = ?");
 				ps.setInt(1, charid);
 				rs = ps.executeQuery();
 				pse = con.prepareStatement("SELECT * FROM queststatusmobs WHERE queststatusid = ?");
-				if (ServerConstants.isLocal) {
-					System.out.println("quest query time : " + (System.currentTimeMillis() - t) + "ms");
-					t = System.currentTimeMillis();
-				}
+				
 				while (rs.next()) {
 					final int id = rs.getInt("quest");
 					final MapleQuest q = MapleQuest.getInstance(id);
@@ -789,15 +768,8 @@ public class MapleCharacter extends AnimatedHinaMapObjectExtend implements Inven
 				ps.close();
 				pse.close();
 
-				if (ServerConstants.isLocal) {
-					System.out.println("quest info parsing : " + (System.currentTimeMillis() - t) + "ms");
-					t = System.currentTimeMillis();
-				}
 				ret.loadKeyValues();
-				if (ServerConstants.isLocal) {
-					System.out.println("keyvalues info : " + (System.currentTimeMillis() - t) + "ms");
-					t = System.currentTimeMillis();
-				}
+				
 				if (ret.getKeyValue("HeadTitle") == null) {
 					ret.setKeyValue("HeadTitle", "0");
 				}
@@ -820,22 +792,11 @@ public class MapleCharacter extends AnimatedHinaMapObjectExtend implements Inven
 				ps.close();
 				rs.close();
 
-				if (ServerConstants.isLocal) {
-					System.out.println("etc2 info : " + (System.currentTimeMillis() - t) + "ms");
-					t = System.currentTimeMillis();
-				}
 				ItemFactory.loadItemsFromPlayer(ret);
-				if (ServerConstants.isLocal) {
-					System.out.println("inventory info : " + (System.currentTimeMillis() - t) + "ms");
-					t = System.currentTimeMillis();
-				}
+
 				ret.cashInv = new MapleCashInventory(ret.accountid);
 				ret.cashInv.loadFromDB();
 
-				if (ServerConstants.isLocal) {
-					System.out.println("csinv info : " + (System.currentTimeMillis() - t) + "ms");
-					t = System.currentTimeMillis();
-				}
 				rs.close();
 				ps.close();
 
@@ -855,10 +816,6 @@ public class MapleCharacter extends AnimatedHinaMapObjectExtend implements Inven
 				rs.close();
 				ps.close();
 
-				if (ServerConstants.isLocal) {
-					System.out.println("etc3 info : " + (System.currentTimeMillis() - t) + "ms");
-					t = System.currentTimeMillis();
-				}
 				ps = con.prepareStatement("SELECT * FROM questinfo WHERE characterid = ?");
 				ps.setInt(1, charid);
 				rs = ps.executeQuery();
@@ -869,10 +826,6 @@ public class MapleCharacter extends AnimatedHinaMapObjectExtend implements Inven
 				rs.close();
 				ps.close();
 
-				if (ServerConstants.isLocal) {
-					System.out.println("questinfo info : " + (System.currentTimeMillis() - t) + "ms");
-					t = System.currentTimeMillis();
-				}
 				ps = con.prepareStatement(
 						"SELECT skillid, skilllevel, masterlevel, expiration FROM skills WHERE characterid = ?");
 				ps.setInt(1, charid);
@@ -888,10 +841,6 @@ public class MapleCharacter extends AnimatedHinaMapObjectExtend implements Inven
 				rs.close();
 				ps.close();
 
-				if (ServerConstants.isLocal) {
-					System.out.println("skill info : " + (System.currentTimeMillis() - t) + "ms");
-					t = System.currentTimeMillis();
-				}
 				ps = con.prepareStatement(
 						"SELECT skill_id, skill_level, max_level, rank FROM inner_ability_skills WHERE player_id = ?");
 				ps.setInt(1, charid);
@@ -902,17 +851,9 @@ public class MapleCharacter extends AnimatedHinaMapObjectExtend implements Inven
 				}
 				rs.close();
 				ps.close();
-
-				if (ServerConstants.isLocal) {
-					System.out.println("inner info : " + (System.currentTimeMillis() - t) + "ms");
-					t = System.currentTimeMillis();
-				}
+				
 				ret.retrieveLinkBless();
 
-				if (ServerConstants.isLocal) {
-					System.out.println("linkbless info : " + (System.currentTimeMillis() - t) + "ms");
-					t = System.currentTimeMillis();
-				}
 				ps = con.prepareStatement("SELECT * FROM skillmacros WHERE characterid = ?");
 				ps.setInt(1, charid);
 				rs = ps.executeQuery();
@@ -927,10 +868,6 @@ public class MapleCharacter extends AnimatedHinaMapObjectExtend implements Inven
 				rs.close();
 				ps.close();
 
-				if (ServerConstants.isLocal) {
-					System.out.println("skillmacro info : " + (System.currentTimeMillis() - t) + "ms");
-					t = System.currentTimeMillis();
-				}
 				ps = con.prepareStatement("SELECT `key`,`type`,`action` FROM keymap WHERE characterid = ?");
 				ps.setInt(1, charid);
 				rs = ps.executeQuery();
@@ -943,10 +880,6 @@ public class MapleCharacter extends AnimatedHinaMapObjectExtend implements Inven
 				rs.close();
 				ps.close();
 
-				if (ServerConstants.isLocal) {
-					System.out.println("keymap info : " + (System.currentTimeMillis() - t) + "ms");
-					t = System.currentTimeMillis();
-				}
 				ps = con.prepareStatement("SELECT `locationtype`,`map` FROM savedlocations WHERE characterid = ?");
 				ps.setInt(1, charid);
 				rs = ps.executeQuery();
@@ -988,10 +921,6 @@ public class MapleCharacter extends AnimatedHinaMapObjectExtend implements Inven
 				rs.close();
 				ps.close();
 
-				if (ServerConstants.isLocal) {
-					System.out.println("etc4 info : " + (System.currentTimeMillis() - t) + "ms");
-					t = System.currentTimeMillis();
-				}
 				ps = con.prepareStatement(
 						"SELECT `uniqueid` FROM extendedslots WHERE characterid = ? ORDER by `index` ASC");
 				ps.setInt(1, charid);
@@ -1002,10 +931,6 @@ public class MapleCharacter extends AnimatedHinaMapObjectExtend implements Inven
 				rs.close();
 				ps.close();
 
-				if (ServerConstants.isLocal) {
-					System.out.println("bags info : " + (System.currentTimeMillis() - t) + "ms");
-					t = System.currentTimeMillis();
-				}
 				ps = con.prepareStatement("SELECT mapid, type FROM trocklocations WHERE characterid = ?");
 				ps.setInt(1, charid);
 				rs = ps.executeQuery();
@@ -1029,11 +954,6 @@ public class MapleCharacter extends AnimatedHinaMapObjectExtend implements Inven
 				ret.setKeyValue2("mountid", 0);
 				ret.setKeyValue2("mountskillid", 0);
 				loadItemPot(charid);
-
-				if (ServerConstants.isLocal) {
-					System.out.println("etc5 info : " + (System.currentTimeMillis() - t) + "ms");
-					t = System.currentTimeMillis();
-				}
 
 			} else { // Not channel server
 				ps = con.prepareStatement(
@@ -1064,9 +984,6 @@ public class MapleCharacter extends AnimatedHinaMapObjectExtend implements Inven
 
 			}
 		}
-		if (ServerConstants.isLocal) {
-			System.out.println("QUERY Searched Time : " + (System.currentTimeMillis() - t) + "ms");
-		}
 		t = System.currentTimeMillis();
 		ret.stats.recalcLocalStats();
 		ret.silentEnforceMaxHpMp();
@@ -1075,9 +992,6 @@ public class MapleCharacter extends AnimatedHinaMapObjectExtend implements Inven
 		}
 		if (ret.stats.getMp() > ret.stats.getCurrentMaxMp()) {
 			ret.stats.setMp(ret.stats.getCurrentMaxMp());
-		}
-		if (ServerConstants.isLocal) {
-			System.out.println("all char loaded time : " + (System.currentTimeMillis() - t) + "ms");
 		}
 		return ret;
 	}
@@ -6720,7 +6634,7 @@ public class MapleCharacter extends AnimatedHinaMapObjectExtend implements Inven
 					}
 				}
 			} else {
-				System.out.println("선파이어 스킬데이터를 알 수 없습니다.");
+				logger.debug("선파이어 스킬데이터를 알 수 없습니다.");
 			}
 		} else {
 			this.changeSkillLevel(sunfireid, (byte) sunfireid.getMaxLevel(), (byte) sunfireid.getMasterLevel());
@@ -6748,7 +6662,7 @@ public class MapleCharacter extends AnimatedHinaMapObjectExtend implements Inven
 					}
 				}
 			} else {
-				System.out.println("이클립스 스킬데이터를 알 수 없습니다.");
+				logger.debug("이클립스 스킬데이터를 알 수 없습니다.");
 			}
 		} else {
 			this.changeSkillLevel(eclipseid, (byte) eclipseid.getMaxLevel(), (byte) eclipseid.getMasterLevel());

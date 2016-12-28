@@ -10,6 +10,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ScheduledFuture;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import client.MapleCharacter;
 import client.MapleCharacterStat;
 import client.items.Equip;
@@ -52,7 +55,8 @@ import tools.Timer.BuffTimer;
 import tools.Triple;
 
 public class SkillStatEffect {
-
+	private static final Logger logger = LoggerFactory.getLogger(SkillStatEffect.class);
+	
 	private int sourceid;
 	private boolean overTime, skill, absstats = true;
 	private List<Triple<BuffStats, Integer, Boolean>> statups;
@@ -123,9 +127,7 @@ public class SkillStatEffect {
 					}
 				}
 			} catch (Exception e) {
-				if (!ServerConstants.realese) {
-					System.out.println("[경고] 스킬값 로딩중 잘못된 값이 삽입되었습니다. : " + sourceid + " : " + d.getName());
-				}
+				logger.warn("[경고] 스킬값 로딩중 잘못된 값이 삽입되었습니다. : {} : {}", sourceid, d.getName());
 			}
 		}
 		if (skill) {

@@ -1,13 +1,5 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package constants.programs;
 
-import client.MapleCharacter;
-import client.MapleClient;
-import constants.ServerConstants;
-import database.MYSQL;
 import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.sql.Connection;
@@ -15,8 +7,17 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.concurrent.ScheduledFuture;
+
 import javax.swing.DefaultListModel;
 import javax.swing.JOptionPane;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import client.MapleCharacter;
+import client.MapleClient;
+import constants.ServerConstants;
+import database.MYSQL;
 import launch.ChannelServer;
 import launch.world.WorldBroadcasting;
 import launch.world.WorldCommunity;
@@ -27,12 +28,11 @@ import packet.opcode.SendPacketOpcode;
 import server.maps.MapleMap;
 import tools.Timer;
 
-/**
- *
- * @author Administrator
- */
 public class ControlUnit extends javax.swing.JFrame {
-
+	private static final Logger logger = LoggerFactory.getLogger(ControlUnit.class);
+	
+	private static final long serialVersionUID = 97525601027832202L;
+	
 	public ControlUnit() {
 		Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
 		this.setLocation((screenSize.width - 1505) / 2, (screenSize.height - 576) / 2);
@@ -1371,7 +1371,7 @@ public class ControlUnit extends javax.swing.JFrame {
 		// TODO add your handling code here:
 		SendPacketOpcode.loadOpcode();
 		RecvPacketOpcode.loadOpcode();
-		System.out.println("[알림] 옵코드 재설정이 완료되었습니다.");
+		logger.info("[알림] 옵코드 재설정이 완료되었습니다.");
 	}// GEN-LAST:event_jButton20ActionPerformed
 
 	public String 아이피(String name) throws SQLException {

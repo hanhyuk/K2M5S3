@@ -1,18 +1,12 @@
-/*
- * ArcStory Project
- * 최주원 sch2307@naver.com
- * 이준 junny_adm@naver.com
- * 우지훈 raccoonfox69@gmail.com
- * 강정규 ku3135@nate.com
- * 김진홍 designer@inerve.kr
- */
-
 package server.quest;
 
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import client.MapleCharacter;
 import client.MapleQuestStatus;
@@ -24,7 +18,8 @@ import provider.MapleDataTool;
 import scripting.NPCScriptManager;
 
 public class MapleQuest {
-
+	private static final Logger logger = LoggerFactory.getLogger(MapleQuest.class);
+	
     public static Map<Integer, MapleQuest> quests = new LinkedHashMap<Integer, MapleQuest>();
     protected int id;
     protected List<MapleQuestRequirement> startReqs;
@@ -49,7 +44,7 @@ public class MapleQuest {
     public static void cacheMapleQuest() {
         synchronized(questReady) {
             if (!questReady) {
-                System.out.println("[알림] 퀘스트 데이터 캐싱을 시작합니다.");
+            	logger.info("[알림] 퀘스트 데이터 캐싱을 시작합니다.");
                long t = System.currentTimeMillis();
                 for (MapleData d : actions.getChildren()) {
                     MapleQuest ret = new MapleQuest();
@@ -57,7 +52,7 @@ public class MapleQuest {
                         quests.put(Integer.parseInt(d.getName()), ret);
                     }
                 }
-                 System.out.println("[알림] 퀘스트 데이터 캐싱이 완료되었습니다. 데이터 : " + quests.size() +" 소요시간 : "+(System.currentTimeMillis() - t)+"ms");
+                logger.info("[알림] 퀘스트 데이터 캐싱이 완료되었습니다. 데이터 : {} 소요시간 : {} ms", quests.size(), (System.currentTimeMillis() - t));
                 questReady = Boolean.TRUE;
             }
         }

@@ -20,10 +20,6 @@ import provider.MapleDataTool;
 import server.items.ItemInformation;
 import tools.Triple;
 
-/**
-*
-* @author 온라인월드
-*/
 public class ShopMaker2 {
     private static int MIN_LEVEL = 0, MAX_LEVEL = 100;
     private static List<Integer> EXCPET_ITEMS = Arrays.asList(1003142, 1402037);

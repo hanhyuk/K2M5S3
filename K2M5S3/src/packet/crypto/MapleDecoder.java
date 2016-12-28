@@ -6,9 +6,10 @@ import org.apache.mina.core.buffer.IoBuffer;
 import org.apache.mina.core.session.IoSession;
 import org.apache.mina.filter.codec.CumulativeProtocolDecoder;
 import org.apache.mina.filter.codec.ProtocolDecoderOutput;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import client.MapleClient;
-import constants.ServerConstants;
 import packet.opcode.RecvPacketOpcode;
 import packet.transfer.read.ByteStream;
 import packet.transfer.read.ReadingMaple;
@@ -16,6 +17,8 @@ import tools.HexTool;
 
 public class MapleDecoder extends CumulativeProtocolDecoder {
 
+	private static final Logger logger = LoggerFactory.getLogger(MapleDecoder.class);
+	
 	public static final String DECODER_STATE_KEY = MapleDecoder.class.getName() + ".STATE";
 
 	public static class DecoderState {
@@ -50,20 +53,15 @@ public class MapleDecoder extends CumulativeProtocolDecoder {
 				client.getReceiveCrypto().crypt(decryptedPacket);
 				out.write(decryptedPacket);
 				
-				if (ServerConstants.showPackets) {
+				if (logger.isDebugEnabled()) {
 					final byte[] data = decryptedPacket;
 					final ReadingMaple rh = new ReadingMaple(new ByteStream(data));
 					final short header_num = rh.readShort();
 					
 					if (header_num != RecvPacketOpcode.MOVE_LIFE.getValue() && header_num != RecvPacketOpcode.MOVE_PLAYER.getValue()) {
-						final StringBuilder sb = new StringBuilder("RECV - [" + RecvPacketOpcode.getOpcodeName(header_num) + "] : ");
-						sb.append(HexTool.toString(data)).append("\n")
-								.append(HexTool.toStringFromAscii(data)).append("\n\n");
-						System.out.println(sb.toString());
+						logger.debug("RECV - [{}] {} \n {} ", RecvPacketOpcode.getOpcodeName(header_num), HexTool.toString(data), HexTool.toStringFromAscii(data));
 					}
 				}
-				
-				
 			} finally {
 				mutex.unlock();
 			}

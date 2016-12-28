@@ -22,6 +22,8 @@ import java.util.concurrent.locks.ReentrantLock;
 import javax.script.ScriptEngine;
 
 import org.apache.mina.core.session.IoSession;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import a.my.made.AccountStatusType;
 import a.my.made.CommonType;
@@ -49,7 +51,8 @@ import scripting.NPCScriptManager;
 import server.shops.IMapleCharacterShop;
 
 public class MapleClient {
-
+	private static final Logger logger = LoggerFactory.getLogger(MapleClient.class);
+	
 	protected static final class CharNameAndId {
 
 		public final String name;
@@ -247,8 +250,8 @@ public class MapleClient {
 			ps.close();
 
 			return canlogin;
-		} catch (final SQLException e) {
-			System.out.println("Failed in checking IP address for client.");
+		} catch (SQLException e) {
+			logger.debug("{}", e);
 		}
 		return false;
 	}
@@ -904,7 +907,6 @@ public class MapleClient {
 	}
 
 	private List<CharNameAndId> loadCharactersInternal() {
-		long t = System.currentTimeMillis();
 		List<CharNameAndId> chars = new LinkedList<CharNameAndId>();
 		try {
 			Connection con = MYSQL.getConnection();
@@ -919,9 +921,6 @@ public class MapleClient {
 			ps.close();
 		} catch (SQLException e) {
 			System.err.println("error loading characters internal" + e);
-		}
-		if (ServerConstants.isLocal) {
-			System.out.println("Load Characters Internal time : " + (System.currentTimeMillis() - t) + "ms");
 		}
 		return chars;
 	}
@@ -1067,7 +1066,7 @@ public class MapleClient {
 			ps.executeUpdate();
 			ps.close();
 		} catch (SQLException e) {
-			System.out.println(e);
+			logger.debug("{}", e);
 		}
 	}
 

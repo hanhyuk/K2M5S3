@@ -6,9 +6,10 @@ import org.apache.mina.core.buffer.IoBuffer;
 import org.apache.mina.core.session.IoSession;
 import org.apache.mina.filter.codec.ProtocolEncoder;
 import org.apache.mina.filter.codec.ProtocolEncoderOutput;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import client.MapleClient;
-import constants.ServerConstants;
 import packet.opcode.SendPacketOpcode;
 import packet.transfer.read.ByteStream;
 import packet.transfer.read.ReadingMaple;
@@ -16,18 +17,17 @@ import packet.transfer.write.Packet;
 import tools.HexTool;
 
 public class MapleEncoder implements ProtocolEncoder {
-
+	private static final Logger logger = LoggerFactory.getLogger(MapleEncoder.class);
+	
 	@Override
 	public void encode(final IoSession session, final Object message, final ProtocolEncoderOutput out) throws Exception {
 		final MapleClient client = (MapleClient) session.getAttribute(MapleClient.CLIENT_KEY);
 
-		if (ServerConstants.showPackets) {
+		if (logger.isDebugEnabled()) {
 			final byte[] data = ((Packet) message).getBytes();
 			final ReadingMaple rh = new ReadingMaple(new ByteStream(data));
 			final short header_num = rh.readShort();
-			final StringBuilder sb = new StringBuilder("SEND - [" + SendPacketOpcode.getOpcodeName(header_num) + "] : ");
-			sb.append(HexTool.toString(data)).append("\n").append(HexTool.toStringFromAscii(data)).append("\n\n");
-			System.out.println(sb.toString());
+			logger.debug("SEND - [{}] {} \n {} ", SendPacketOpcode.getOpcodeName(header_num), HexTool.toString(data), HexTool.toStringFromAscii(data));
 		}
 		
 		if (client != null) {

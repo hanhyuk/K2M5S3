@@ -6,6 +6,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Calendar;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import constants.ServerConstants;
 import constants.programs.AutoReboot;
 import constants.programs.ControlUnit;
@@ -25,12 +28,13 @@ import server.items.CashItemFactory;
 import server.life.MapleMonsterProvider;
 
 public final class Start {
-
-	public static long START = System.currentTimeMillis();
-
+	
+	private static final Logger logger = LoggerFactory.getLogger(Start.class);
+	
 	public static void main(String args[]) throws IOException {
-
-		System.out.println("[알림] 에뮬레이터 :: V1.2." + ServerConstants.MAPLE_VERSION + " 버전이 실행되었습니다.\n");
+		final long START = System.currentTimeMillis();
+		
+		logger.info("[알림] 에뮬레이터 :: V1.2." + ServerConstants.MAPLE_VERSION + " 버전이 실행되었습니다.\n");
 
 		ServerConstants.loadServerSetProp();
 		
@@ -74,7 +78,6 @@ public final class Start {
 		/* 세부 쓰레드 시작 */
 		DatabaseGarbageCollector.main(args);
 		DatabaseBackup.getInstance().startTasking();
-		AutoReboot.main(args);
 		ControlUnit.main(args);
 		System.gc();
 

@@ -3,6 +3,8 @@ package handler;
 import org.apache.mina.core.service.IoHandlerAdapter;
 import org.apache.mina.core.session.IdleStatus;
 import org.apache.mina.core.session.IoSession;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import client.MapleClient;
 import constants.ServerConstants;
@@ -46,7 +48,6 @@ import packet.transfer.read.ByteStream;
 import packet.transfer.read.ReadingMaple;
 import packet.transfer.write.Packet;
 import server.items.EnforceSystem;
-import tools.CurrentTime;
 import tools.Randomizer;
 import tools.StringUtil;
 
@@ -54,7 +55,8 @@ import tools.StringUtil;
  * 소켓통신 할때 read, write 하는 등의 동작을 이곳에 구현한다.
  */
 public class MapleServerHandler extends IoHandlerAdapter {
-
+	private static final Logger logger = LoggerFactory.getLogger(MapleServerHandler.class);
+	
 	private int channel = 0;
 	private ServerType type = null;
 	
@@ -105,13 +107,13 @@ public class MapleServerHandler extends IoHandlerAdapter {
 
 		switch (type) {
 		case LOGIN:
-			System.out.println("[알림] " + address + " 에서 로그인 서버로 연결을 시도했습니다.");
+			logger.info("[알림] {} 에서 로그인 서버로 연결을 시도했습니다.", address);
 			break;
 		case CHANNEL:
-			System.out.println("[알림] " + address + " 에서 채널 서버로 연결을 시도했습니다.");
+			logger.info("[알림] {} 에서 채널 서버로 연결을 시도했습니다.", address);
 			break;
 		case CASHSHOP:
-			System.out.println("[알림] " + address + " 에서 캐시샵 서버로 연결을 시도했습니다.");
+			logger.info("[알림] {} 에서 캐시샵 서버로 연결을 시도했습니다.", address);
 			break;
 		default:
 		}
@@ -209,9 +211,7 @@ public class MapleServerHandler extends IoHandlerAdapter {
 			InterServerHandler.getGameQuitRequest(rh, c);
 			break;
 		case LOGIN_REQUEST:
-			System.out.println("----------- 경고 ---------");
-			System.out.println("LOGIN_REQUEST 패킷 발견!");
-			System.out.println("--------------------------");
+			logger.warn("LOGIN_REQUEST 패킷 발견!");
 			//CharLoginHandler.getLoginRequest(rh, c);
 			break;
 		case REDISPLAY_CHANNEL:
@@ -219,9 +219,7 @@ public class MapleServerHandler extends IoHandlerAdapter {
 			CharLoginHandler.getDisplayChannel(false, c);
 			break;
 		case ENTER_CREATE_CHAR:
-			System.out.println("----------- 경고 ---------");
-			System.out.println("ENTER_CREATE_CHAR 패킷 발견!");
-			System.out.println("--------------------------");
+			logger.warn("ENTER_CREATE_CHAR 패킷 발견!");
 			//CharLoginHandler.getIPRequest(rh, c);
 			break;
 		case SECONDPW_RESULT_R:
@@ -231,9 +229,7 @@ public class MapleServerHandler extends IoHandlerAdapter {
 			CharLoginHandler.getSessionCheck(rh, c);
 			break;
 		case NEW_CONNECTION:
-			System.out.println("----------- 경고 ---------");
-			System.out.println("NEW_CONNECTION 패킷 발견!");
-			System.out.println("--------------------------");
+			logger.warn("NEW_CONNECTION 패킷 발견!");
 			// CharLoginHandler.newConnection(c);
 			break;
 		case PONG:
@@ -280,10 +276,7 @@ public class MapleServerHandler extends IoHandlerAdapter {
 			CharLoginHandler.DeleteChar(rh, c);
 			break;
 		case CHAR_SELECT:
-			System.out.println("----------- 경고 ---------");
-			System.out.println("CHAR_SELECT Character_WithSecondPassword 호출!");
-			System.out.println("--------------------------");
-			
+			logger.info("CHAR_SELECT 패킷 호출");
 			CharLoginHandler.Character_WithSecondPassword(rh, c);
 			break;
 		case AUTH_LOGIN_WITH_SPW:
@@ -304,18 +297,12 @@ public class MapleServerHandler extends IoHandlerAdapter {
 			if (type == ServerType.CHANNEL) {
 				InterServerHandler.Loggedin(playerid, c);
 			} else {
-				System.out.println("----------- 경고 ---------");
-				System.out.println("PLAYER_LOGGEDIN EnterCs 호출!");
-				System.out.println("--------------------------");
-				
+				logger.info("PLAYER_LOGGEDIN 패킷 EnterCS() 호출");
 				CashShopOperation.EnterCS(playerid, c);
 			}
 			break;
 		case ENTER_CASH_SHOP:
-			System.out.println("----------- 경고 ---------");
-			System.out.println("ENTER_CASH_SHOP EnterCs 호출!");
-			System.out.println("--------------------------");
-			
+			logger.info("ENTER_CASH_SHOP 패킷 호출");
 			InterServerHandler.EnterCS(c, c.getPlayer(), true);
 			break;
 		case ENTER_MTS:

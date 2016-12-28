@@ -1,12 +1,3 @@
-/*
- * ArcStory Project
- * 최주원 sch2307@naver.com
- * 이준 junny_adm@naver.com
- * 우지훈 raccoonfox69@gmail.com
- * 강정규 ku3135@nate.com
- * 김진홍 designer@inerve.kr
- */
-
 package constants.programs;
 
 import java.io.Console;
@@ -29,10 +20,6 @@ import provider.MapleDataTool;
 import server.items.ItemInformation;
 import tools.Triple;
 
-/**
-*
-* @author 온라인월드
-*/
 public class ShopMaker {
     private static List<Integer> EXCPET_ITEMS = Arrays.asList(1082392, 1082393, 1082394, 1003142, 1402037, 1002140, 1042003, 1062007, 1322013, 1142249);
     private static int NPC = -1;

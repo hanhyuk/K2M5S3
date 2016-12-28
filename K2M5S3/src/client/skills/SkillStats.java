@@ -9,9 +9,10 @@
 
 package client.skills;
 
-import tools.CaltechEval;
 import java.util.HashMap;
 import java.util.Map;
+
+import tools.CaltechEval;
 
 public class SkillStats {
     private final int level;

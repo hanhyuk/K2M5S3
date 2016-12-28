@@ -1,12 +1,3 @@
-/*
- * ArcStory Project
- * 최주원 sch2307@naver.com
- * 이준 junny_adm@naver.com
- * 우지훈 raccoonfox69@gmail.com
- * 강정규 ku3135@nate.com
- * 김진홍 designer@inerve.kr
- */
-
 package tools;
 
 import java.lang.management.LockInfo;
@@ -14,19 +5,16 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.MonitorInfo;
 import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
-import org.slf4j.Logger;
 
+/**
+ * TODO 어떤 용도로 사용되는지 확인 필요.
+ */
 public class DeadLockDetector extends Thread {
 
-
     public static final byte NOTHING = 0;
-
     public static final byte RESTART = 1;
-
     private final int sleepTime;
-
     private final ThreadMXBean tmx;
-
     private final byte doWhenDL;
 
     public DeadLockDetector(int sleepTime, byte doWhenDL) {

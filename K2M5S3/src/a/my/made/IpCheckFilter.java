@@ -7,14 +7,23 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.mina.core.filterchain.IoFilterAdapter;
 import org.apache.mina.core.session.IoSession;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import tools.Pair;
 
 /**
  * 클라이언트에서 로그인 서버로 접근 할때, 접근주기가 너무 빠를 경우 접속차단하도록 처리.
  * 차단 된 아이피는 서버를 리붓하기 전에는 접속 할 수 없다.
+ * 
+ * @deprecated 현재 사용하지 않음
+ * FIXME 접속기를 통해서 접속할 경우 아이피를 체크하는건 현재 아무 소용이 없다.
+ * 그래서 접속기쪽 소스를 분석해서 뭔가 대책을 세워야 한다.
+ * 
  */
 public class IpCheckFilter extends IoFilterAdapter {
+	private static final Logger logger = LoggerFactory.getLogger(IpCheckFilter.class);
+	
 	/**
 	 * 접속 시도 간격 
 	 */
@@ -32,7 +41,7 @@ public class IpCheckFilter extends IoFilterAdapter {
 		final String address = session.getRemoteAddress().toString().split(":")[0];
 		
 		if (blockedIpList.contains(address)) {
-			System.out.println("블록 처리된 [" + address + "] 에서 로그인을 시도 하였습니다. 연결을 해제 합니다.");
+			logger.warn("블록 처리된 [{}] 에서 로그인을 시도 하였습니다. 연결을 해제 합니다.", address);
 			session.closeNow();
 			return;
 		}
@@ -54,7 +63,7 @@ public class IpCheckFilter extends IoFilterAdapter {
 			
 			//CHECK_COUNT 값 이상 시도한 경우 아이피 블록 처리 
 			if (CHECK_COUNT <= count) {
-				System.out.println("[" + address + "] 아이피를 블록 처리 하였습니다. 연결을 해제 합니다.");
+				logger.warn("[{}] 아이피를 블록 처리 하였습니다. 연결을 해제 합니다.", address);
 				blockedIpList.add(address);
 				tracker.remove(address);
 				session.closeNow();

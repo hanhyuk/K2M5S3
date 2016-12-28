@@ -1,23 +1,17 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package constants.programs;
 
-import database.MYSQL;
 import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
 import javax.swing.JOptionPane;
-import launch.Start;
+
+import database.MYSQL;
 
 /**
- *
- * @author Asteria
+ * TODO 현재 사용하고 있지 않음. 분석 필요.
  */
 public class RollingCreator extends javax.swing.JFrame {
 

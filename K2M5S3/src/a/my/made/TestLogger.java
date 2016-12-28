@@ -9,7 +9,5 @@ public class TestLogger {
 	
 	public static void main(String[] args) {
 		logger.debug("debug ÇÑÈ«ÀÌ");
-		atest.Test.main(args);
-		atest.p1.s1.Test.main(args);
 	}
 }

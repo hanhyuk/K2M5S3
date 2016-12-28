@@ -1,12 +1,3 @@
-/*
- * ArcStory Project
- * √÷¡÷ø¯ sch2307@naver.com
- * ¿Ã¡ÿ junny_adm@naver.com
- * øÏ¡ˆ»∆ raccoonfox69@gmail.com
- * ∞≠¡§±‘ ku3135@nate.com
- * ±Ë¡¯»´ designer@inerve.kr
- */
-
 package scripting;
 
 import java.io.File;
@@ -28,60 +19,60 @@ import server.maps.MaplePortal;
 
 public class PortalScriptManager {
 
-    private static final PortalScriptManager instance = new PortalScriptManager();
-    private final Map<String, PortalScript> scripts = new HashMap<String, PortalScript>();
-    private final static ScriptEngineFactory sef = new ScriptEngineManager().getEngineByName("nashorn").getFactory();
+	private static final PortalScriptManager instance = new PortalScriptManager();
+	private final Map<String, PortalScript> scripts = new HashMap<String, PortalScript>();
+	private final static ScriptEngineFactory sef = new ScriptEngineManager().getEngineByName("nashorn").getFactory();
 
-    public final static PortalScriptManager getInstance() {
-	return instance;
-    }
-
-    private final PortalScript getPortalScript(final String scriptName) {
-	if (scripts.containsKey(scriptName)) {
-	    return scripts.get(scriptName);
+	public final static PortalScriptManager getInstance() {
+		return instance;
 	}
 
-	final File scriptFile = new File("Scripts/portal/" + scriptName + ".js");
-	if (!scriptFile.exists()) {
-	    scripts.put(scriptName, null);
-	    return null;
-	}
-
-	FileReader fr = null;
-	final ScriptEngine portal = sef.getScriptEngine();
-	try {
-	    fr = new FileReader(scriptFile);
-	    CompiledScript compiled = ((Compilable) portal).compile(fr);
-	    compiled.eval();
-	} catch (final ScriptException e) {
-	    System.err.println("THROW" + e);
-	} catch (final IOException e) {
-	    System.err.println("THROW" + e);
-	} finally {
-	    if (fr != null) {
-		try {
-		    fr.close();
-		} catch (final IOException e) {
-		    System.err.println("ERROR CLOSING" + e);
+	private final PortalScript getPortalScript(final String scriptName) {
+		if (scripts.containsKey(scriptName)) {
+			return scripts.get(scriptName);
 		}
-	    }
+
+		final File scriptFile = new File("Scripts/portal/" + scriptName + ".js");
+		if (!scriptFile.exists()) {
+			scripts.put(scriptName, null);
+			return null;
+		}
+
+		FileReader fr = null;
+		final ScriptEngine portal = sef.getScriptEngine();
+		try {
+			fr = new FileReader(scriptFile);
+			CompiledScript compiled = ((Compilable) portal).compile(fr);
+			compiled.eval();
+		} catch (final ScriptException e) {
+			System.err.println("THROW" + e);
+		} catch (final IOException e) {
+			System.err.println("THROW" + e);
+		} finally {
+			if (fr != null) {
+				try {
+					fr.close();
+				} catch (final IOException e) {
+					System.err.println("ERROR CLOSING" + e);
+				}
+			}
+		}
+		final PortalScript script = ((Invocable) portal).getInterface(PortalScript.class);
+		scripts.put(scriptName, script);
+		return script;
 	}
-	final PortalScript script = ((Invocable) portal).getInterface(PortalScript.class);
-	scripts.put(scriptName, script);
-	return script;
-    }
 
-    public final void executePortalScript(final MaplePortal portal, final MapleClient c) {
-	final PortalScript script = getPortalScript(portal.getScriptName());
+	public final void executePortalScript(final MaplePortal portal, final MapleClient c) {
+		final PortalScript script = getPortalScript(portal.getScriptName());
 
-	if (script != null) {
-	    script.enter(new PortalPlayerInteraction(c, portal));
-	} else {
-	    System.out.println("Unhandled portal script " + portal.getScriptName());
+		if (script != null) {
+			script.enter(new PortalPlayerInteraction(c, portal));
+		} else {
+			System.out.println("Unhandled portal script " + portal.getScriptName());
+		}
 	}
-    }
 
-    public final void clearScripts() {
-	scripts.clear();
-    }
+	public final void clearScripts() {
+		scripts.clear();
+	}
 }
