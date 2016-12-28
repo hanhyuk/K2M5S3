@@ -213,7 +213,7 @@ public class CharCommands implements Command {
 	    if (splitted.length > 2) {
                 StringBuilder sb = new StringBuilder();
                 sb.append(StringUtil.joinStringFrom(splitted, 2));
-                if (!c.getPlayer().hasGmLevel((byte) 5)) {
+                if (!c.getPlayer().hasGmLevel(5)) {
                     if (Integer.parseInt(splitted[1]) >= 12) {
                         c.getPlayer().dropMessage(6, "사용할 수 없는 색깔코드입니다. 사용가능코드 : 0~11");
                         return;

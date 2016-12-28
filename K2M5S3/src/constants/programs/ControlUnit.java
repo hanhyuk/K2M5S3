@@ -1149,7 +1149,6 @@ public class ControlUnit extends javax.swing.JFrame {
 					public void run() {
 						c.disconnect(true, (c.getLoginState() == 4 || c.getLoginState() == 5));
 						c.getSession().closeNow();
-						c.getSession().closeNow();
 					}
 				}, 3000);
 				JOptionPane.showMessageDialog(null, jTextField8.getText() + "유저를 밴 하였습니다.");

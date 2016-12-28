@@ -142,7 +142,7 @@ public class CommandProcessor {
 	chr.dropMessage(6, "명령 도움말: --------" + page + "---------");
 	for (int i = startEntry; i < startEntry + 20 && i < allCommands.size(); i++) {
 	    CommandDefinition commandDefinition = allCommands.get(i).getDefinition();
-	    if (chr.hasGmLevel((byte) commandDefinition.getRequiredLevel())) {
+	    if (chr.hasGmLevel(commandDefinition.getRequiredLevel())) {
 		chr.dropMessage(6, commandDefinition.getCommand() + " " + commandDefinition.getParameterDescription() + ": " + commandDefinition.getHelp());
 	    }
 	}

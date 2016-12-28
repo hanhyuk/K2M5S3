@@ -1,12 +1,3 @@
-/*
- * ArcStory Project
- * 최주원 sch2307@naver.com
- * 이준 junny_adm@naver.com
- * 배지훈 raccoonfox69@gmail.com
- * 강정규 ku3135@nate.com
- * 김진홍 designer@inerve.kr
- */
-
 package client.commands;
 
 import java.sql.PreparedStatement;
@@ -55,22 +46,6 @@ public class BanningCommands implements Command {
 				}
 			}
 
-		} else if (splitted[0].equals("!기간밴")) {
-			final MapleCharacter character = cserv.getPlayerStorage().getCharacterByName(splitted[1]);
-			final int reason = Integer.parseInt(splitted[2]);
-			final int numDay = Integer.parseInt(splitted[3]);
-
-			final Calendar cal = Calendar.getInstance();
-			cal.add(Calendar.DATE, numDay);
-			final DateFormat df = DateFormat.getInstance();
-
-			if (character == null) {
-				c.getPlayer().dropMessage(6, "해당 캐릭터를 찾을 수 없습니다.");
-				return;
-			}
-			character.tempban(String.format("[%s] %s", c.getPlayer().getName(), reason), cal);
-			c.getPlayer().dropMessage(6, "" + splitted[1] + " 캐릭터가 " + df.format(cal.getTime()) + " 까지 성공적으로 밴 되었습니다.");
-
 		} else if (splitted[0].equals("!밴풀기")) {
 			if (splitted.length < 1) {
 				c.getPlayer().dropMessage(6, "!밴풀기 <캐릭터이름>");
@@ -117,7 +92,6 @@ public class BanningCommands implements Command {
 		return new CommandDefinition[] {
 				new CommandDefinition("밴", "<캐릭터이름> <이유>", "해당 ip와 mac주소, 계정을 영구적으로 밴 시킵니다.", 3),
 				new CommandDefinition("밴풀기", "<캐릭터이름>", "밴 된 ip와 mac주소, 계정의 밴을 해제합니다.", 3),
-				new CommandDefinition("기간밴", "<캐릭터이름> <이유> <밴 될 일수>", "해당 계정을 해당 일 수 동안 밴 시킵니다.", 3),
 				new CommandDefinition("접속끊기", "[-f] <캐릭터이름>", "해당 캐릭터를 강제로 접속종료시킵니다. 현접에걸렸다면 -f 옵션을 사용하세요.", 3) };
 	}
 }

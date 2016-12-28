@@ -1,13 +1,11 @@
 package handler.login;
 
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.locks.Lock;
 
-import a.my.made.CommonTypeCheck;
+import a.my.made.AccountStatusType;
+import a.my.made.CommonType;
 import client.MapleCharacter;
 import client.MapleCharacterUtil;
 import client.MapleClient;
@@ -30,7 +28,7 @@ import tools.Randomizer;
 public class CharLoginHandler {
 
 	/**
-	 * 클라이언트에서 로그인 요청시
+	 * RECV LOGIN_PASSWORD 패킷 처리
 	 */
 	public static void login(ReadingMaple rh, MapleClient c) {
 
@@ -49,47 +47,33 @@ public class CharLoginHandler {
 			String login = rh.readMapleAsciiString(); // 로그인 ID
 			String pwd = rh.readMapleAsciiString(); // 비밀번호
 
-			CommonTypeCheck checkType = AutoRegister.checkAccount(login);
+			CommonType checkType = AutoRegister.checkAccount(login);
 
-			if (CommonTypeCheck.ACCOUNT_YES == checkType) {
+			if (CommonType.ACCOUNT_CREATE_POSSIBLE == checkType) {
 				AutoRegister.registerAccount(c, login, pwd);
 				c.send(MainPacketCreator.serverNotice(1, "계정이 생성 되었습니다.\r\n다시 로그인 하세요."));
 				c.send(LoginPacket.getLoginFailed(20));
 				c.addLoginTryCount();
-			} else if (CommonTypeCheck.ACCOUNT_OVER == checkType) {
-				//TODO 현재 ACCOUNT_OVER 값이 반환이 안되는데. 그 이유는 
-				//유저가 다수의 계정을 생성했다고 판단할수 있는 기준이 현재 없다. 생각해볼 문제이다.
-				//[의견] 계정 생성 횟수를 제한하는게 아니라. 일정주기로 특정 레벨 이하 계정 또는 캐릭터를 삭제하도록
-				//스케쥴링 처리하는 방법이 최선일듯 하다.
-				c.send(MainPacketCreator.serverNotice(1, "더 이상 계정을 생성 할 수 없습니다."));
-				c.send(LoginPacket.getLoginFailed(20));
-				c.addLoginTryCount();
-			} else {
-				CommonTypeCheck commonType = c.login(login, pwd);
+			} else if( CommonType.ACCOUNT_EXISTS == checkType ) {
+				CommonType commonType = c.checkLoginAvailability(login, pwd);
 
-				if (CommonTypeCheck.LOGIN_SUCCESS == commonType) {
-					// 마지막으로 로그인이 성공한 날짜를 업데이트 한다.
-					// 실제 ingame 했을때(MapleClient.LOGIN_LOGGEDIN 상태) lastlogin
-					// 컬럼에 타임스템프를 찍는다.
-					// TODO 위 설명과 같이 마지막 로그인 날짜를 업데이트 하는건 불필요한 것이 아닌가 고민됨.
-					SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHH");
-					c.updateLastConnection(sdf.format(Calendar.getInstance().getTime()));
-					c.clearLoginTryCount();
+				if (CommonType.LOGIN_POSSIBLE == commonType) {
+					boolean isChanged = c.updateLoginState(AccountStatusType.FIRST_LOGIN.getValue(), c.getSessionIPAddress());
 					
-					//hh
-					//TODO finishLogin 메소드의 내용을 밖으로 빼고, 해당 메소드를 삭제 하도록 로직을 수정하자.
-					int result = c.finishLogin();
-					if( result == 0 ) {
+					if( isChanged ) {
 						c.send(LoginPacket.getAuthSuccessRequest(c));
 						CharLoginHandler.getDisplayChannel(true, c);
+						
+						c.clearLoginTryCount();
 					} else {
-						c.send(LoginPacket.getLoginFailed(7));
+						System.err.println("updateLoginState() - 사용자의 계정 접속 상태값 변경 실패. 원인 파악 필요.");
+						c.send(LoginPacket.getLoginFailed(6));
 						c.addLoginTryCount();
 					}
-				} else if (CommonTypeCheck.ACCOUNT_BAN == commonType) {
+				} else if (CommonType.ACCOUNT_BAN == commonType) {
 					c.send(LoginPacket.getLoginFailed(3));
 					c.addLoginTryCount();
-				} else if (CommonTypeCheck.LOGIN_ING == commonType) {
+				} else if (CommonType.LOGIN_ING == commonType) {
 					c.send(LoginPacket.getLoginFailed(7));
 					c.addLoginTryCount();
 				}
@@ -206,21 +190,26 @@ public class CharLoginHandler {
 		if (!c.isLoggedIn()) { // hack
 			return;
 		}
-		c.updateLoginState(MapleClient.LOGIN_SERVER_TRANSITION, c.getSessionIPAddress());
+		c.updateLoginState(AccountStatusType.SERVER_TRANSITION.getValue(), c.getSessionIPAddress());
 		c.getSession().write(MainPacketCreator.getServerIP(c, ServerConstants.basePorts + c.getChannel(), ServerConstants.BuddyChatPort, rh.readInt()));
 	}
 
 	/**
-	 * 로그인 하고 나서 서버 선택하는 화면에 노출되는 서버 리스트를 클라이언트로 전송한다.
+	 * 서버 선택하는 화면에 노출되는 서버 리스트를 클라이언트로 보낸다.
+	/**
+	 * @param firstLogin 사용자가 1차 로그인을 했을 경우 true
+	 * @param c MapleClient
 	 */
-	public static void getDisplayChannel(final boolean first_login, MapleClient c) {
-		c.getSession().write(LoginPacket.getChannelBackImg(first_login, (byte) (byte) Randomizer.rand(0, 1)));
+	public static void getDisplayChannel(final boolean firstLogin, final MapleClient c) {
+		c.getSession().write(LoginPacket.getChannelBackImg(firstLogin, (byte)Randomizer.rand(0, 1)));
+		
 		/* 겉 멀티월드 시작 */
 		int[] world = new int[] { 0, 1, 3, 4, 5, 10, 16, 29, 43, 44, 45 };
 		for (int i = 0; i < world.length; i++) {
 			c.getSession().write(LoginPacket.getServerList(world[i], WorldConnected.getConnected()));
 		}
 		/* 겉 멀티월드 종료 */
+		
 		c.getSession().write(LoginPacket.recommendWorld());
 		c.getSession().write(LoginPacket.getEndOfServerList());
 		c.getSession().write(LoginPacket.getLastWorld());
@@ -589,14 +578,7 @@ public class CharLoginHandler {
 			return;
 		}
 		if (c.CheckSecondPassword(password)) {
-			//TODO 로그인이 성공하고 나면 아래 로직의 의해 일정 주기 이후에 클라를 종료시킨다.2
-			//알고 보니 로그인 이후 ingame 하려면 2차 비밀번호를 입력해야 하는데
-			//해당 2차번호 인증이 성공할 경우 아래 종료처리 로직을 cancel 시킨다.
-			//내가 궁금한건 굳이 그렇게 해야 하는가 인데... 일단 사용하지 않도록 처리한다.
-//			if (c.getIdleTask() != null) {
-//				c.getIdleTask().cancel(true);
-//			}
-			c.updateLoginState(MapleClient.LOGIN_SERVER_TRANSITION, c.getSessionIPAddress());
+			c.updateLoginState(AccountStatusType.SERVER_TRANSITION.getValue(), c.getSessionIPAddress());
 			c.getSession().write(MainPacketCreator.getServerIP(c, ServerConstants.ChannelPort + c.getChannel(), ServerConstants.BuddyChatPort, charId));
 		} else {
 			c.getSession().write(LoginPacket.secondPwError((byte) 0x14));

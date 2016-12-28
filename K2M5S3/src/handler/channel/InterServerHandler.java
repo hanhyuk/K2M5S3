@@ -11,6 +11,7 @@ package handler.channel;
 
 import java.util.List;
 
+import a.my.made.AccountStatusType;
 import client.MapleCharacter;
 import client.MapleClient;
 import client.MapleQuestStatus;
@@ -93,7 +94,7 @@ public class InterServerHandler {
 		ChannelServer.addDiseaseToStorage(chr.getId(), chr.getAllDiseases());
 		ChannelServer.ChannelChange_Data(new ChracterTransfer(chr), chr.getId(), -10);
 		ch.removePlayer(chr);
-		c.updateLoginState(MapleClient.CHANGE_CHANNEL, c.getSessionIPAddress());
+		c.updateLoginState(AccountStatusType.CHANGE_CHANNEL.getValue(), c.getSessionIPAddress());
 
 		c.getSession().write(MainPacketCreator.getChannelChange(c, ServerConstants.CashShopPort)); // default
 																									// cashshop
@@ -103,11 +104,19 @@ public class InterServerHandler {
 		c.setPlayer(null);
 	}
 
+	/**
+	 * 사용자의 인게임(채널 서버로 접속) 처리를 담당한다.
+	 * 
+	 * TODO PLAYER_LOGGEDIN 패킷을 전달받으면 호출이 되는 메소드이다.
+	 * 1. 최초 로그인 할때 호출 되는지 확인이 필요
+	 * 2. 채널 변경시에도 호출 되는지 확인 필요.
+	 */
 	public static void Loggedin(final int playerid, final MapleClient c) {
 		final ChannelServer channelServer = c.getChannelServer();
 		MapleCharacter player;
+		
 		final ChracterTransfer transfer = channelServer.getPlayerStorage().getPendingCharacter(playerid);
-		if (transfer == null) { // Player isn't in storage, probably isn't CC
+		if (transfer == null) {
 			player = MapleCharacter.loadCharFromDB(playerid, c, true);
 		} else {
 			player = MapleCharacter.ReconstructChr(transfer, c, true);
@@ -125,7 +134,7 @@ public class InterServerHandler {
 
 		boolean allowLogin = false;
 
-		if (state == MapleClient.LOGIN_SERVER_TRANSITION || state == MapleClient.CHANGE_CHANNEL) {
+		if (state == AccountStatusType.SERVER_TRANSITION.getValue() || state == AccountStatusType.CHANGE_CHANNEL.getValue()) {
 			if (!ChannelServer.isCharacterListConnected(c.loadCharacterNames(), true)) {
 				allowLogin = true;
 			}
@@ -138,7 +147,7 @@ public class InterServerHandler {
 			}
 			return;
 		}
-		c.updateLoginState(MapleClient.LOGIN_LOGGEDIN, c.getSessionIPAddress());
+		c.updateLoginState(AccountStatusType.IN_CHANNEL.getValue(), c.getSessionIPAddress());
 
 		final ChannelServer cserv = ChannelServer.getInstance(c.getChannel());
 		cserv.addPlayer(player);
@@ -372,7 +381,7 @@ public class InterServerHandler {
 		ChannelServer.addDiseaseToStorage(chr.getId(), chr.getAllDiseases());
 		ChannelServer.ChannelChange_Data(new ChracterTransfer(chr), chr.getId(), channel);
 		ch.removePlayer(chr);
-		c.updateLoginState(MapleClient.CHANGE_CHANNEL, c.getSessionIPAddress());
+		c.updateLoginState(AccountStatusType.CHANGE_CHANNEL.getValue(), c.getSessionIPAddress());
 		c.getSession().write(MainPacketCreator.getChannelChange(c, ServerConstants.basePorts + (channel)));
 		chr.saveToDB(false, false);
 		chr.getMap().removePlayer(chr);

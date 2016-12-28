@@ -214,6 +214,7 @@ public class MapleServerHandler extends IoHandlerAdapter {
 			//CharLoginHandler.getLoginRequest(rh, c);
 			break;
 		case REDISPLAY_CHANNEL:
+			//TODO RECV REDISPLAY_CHANNEL 패킷이 언제 호출되는지 확인 필요.
 			CharLoginHandler.getDisplayChannel(false, c);
 			break;
 		case ENTER_CREATE_CHAR:
@@ -278,6 +279,10 @@ public class MapleServerHandler extends IoHandlerAdapter {
 			CharLoginHandler.DeleteChar(rh, c);
 			break;
 		case CHAR_SELECT:
+			System.out.println("----------- 경고 ---------");
+			System.out.println("CHAR_SELECT Character_WithSecondPassword 호출!");
+			System.out.println("--------------------------");
+			
 			CharLoginHandler.Character_WithSecondPassword(rh, c);
 			break;
 		case AUTH_LOGIN_WITH_SPW:

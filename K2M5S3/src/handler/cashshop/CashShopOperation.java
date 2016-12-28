@@ -32,6 +32,8 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
+
+import a.my.made.AccountStatusType;
 import server.quest.MapleQuest;
 
 public class CashShopOperation {
@@ -39,9 +41,8 @@ public class CashShopOperation {
 	public static void LeaveCS(final ReadingMaple rh, final MapleClient ha, final MapleCharacter hp) {
 		final CashShopServer cs = CashShopServer.getInstance();
 		cs.getPlayerStorage().deregisterPlayer(hp);
-		ha.updateLoginState(MapleClient.LOGIN_SERVER_TRANSITION, ha.getSessionIPAddress());
-		ChannelServer.getInstance(ha.getChannel()).ChannelChange_Data(new ChracterTransfer(hp), hp.getId(),
-				ha.getChannel());
+		ha.updateLoginState(AccountStatusType.SERVER_TRANSITION.getValue(), ha.getSessionIPAddress());
+		ChannelServer.getInstance(ha.getChannel()).ChannelChange_Data(new ChracterTransfer(hp), hp.getId(), ha.getChannel());
 		ha.getSession().write(MainPacketCreator.getChannelChange(ha, ServerConstants.basePorts + (ha.getChannel())));
 		hp.saveToDB(false, true);
 		try {
@@ -64,39 +65,39 @@ public class CashShopOperation {
 		ha.isCS = false;
 	}
 
-	public static final void EnterCS(final int playerid, final MapleClient ha) {
-		final CashShopServer cs = CashShopServer.getInstance();
-		final ChracterTransfer transfer = cs.getPlayerStorage().getPendingCharacter(playerid);
+	public static final void EnterCS(final int playerid, final MapleClient c) {
+		final CashShopServer cashShopServer = CashShopServer.getInstance();
+		final ChracterTransfer transfer = cashShopServer.getPlayerStorage().getPendingCharacter(playerid);
 
-		MapleCharacter chr = MapleCharacter.ReconstructChr(transfer, ha, false);
-		ha.setPlayer(chr);
-		ha.setAccID(chr.getAccountID());
-		ha.isCS = true;
+		MapleCharacter chr = MapleCharacter.ReconstructChr(transfer, c, false);
+		c.setPlayer(chr);
+		c.setAccID(chr.getAccountID());
+		c.isCS = true;
 
-		final int state = ha.getLoginState();
+		final int state = c.getLoginState();
 		boolean allowLogin = true;
-		if (state == MapleClient.LOGIN_SERVER_TRANSITION || state == MapleClient.CHANGE_CHANNEL) {
-			if (!ChannelServer.isCharacterListConnected(ha.loadCharacterNames(), false)) {
+		if (state == AccountStatusType.SERVER_TRANSITION.getValue() || state == AccountStatusType.CHANGE_CHANNEL.getValue()) {
+			if (!ChannelServer.isCharacterListConnected(c.loadCharacterNames(), false)) {
 				allowLogin = true;
 			}
 		}
 		if (!allowLogin) {
-			ha.setPlayer(null);
-			ha.getSession().closeNow();
+			c.setPlayer(null);
+			c.getSession().closeNow();
 			return;
 		}
-		ha.updateLoginState(MapleClient.LOGIN_LOGGEDIN, ha.getSessionIPAddress());
+		c.updateLoginState(AccountStatusType.IN_CASHSHOP.getValue(), c.getSessionIPAddress());
 
-		cs.getPlayerStorage().registerPlayer(chr);
+		cashShopServer.getPlayerStorage().registerPlayer(chr);
 
-		ha.getSession().write(CashPacket.warpCS(ha));
-		ha.getSession().write(CashPacket.enableUse());
-		ha.getSession().write(CashPacket.enableUse3(ha.getPlayer()));
-		ha.getSession().write(CashPacket.showCashInventory(ha));
-		ha.getSession().write(CashPacket.sendWishList(chr, false));
-		ha.getSession().write(CashPacket.getCSCody());
-		ha.getSession().write(CashPacket.showGifts());
-		ha.getSession().write(CashPacket.showNXMapleTokens(chr));
+		c.getSession().write(CashPacket.warpCS(c));
+		c.getSession().write(CashPacket.enableUse());
+		c.getSession().write(CashPacket.enableUse3(c.getPlayer()));
+		c.getSession().write(CashPacket.showCashInventory(c));
+		c.getSession().write(CashPacket.sendWishList(chr, false));
+		c.getSession().write(CashPacket.getCSCody());
+		c.getSession().write(CashPacket.showGifts());
+		c.getSession().write(CashPacket.showNXMapleTokens(chr));
 	}
 
 	public static final void CSUpdate(ReadingMaple rh, final MapleClient ha, final MapleCharacter chr) {

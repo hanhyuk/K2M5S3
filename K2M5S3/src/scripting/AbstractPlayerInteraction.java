@@ -970,6 +970,9 @@ public class AbstractPlayerInteraction {
         }
     }
     
+    /**
+     * 접속 중인 GM 들에게만 보스레이드 시작을 알림.
+     */
     public final void warningStartBoss(String name) {
         WorldBroadcasting.broadcastGM(MainPacketCreator.getGMText(5, "[GM알림] "+ getClient().getChannel() +" 채널서버에서 "+ name +" 보스 레이드가 시작되었습니다. 맵 코드 : "+getPlayer().getMapId()).getBytes());
     }

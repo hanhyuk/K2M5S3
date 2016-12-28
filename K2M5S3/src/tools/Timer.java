@@ -77,21 +77,21 @@ public abstract class Timer {
 		if (scheduledExecutor == null) {
 			return null;
 		}
-		return scheduledExecutor.scheduleAtFixedRate(new LoggingSaveRunnable(r), delay, repeatTime, TimeUnit.MILLISECONDS);
+		return scheduledExecutor.scheduleAtFixedRate(new ScheduledCommand(r), delay, repeatTime, TimeUnit.MILLISECONDS);
 	}
 
 	public ScheduledFuture<?> register(Runnable r, long repeatTime) {
 		if (scheduledExecutor == null) {
 			return null;
 		}
-		return scheduledExecutor.scheduleAtFixedRate(new LoggingSaveRunnable(r), 0, repeatTime, TimeUnit.MILLISECONDS);
+		return scheduledExecutor.scheduleAtFixedRate(new ScheduledCommand(r), 0, repeatTime, TimeUnit.MILLISECONDS);
 	}
 
 	public ScheduledFuture<?> schedule(Runnable r, long delay) {
 		if (scheduledExecutor == null) {
 			return null;
 		}
-		return scheduledExecutor.schedule(new LoggingSaveRunnable(r), delay, TimeUnit.MILLISECONDS);
+		return scheduledExecutor.schedule(new ScheduledCommand(r), delay, TimeUnit.MILLISECONDS);
 	}
 
 	//TODO EventManager 클래스에서 사용되는데 현재 활용되는 부분이 없는지 확인하자.
@@ -99,11 +99,11 @@ public abstract class Timer {
 		return schedule(r, timestamp - System.currentTimeMillis());
 	}
 
-	private static class LoggingSaveRunnable implements Runnable {
+	private static class ScheduledCommand implements Runnable {
 
 		Runnable r;
 		
-		public LoggingSaveRunnable(final Runnable r) {
+		public ScheduledCommand(final Runnable r) {
 			this.r = r;
 		}
 

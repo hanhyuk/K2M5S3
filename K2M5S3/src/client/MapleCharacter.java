@@ -38,6 +38,8 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 
+import a.my.made.AccountStatusType;
+import a.my.made.LogUtils;
 import client.items.Equip;
 import client.items.IEquip;
 import client.items.IItem;
@@ -152,7 +154,13 @@ public class MapleCharacter extends AnimatedHinaMapObjectExtend implements Inven
 	private transient Map<Integer, Integer> damageMeter = new ArrayMap<Integer, Integer>();
 	private long lastCombo, lastfametime, keydown_skill, lastSummonTime, lastChannelChange = System.currentTimeMillis(),
 			exp, meso;
-	private byte gender, secondGender, skinColor, secondSkinColor, gmLevel, burning;
+	private byte gender, secondGender, skinColor, secondSkinColor, burning;
+	
+	/**
+	 * TODO GMType 클래스를 사용하는 형태로 변경이 필요함.
+	 */
+	private byte gmLevel;
+	
 	private short level, job, combo;
 	private List<MapleSummon> mines = new ArrayList<MapleSummon>();
 	public IItem cashPacketTemp = null;
@@ -204,8 +212,14 @@ public class MapleCharacter extends AnimatedHinaMapObjectExtend implements Inven
 	private transient Map<BuffStats, List<BuffStatsValueHolder>> effects = new LinkedHashMap<BuffStats, List<BuffStatsValueHolder>>();
 	private transient Map<BuffStats, List<StackedSkillEntry>> stackedEffects = new LinkedHashMap<BuffStats, List<StackedSkillEntry>>();
 	private MapleCashInventory cashInv;
+	
+	/**
+	 * TODO CustomValues, CustomValues2 관련 분석 필요. 이쪽에 추뎀 시스템과 연관된 부분도 있는 것으로 생각됨. 
+	 */
 	private Map<String, String> CustomValues = new HashMap<String, String>();
 	private Map<String, Integer> CustomValues2 = new HashMap<String, Integer>();
+	
+	
 	private transient Map<Integer, MapleSummon> summons;
 	private transient Map<Integer, CoolDownValueHolder> coolDowns = new LinkedHashMap<Integer, CoolDownValueHolder>(50);
 	private transient Map<DiseaseStats, DiseaseValueHolder> diseases;
@@ -1824,11 +1838,11 @@ public class MapleCharacter extends AnimatedHinaMapObjectExtend implements Inven
 			if (!ServerConstants.realese) {
 				e.printStackTrace();
 			}
-			System.err.println(MapleClient.getLogMessage(this, "[charsave] Error saving character data."));
+			System.err.println(LogUtils.getLogMessage(this, "[charsave] Error saving character data."));
 			try {
 				con.rollback();
 			} catch (SQLException ex) {
-				System.err.println(MapleClient.getLogMessage(this, "[charsave] Error Rolling Back"));
+				System.err.println(LogUtils.getLogMessage(this, "[charsave] Error Rolling Back"));
 				ex.printStackTrace();
 			}
 		} finally {
@@ -3754,7 +3768,7 @@ public class MapleCharacter extends AnimatedHinaMapObjectExtend implements Inven
 		return gmLevel;
 	}
 
-	public boolean hasGmLevel(byte level) {
+	public boolean hasGmLevel(int level) {
 		return gmLevel >= level;
 	}
 
@@ -4266,7 +4280,8 @@ public class MapleCharacter extends AnimatedHinaMapObjectExtend implements Inven
 	}
 
 	/**
-	 * 해당 계정을 일정 기간동안 벤 시킨다.
+	 * @deprecated 해당 계정을 일정 기간동안 벤 시킨다.
+	 * 
 	 * @param reason
 	 * @param duration
 	 * @return true : 벤 성공
@@ -6817,7 +6832,7 @@ public class MapleCharacter extends AnimatedHinaMapObjectExtend implements Inven
 		ch.removePlayer(chr);
 		chr.getMap().removePlayer(chr);
 		c.setPlayer(null);
-		c.updateLoginState(MapleClient.CHANGE_CHANNEL, c.getSessionIPAddress());
+		c.updateLoginState(AccountStatusType.CHANGE_CHANNEL.getValue(), c.getSessionIPAddress());
 		c.getSession().write(MainPacketCreator.getChannelChange(c, ServerConstants.basePorts + (channel)));
 	}
 

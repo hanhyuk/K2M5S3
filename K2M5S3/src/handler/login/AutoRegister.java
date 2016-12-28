@@ -4,7 +4,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 
-import a.my.made.CommonTypeCheck;
+import a.my.made.CommonType;
 import client.MapleClient;
 import constants.ServerConstants;
 import database.MYSQL;
@@ -13,14 +13,9 @@ public class AutoRegister {
 
 	/**
 	 * 계정 생성이 가능한지 체크한다.
-	 * 
-	 * @param client
-	 * @param loginId
-	 * @param loginPassword
-	 * @return
 	 */
-	public static CommonTypeCheck checkAccount(String loginId) {
-		CommonTypeCheck accountType = CommonTypeCheck.ACCOUNT_YES;
+	public static CommonType checkAccount(String loginId) {
+		CommonType accountType = CommonType.ACCOUNT_CREATE_POSSIBLE;
 		Connection connect = MYSQL.getConnection();
 		PreparedStatement ps = null;
 		ResultSet rs = null;
@@ -31,7 +26,7 @@ public class AutoRegister {
 			rs = ps.executeQuery();
 
 			if( rs.next() ) {
-				accountType = CommonTypeCheck.ACCOUNT_EXIST;
+				accountType = CommonType.ACCOUNT_EXISTS;
 			}
 			//FIXME 벤 처리 여부 체크
 		} catch (Exception e) {
