@@ -1,19 +1,21 @@
 package client.skills;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import client.MapleCharacter;
 import packet.transfer.write.WritingPacket;
-import java.util.*;
 
-/**
- *
- * @author T-Sun
- * 
- *   This file was written by T-Sun (doomgate17@naver.com)
- *
- *
- *
- */
 public class PhantomSteelSkill {
+	private static final Logger logger = LoggerFactory.getLogger(PhantomSteelSkill.class);
+	
     // * 리스트 하나로 처리도 가능할 것 같은데.. 지금은 패스.
     List<SteelSkillEntry> job1Skills = new ArrayList<SteelSkillEntry>();
     List<SteelSkillEntry> job2Skills = new ArrayList<SteelSkillEntry>();
@@ -35,7 +37,7 @@ public class PhantomSteelSkill {
         } else if (index == 5) {
             task = job5Skills;
         } else {
-            System.err.println("[오류] 인덱스가 해당하지 않는 번호입니다.");
+        	logger.debug("[오류] 인덱스가 해당하지 않는 번호입니다.");
             return -1;
         }
         int lastfree = 1;
@@ -65,7 +67,7 @@ public class PhantomSteelSkill {
             entry.setSlot(getNextFreeSlot(index));
             job5Skills.add(entry);
         } else {
-            System.err.println("[오류] 팬텀 스틸 스킬 인덱스 삽입이 잘못되었거나 사이즈 초과.");
+        	logger.debug("[오류] 팬텀 스틸 스킬 인덱스 삽입이 잘못되었거나 사이즈 초과.");
         }
     }
     
@@ -86,7 +88,7 @@ public class PhantomSteelSkill {
             entry.setSlot(slot);
             job5Skills.add(entry);
         } else {
-            System.err.println("[오류] 팬텀 스틸 스킬 인덱스 삽입이 잘못되었거나 사이즈 초과.");
+        	logger.debug("[오류] 팬텀 스틸 스킬 인덱스 삽입이 잘못되었거나 사이즈 초과.");
         }
     }
     
@@ -102,7 +104,7 @@ public class PhantomSteelSkill {
         } else if (index == 5) {
             job5Skills.get(slot).setEquipped(equipped);
         } else {
-            System.err.println("[오류] 스킬 장착에 실패하였습니다.");
+        	logger.debug("[오류] 스킬 장착에 실패하였습니다.");
         }
     }
     
@@ -175,7 +177,7 @@ public class PhantomSteelSkill {
         } else if (index == 5) {
             task = job5Skills;
         } else {
-            System.err.println("[오류] 인덱스가 해당하지 않는 번호입니다.");
+        	logger.debug("[오류] 인덱스가 해당하지 않는 번호입니다.");
             return;
         }
         Comparator<SteelSkillEntry> com = new Comparator<SteelSkillEntry> () {

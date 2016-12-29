@@ -1,15 +1,9 @@
-/*
- * ArcStory Project
- * 최주원 sch2307@naver.com
- * 이준 junny_adm@naver.com
- * 우지훈 raccoonfox69@gmail.com
- * 강정규 ku3135@nate.com
- * 김진홍 designer@inerve.kr
- */
-
 package handler.channel;
 
 import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import a.my.made.AccountStatusType;
 import client.MapleCharacter;
@@ -48,6 +42,7 @@ import server.maps.MapleMap;
 import server.shops.IMapleCharacterShop;
 
 public class InterServerHandler {
+	private static final Logger logger = LoggerFactory.getLogger(InterServerHandler.class);
 
 	public static final void EnterMTS(final MapleClient c) {
 		final MapleMap map = c.getChannelServer().getMapFactory().getMap(910000000);
@@ -111,18 +106,18 @@ public class InterServerHandler {
 	 * 1. 최초 로그인 할때 호출 되는지 확인이 필요
 	 * 2. 채널 변경시에도 호출 되는지 확인 필요.
 	 */
-	public static void Loggedin(final int playerid, final MapleClient c) {
+	public static void Loggedin(final int playerId, final MapleClient c) {
 		final ChannelServer channelServer = c.getChannelServer();
 		MapleCharacter player;
 		
-		final ChracterTransfer transfer = channelServer.getPlayerStorage().getPendingCharacter(playerid);
+		final ChracterTransfer transfer = channelServer.getPlayerStorage().getPendingCharacter(playerId);
 		if (transfer == null) {
-			player = MapleCharacter.loadCharFromDB(playerid, c, true);
+			player = MapleCharacter.loadCharFromDB(playerId, c, true);
 		} else {
 			player = MapleCharacter.ReconstructChr(transfer, c, true);
 		}
 		if (player == null) {
-			System.out.println("ERROR!!!!!! CANNOT LOAD CHARACTER FROM DB!!");
+			logger.error("필수적인 캐릭터 정보를 로딩 할 수 없습니다. playerId : {}", playerId);
 			return;
 		}
 		c.setPlayer(player);
@@ -142,9 +137,7 @@ public class InterServerHandler {
 		if (!allowLogin) {
 			c.setPlayer(null);
 			c.getSession().closeNow();
-			if (!ServerConstants.realese) {
-				System.out.println("not allow login - " + c.getAccountName() + " from " + c.getSessionIPAddress() + " / state : " + state);
-			}
+			logger.debug("not allow login - {} from {} state : {}", c.getAccountName(), c.getSessionIPAddress(), state);
 			return;
 		}
 		c.updateLoginState(AccountStatusType.IN_CHANNEL.getValue(), c.getSessionIPAddress());
@@ -305,7 +298,7 @@ public class InterServerHandler {
 		}
 
 		if (GameConstants.isBlaster(player.getJob())) {
-			// FIXME hyuk. giveBulletGauge 메소드가 정의된 부분이 없어서 일단 주석으로 막음. 이후 구현이
+			// FIXME giveBulletGauge 메소드가 정의된 부분이 없어서 일단 주석으로 막음. 이후 구현이
 			// 가능하다면 수정해야할듯.
 			// player.giveBulletGauge(0, false);
 		}

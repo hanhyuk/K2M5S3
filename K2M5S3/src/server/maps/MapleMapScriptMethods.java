@@ -2,6 +2,9 @@ package server.maps;
 
 import java.awt.Point;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import client.MapleClient;
 import packet.creators.MainPacketCreator;
 import packet.creators.UIPacket;
@@ -9,7 +12,8 @@ import server.life.MapleLifeProvider;
 import server.life.MapleMonster;
 
 public class MapleMapScriptMethods {
-
+	private static final Logger logger = LoggerFactory.getLogger(MapleMapScriptMethods.class);
+	
     private static final Point witchTowerPos = new Point(-60, 184);
 
     private static enum onFirstUserEnter {
@@ -63,7 +67,7 @@ public class MapleMapScriptMethods {
                 break;
             }
             default: {
-                //System.out.println("Unhandled script : " + scriptName + ", type : onFirstUserEnter - MAPID " + c.getPlayer().getMapId());
+                logger.debug("Unhandled script : {}, type : onFirstUserEnter - MAPID {}", scriptName, c.getPlayer().getMapId());
                 break;
             }
         }
@@ -94,7 +98,7 @@ public class MapleMapScriptMethods {
                 break;
             }
             default: {
-                //System.out.println("Unhandled script : " + scriptName + ", type : onUserEnter - MAPID " + c.getPlayer().getMapId());
+            	logger.debug("Unhandled script : {}, type : onFirstUserEnter - MAPID {}", scriptName, c.getPlayer().getMapId());
                 break;
             }
         }

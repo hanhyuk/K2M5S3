@@ -10,7 +10,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import constants.ServerConstants;
-import constants.programs.AutoReboot;
 import constants.programs.ControlUnit;
 import constants.programs.DatabaseBackup;
 import constants.programs.DatabaseGarbageCollector;
@@ -32,8 +31,6 @@ public final class Start {
 	private static final Logger logger = LoggerFactory.getLogger(Start.class);
 	
 	public static void main(String args[]) throws IOException {
-		final long START = System.currentTimeMillis();
-		
 		logger.info("[알림] 에뮬레이터 :: V1.2." + ServerConstants.MAPLE_VERSION + " 버전이 실행되었습니다.\n");
 
 		ServerConstants.loadServerSetProp();
@@ -81,9 +78,7 @@ public final class Start {
 		ControlUnit.main(args);
 		System.gc();
 
-		/* 서버 오픈 완료 메세지 */
-		long END = System.currentTimeMillis();
-		System.out.println("[알림] 서버 오픈이 정상적으로 완료 되었으며, 소요된 시간은 : " + (END - START) / 1000.0 + "초 입니다.");
+		logger.info("[알림] 서버 오픈이 정상적으로 완료 되습니다.");
 	}
 
 	public static void clean() {
@@ -104,7 +99,7 @@ public final class Start {
 					nu++;
 				}
 			}
-			System.out.println("[알림] " + nu + "개의 1일 입장 기록을 지웠습니다.");
+			logger.info("[알림] {} 개의 1일 입장 기록을 지웠습니다.", nu);
 			ps.close();
 		} catch (SQLException ex) {
 			ex.printStackTrace();

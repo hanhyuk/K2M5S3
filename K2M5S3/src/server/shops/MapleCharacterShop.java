@@ -1,12 +1,3 @@
-/*
- * ArcStory Project
- * ÃÖÁÖ¿ø sch2307@naver.com
- * ÀÌÁØ junny_adm@naver.com
- * ¿ìÁöÈÆ raccoonfox69@gmail.com
- * °­Á¤±Ô ku3135@nate.com
- * ±èÁøÈ« designer@inerve.kr
- */
-
 package server.shops;
 
 import client.MapleClient;
@@ -20,89 +11,90 @@ import server.items.InventoryManipulator;
 
 public class MapleCharacterShop extends AbstractPlayerStore {
 
-    private boolean open;
-    private MapleCharacter owner;
-    private List<String> bannedList = new ArrayList<String>();
+	private boolean open;
+	private MapleCharacter owner;
+	private List<String> bannedList = new ArrayList<String>();
 
-    public MapleCharacterShop(MapleCharacter owner, int itemId, String desc) {
-	super(owner, owner.getId(), owner.getAccountID(), owner.getPosition(), itemId, desc, 3);
-	this.owner = owner;
-	open = false;
-    }
-
-    @Override
-    public void buy(MapleClient c, int item, short quantity) {
-	MapleCharacterShopItem pItem = items.get(item);
-	if (pItem.bundles > 0) {
-	    owner.getClient().getSession().write(PlayerShopPacket.shopItemUpdate(this));
+	public MapleCharacterShop(MapleCharacter owner, int itemId, String desc) {
+		super(owner, owner.getId(), owner.getAccountID(), owner.getPosition(), itemId, desc, 3);
+		this.owner = owner;
+		open = false;
 	}
-    }
 
-    @Override
-    public byte getShopType() {
-	return IMapleCharacterShop.PLAYER_SHOP;
-    }
-
-    @Override
-    public void closeShop(boolean saveItems, boolean remove) {
-        MapleCharacter owner = getMCOwner();
-        getMCOwner().getClient().getSession().write(PlayerShopPacket.shopErrorMessage(10, 3, 0)); //»óÁ¡ÀÌ ´İÇû½À´Ï´Ù.
-        removeAllVisitors(3, -2);
-        
-        getMap().removeMapObject(this);
-        for (MapleCharacterShopItem items : getItems()) {
-            saveItems(); 
-            break;
-        }
-        owner.setPlayerShop(null);
-        update();
-    }
-
-    public void banPlayer(String name) {
-	if (!bannedList.contains(name)) {
-	    bannedList.add(name);
+	@Override
+	public void buy(MapleClient c, int item, short quantity) {
+		MapleCharacterShopItem pItem = items.get(item);
+		if (pItem.bundles > 0) {
+			owner.getClient().getSession().write(PlayerShopPacket.shopItemUpdate(this));
+		}
 	}
-	for (int i = 0; i < 3; i++) {
-	    MapleCharacter chr = getVisitor(i);
-	    if (chr.getName().equals(name)) {
-		chr.getClient().getSession().write(PlayerShopPacket.shopErrorMessage(5, 1, 0x11));
-		chr.setPlayerShop(null);
-		removeVisitor(chr);
-	    }
+
+	@Override
+	public byte getShopType() {
+		return IMapleCharacterShop.PLAYER_SHOP;
 	}
-    }
 
-    @Override
-    public void setOpen(boolean open) {
-	this.open = open;
-    }
+	@Override
+	public void closeShop(boolean saveItems, boolean remove) {
+		MapleCharacter owner = getMCOwner();
+		getMCOwner().getClient().getSession().write(PlayerShopPacket.shopErrorMessage(10, 3, 0)); // »óÁ¡ÀÌ
+																									// ´İÇû½À´Ï´Ù.
+		removeAllVisitors(3, -2);
 
-    @Override
-    public boolean isOpen() {
-	return open;
-    }
-
-    public boolean isBanned(String name) {
-	if (bannedList.contains(name)) {
-	    return true;
+		getMap().removeMapObject(this);
+		for (MapleCharacterShopItem items : getItems()) {
+			saveItems();
+			break;
+		}
+		owner.setPlayerShop(null);
+		update();
 	}
-	return false;
-    }
 
-    public MapleCharacter getMCOwner() {
-	return owner;
-    }
+	public void banPlayer(String name) {
+		if (!bannedList.contains(name)) {
+			bannedList.add(name);
+		}
+		for (int i = 0; i < 3; i++) {
+			MapleCharacter chr = getVisitor(i);
+			if (chr.getName().equals(name)) {
+				chr.getClient().getSession().write(PlayerShopPacket.shopErrorMessage(5, 1, 0x11));
+				chr.setPlayerShop(null);
+				removeVisitor(chr);
+			}
+		}
+	}
 
-    @Override
-    public MapleMapObjectType getType() {
-	return MapleMapObjectType.SHOP;
-    }
+	@Override
+	public void setOpen(boolean open) {
+		this.open = open;
+	}
 
-    @Override
-    public void sendSpawnData(MapleClient client) {
-    }
+	@Override
+	public boolean isOpen() {
+		return open;
+	}
 
-    @Override
-    public void sendDestroyData(MapleClient client) {
-    }
+	public boolean isBanned(String name) {
+		if (bannedList.contains(name)) {
+			return true;
+		}
+		return false;
+	}
+
+	public MapleCharacter getMCOwner() {
+		return owner;
+	}
+
+	@Override
+	public MapleMapObjectType getType() {
+		return MapleMapObjectType.SHOP;
+	}
+
+	@Override
+	public void sendSpawnData(MapleClient client) {
+	}
+
+	@Override
+	public void sendDestroyData(MapleClient client) {
+	}
 }

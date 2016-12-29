@@ -1,7 +1,3 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package server.maps;
 
 import client.MapleClient;
@@ -11,10 +7,6 @@ import java.lang.ref.WeakReference;
 import packet.creators.MainPacketCreator;
 import tools.Timer;
 
-/**
- *
- * @author GOOD
- */
 public class MapleSubSummon extends AnimatedHinaMapObjectExtend {
     
     private final WeakReference<MapleCharacter> ownerchr;

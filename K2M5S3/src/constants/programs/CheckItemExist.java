@@ -110,7 +110,7 @@ public class CheckItemExist {
 			fl.close();
 			br.close();
 		} catch (Exception e) {
-			System.out.print(e);
+			logger.debug("{}", e);
 		}
 	}
 }

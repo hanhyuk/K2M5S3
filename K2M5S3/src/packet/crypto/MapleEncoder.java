@@ -1,6 +1,7 @@
 package packet.crypto;
 
 import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.apache.mina.core.buffer.IoBuffer;
 import org.apache.mina.core.session.IoSession;
@@ -19,9 +20,16 @@ import tools.HexTool;
 public class MapleEncoder implements ProtocolEncoder {
 	private static final Logger logger = LoggerFactory.getLogger(MapleEncoder.class);
 	
+	private final Lock fairLock = new ReentrantLock(true);
+	private String clientKey;
+	
+	public MapleEncoder(String clientKey) {
+		this.clientKey = clientKey;
+	}
+	
 	@Override
 	public void encode(final IoSession session, final Object message, final ProtocolEncoderOutput out) throws Exception {
-		final MapleClient client = (MapleClient) session.getAttribute(MapleClient.CLIENT_KEY);
+		final MapleClient client = (MapleClient) session.getAttribute(clientKey);
 
 		if (logger.isDebugEnabled()) {
 			final byte[] data = ((Packet) message).getBytes();
@@ -37,9 +45,8 @@ public class MapleEncoder implements ProtocolEncoder {
 			System.arraycopy(inputInitialPacket, 0, unencrypted, 0, inputInitialPacket.length);
 			final byte[] ret = new byte[unencrypted.length + 4];
 			
-			final Lock mutex = client.getEncodeLock();
 			try {
-				mutex.lock();
+				fairLock.lock();
 				
 				final byte[] header = send_crypto.getPacketHeader(unencrypted.length);
 				send_crypto.crypt(unencrypted);
@@ -47,7 +54,7 @@ public class MapleEncoder implements ProtocolEncoder {
 				System.arraycopy(unencrypted, 0, ret, 4, unencrypted.length);
 				out.write(IoBuffer.wrap(ret));
 			} finally {
-				mutex.unlock();
+				fairLock.unlock();
 			}
 		} else {
 			out.write(IoBuffer.wrap(((Packet) message).getBytes()));

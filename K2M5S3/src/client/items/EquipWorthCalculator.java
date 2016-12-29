@@ -7,10 +7,6 @@ import java.util.List;
 import java.util.Random;
 import packet.creators.MainPacketCreator;
 
-/**
- *
- * @author 온라인월드
- */
 public class EquipWorthCalculator {
     private int seed = new Random().nextInt();
 

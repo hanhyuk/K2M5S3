@@ -3358,7 +3358,7 @@ public class SkillStatEffect {
 				skillid = 24100003;
 			}
 			if (skillid == 0) {
-				System.err.println("phantom judgement returned...");
+				logger.debug("phantom judgement returned...");
 				return;
 			}
 			int rand = Randomizer.nextBoolean() ? 1 : 0;

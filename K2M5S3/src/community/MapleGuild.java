@@ -31,7 +31,7 @@ import tools.StringUtil;
 
 public class MapleGuild {
 	private static final Logger logger = LoggerFactory.getLogger(MapleGuild.class);
-	
+
 	private static enum BCOp {
 		NONE, DISBAND, EMBELMCHANGE
 	}
@@ -92,13 +92,12 @@ public class MapleGuild {
 				allianceid = 0;
 			}
 
-			ps = con.prepareStatement(
-					"SELECT id, name, level, job, guildrank, alliancerank FROM characters WHERE guildid = ? ORDER BY guildrank ASC, name ASC");
+			ps = con.prepareStatement("SELECT id, name, level, job, guildrank, alliancerank FROM characters WHERE guildid = ? ORDER BY guildrank ASC, name ASC");
 			ps.setInt(1, guildid);
 			rs = ps.executeQuery();
 
 			if (!rs.first()) {
-				System.err.println("No members in guild.  Impossible...");
+				logger.debug("No members in guild.  Impossible...");
 				rs.close();
 				ps.close();
 				return;
@@ -134,8 +133,7 @@ public class MapleGuild {
 						aFix = 3;
 					}
 				}
-				members.add(new MapleGuildCharacter(rs.getInt("id"), rs.getShort("level"), rs.getString("name"),
-						(byte) -1, rs.getInt("job"), gRank, guildid, false, aRank));
+				members.add(new MapleGuildCharacter(rs.getInt("id"), rs.getShort("level"), rs.getString("name"), (byte) -1, rs.getInt("job"), gRank, guildid, false, aRank));
 			} while (rs.next());
 			rs.close();
 			ps.close();
@@ -147,17 +145,18 @@ public class MapleGuild {
 				if (sid < 91000000) { // hack
 					rs.close();
 					ps.close();
-					System.err.println("Skill " + sid + " is in guild " + id + ".  Impossible... guild is disbanding.");
+					logger.debug("Skill {} is in guild {}. Impossible guild is disbanding.", sid, id);
 					writeToDB(true);
 					return;
 				}
-				guildSkills.put(sid, new GuildSkills(sid, rs.getInt("level"), rs.getLong("timestamp"),
-						rs.getString("purchaser"), "")); // activators not saved
+				guildSkills.put(sid, new GuildSkills(sid, rs.getInt("level"), rs.getLong("timestamp"), rs.getString("purchaser"), "")); // activators
+																																		// not
+																																		// saved
 			}
 			rs.close();
 			ps.close();
 		} catch (Exception se) {
-			System.err.println("unable to read guild information from sql" + se);
+			logger.debug("unable to read guild information from sql {}", se);
 			return;
 		}
 	}
@@ -166,8 +165,7 @@ public class MapleGuild {
 		try {
 			Connection con = MYSQL.getConnection();
 			if (!bDisband) {
-				StringBuilder buf = new StringBuilder(
-						"UPDATE guilds SET GP = ?, logo = ?, logoColor = ?, logoBG = ?, logoBGColor = ?, ");
+				StringBuilder buf = new StringBuilder("UPDATE guilds SET GP = ?, logo = ?, logoColor = ?, logoBG = ?, logoBGColor = ?, ");
 				for (int i = 1; i < 6; i++) {
 					buf.append("rank" + i + "title = ?, ");
 				}
@@ -196,8 +194,7 @@ public class MapleGuild {
 				ps.execute();
 				ps.close();
 
-				ps = con.prepareStatement(
-						"INSERT INTO guildskills(`guildid`, `skillid`, `level`, `timestamp`, `purchaser`) VALUES(?, ?, ?, ?, ?)");
+				ps = con.prepareStatement("INSERT INTO guildskills(`guildid`, `skillid`, `level`, `timestamp`, `purchaser`) VALUES(?, ?, ?, ?, ?)");
 				ps.setInt(1, id);
 				for (GuildSkills i : guildSkills.values()) {
 					ps.setInt(2, i.skillID);
@@ -209,8 +206,7 @@ public class MapleGuild {
 				ps.close();
 
 			} else {
-				PreparedStatement ps = con
-						.prepareStatement("UPDATE characters SET guildid = 0, guildrank = 5 WHERE guildid = ?");
+				PreparedStatement ps = con.prepareStatement("UPDATE characters SET guildid = 0, guildrank = 5 WHERE guildid = ?");
 				ps.setInt(1, id);
 				ps.execute();
 				ps.close();
@@ -236,7 +232,7 @@ public class MapleGuild {
 				broadcast(MainPacketCreator.guildDisband(id));
 			}
 		} catch (SQLException se) {
-			System.err.println("Error saving guild to SQL" + se);
+			logger.debug("Error saving guild to SQL {}", se);
 		}
 	}
 
@@ -268,8 +264,7 @@ public class MapleGuild {
 		}
 		ourSkill.timestamp = System.currentTimeMillis() + (skillid.getPeriod() * 60000L);
 		ourSkill.activator = name;
-		broadcast(MainPacketCreator.guildSkillPurchased(id, skill, ourSkill.level, ourSkill.timestamp,
-				ourSkill.purchaser, name));
+		broadcast(MainPacketCreator.guildSkillPurchased(id, skill, ourSkill.level, ourSkill.timestamp, ourSkill.purchaser, name));
 		return true;
 	}
 
@@ -448,8 +443,7 @@ public class MapleGuild {
 		if (bBroadcast) {
 			broadcast(MainPacketCreator.guildMemberOnline(id, cid, online), cid);
 			if (allianceid > 0) {
-				ChannelServer.sendGuild(MainPacketCreator.allianceMemberOnline(allianceid, id, cid, online), id,
-						allianceid);
+				ChannelServer.sendGuild(MainPacketCreator.allianceMemberOnline(allianceid, id, cid, online), id, allianceid);
 			}
 		}
 		bDirty = true; // member formation has changed, update notifications
@@ -478,8 +472,7 @@ public class MapleGuild {
 			ps.close();
 			rs.close();
 
-			ps = con.prepareStatement(
-					"INSERT INTO guilds (`leader`, `name`, `signature`, `alliance`) VALUES (?, ?, ?, 0)");
+			ps = con.prepareStatement("INSERT INTO guilds (`leader`, `name`, `signature`, `alliance`) VALUES (?, ?, ?, 0)");
 			ps.setInt(1, leaderId);
 			ps.setString(2, name);
 			ps.setInt(3, (int) System.currentTimeMillis());
@@ -495,7 +488,7 @@ public class MapleGuild {
 			ps.close();
 			return result;
 		} catch (SQLException se) {
-			System.err.println("SQL THROW" + se);
+			logger.debug("SQL THROW {}", se);
 			return 0;
 		}
 	}
@@ -564,8 +557,7 @@ public class MapleGuild {
 				} else {
 					try {
 						Connection con = MYSQL.getConnection();
-						PreparedStatement ps = con.prepareStatement(
-								"INSERT INTO notes (`to`, `from`, `message`, `timestamp`) VALUES (?, ?, ?, ?)");
+						PreparedStatement ps = con.prepareStatement("INSERT INTO notes (`to`, `from`, `message`, `timestamp`) VALUES (?, ?, ?, ?)");
 						ps.setString(1, mgc.getName());
 						ps.setString(2, initiator.getName());
 						ps.setString(3, "당신은 길드에서 추방되었습니다.");
@@ -573,7 +565,7 @@ public class MapleGuild {
 						ps.executeUpdate();
 						ps.close();
 					} catch (SQLException e) {
-						System.err.println("Error sending guild msg 'expelled'." + e);
+						logger.debug("Error sending guild msg 'expelled'. {}", e);
 					}
 					ChannelServer.setOfflineGuildStatus((short) 0, (byte) 5, cid);
 				}
@@ -663,7 +655,7 @@ public class MapleGuild {
 				ps.execute();
 				ps.close();
 			} catch (SQLException e) {
-				System.err.println("Saving leaderid ERROR" + e);
+				logger.debug("Saving leaderid ERROR {}", e);
 			}
 		}
 	}
@@ -682,7 +674,7 @@ public class MapleGuild {
 			}
 		}
 		// it should never get to this point unless cid was incorrect o_O
-		System.err.println("INFO: unable to find the correct id for changeRank({" + cid + "}, {" + newRank + "})");
+		logger.debug("INFO: unable to find the correct id for changeRank({}/{})", cid, newRank);
 		return false;
 	}
 
@@ -698,7 +690,7 @@ public class MapleGuild {
 			ps.execute();
 			ps.close();
 		} catch (SQLException e) {
-			System.err.println("Saving notice ERROR" + e);
+			logger.debug("Saving notice ERROR {}", e);
 		}
 	}
 
@@ -759,8 +751,7 @@ public class MapleGuild {
 
 		try {
 			Connection con = MYSQL.getConnection();
-			PreparedStatement ps = con.prepareStatement(
-					"UPDATE guilds SET rank1title = ?, rank2title = ?, rank3title = ?, rank4title = ?, rank5title = ? WHERE guildid = ?");
+			PreparedStatement ps = con.prepareStatement("UPDATE guilds SET rank1title = ?, rank2title = ?, rank3title = ?, rank4title = ?, rank5title = ? WHERE guildid = ?");
 			for (int i = 0; i < 5; i++) {
 				ps.setString(i + 1, rankTitles[i]);
 			}
@@ -768,7 +759,7 @@ public class MapleGuild {
 			ps.execute();
 			ps.close();
 		} catch (SQLException e) {
-			System.err.println("Saving rankTitle ERROR" + e);
+			logger.debug("Saving rankTitle ERROR {}", e);
 		}
 	}
 
@@ -785,8 +776,7 @@ public class MapleGuild {
 		broadcast(null, -1, BCOp.EMBELMCHANGE);
 		try {
 			Connection con = MYSQL.getConnection();
-			PreparedStatement ps = con.prepareStatement(
-					"UPDATE guilds SET logo = ?, logoColor = ?, logoBG = ?, logoBGColor = ? WHERE guildid = ?");
+			PreparedStatement ps = con.prepareStatement("UPDATE guilds SET logo = ?, logoColor = ?, logoBG = ?, logoBGColor = ? WHERE guildid = ?");
 			ps.setInt(1, logo);
 			ps.setInt(2, logoColor);
 			ps.setInt(3, logoBG);
@@ -795,7 +785,7 @@ public class MapleGuild {
 			ps.execute();
 			ps.close();
 		} catch (SQLException e) {
-			System.err.println("Saving guild logo / BG colo ERROR" + e);
+			logger.debug("Saving guild logo / BG colo ERROR {}", e);
 		}
 	}
 
@@ -823,7 +813,7 @@ public class MapleGuild {
 			ps.execute();
 			ps.close();
 		} catch (SQLException e) {
-			System.err.println("Saving guild capacity ERROR" + e);
+			logger.debug("Saving guild capacity ERROR {}", e);
 		}
 		return true;
 	}
@@ -839,7 +829,7 @@ public class MapleGuild {
 			ps.execute();
 			ps.close();
 		} catch (SQLException e) {
-			System.err.println("Saving guild point ERROR" + e);
+			logger.debug("Saving guild point ERROR {}", e);
 		}
 	}
 
@@ -895,8 +885,7 @@ public class MapleGuild {
 			return MapleGuildResponse.ALREADY_IN_GUILD;
 		}
 		mc.setAskguildid(c.getPlayer().getGuildId());
-		mc.getClient().getSession().write(MainPacketCreator.guildInvite(c.getPlayer().getGuildId(),
-				c.getPlayer().getName(), c.getPlayer().getLevel(), c.getPlayer().getJob(), c.getPlayer().getId()));
+		mc.getClient().getSession().write(MainPacketCreator.guildInvite(c.getPlayer().getGuildId(), c.getPlayer().getName(), c.getPlayer().getLevel(), c.getPlayer().getJob(), c.getPlayer().getId()));
 		return null;
 	}
 
@@ -942,16 +931,14 @@ public class MapleGuild {
 			ps.execute();
 			ps.close();
 		} catch (SQLException e) {
-			System.err.println("Saving allianceid ERROR" + e);
+			logger.debug("Saving allianceid ERROR {}", e);
 		}
 	}
 
-	public static void setOfflineGuildStatus(int guildid, byte guildrank, int contribution, byte alliancerank,
-			int cid) {
+	public static void setOfflineGuildStatus(int guildid, byte guildrank, int contribution, byte alliancerank, int cid) {
 		try {
 			java.sql.Connection con = MYSQL.getConnection();
-			java.sql.PreparedStatement ps = con.prepareStatement(
-					"UPDATE characters SET guildid = ?, guildrank = ?, alliancerank = ? WHERE id = ?");
+			java.sql.PreparedStatement ps = con.prepareStatement("UPDATE characters SET guildid = ?, guildrank = ?, alliancerank = ? WHERE id = ?");
 			ps.setInt(1, guildid);
 			ps.setInt(2, guildrank);
 			ps.setInt(3, alliancerank);

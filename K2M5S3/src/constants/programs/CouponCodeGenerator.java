@@ -21,7 +21,7 @@ public class CouponCodeGenerator {
 
 		String temp = "Maple";
 		do {
-			System.out.println("쿠폰 타입 : 1 - 넥슨 캐쉬, 2 - 메이플 포인트, 3 - 메소");
+			logger.debug("쿠폰 타입 : 1 - 넥슨 캐쉬, 2 - 메이플 포인트, 3 - 메소");
 			temp = c.readLine("쿠폰 타입? = ");
 			if (!(temp.equals("1") || temp.equals("2") || temp.equals("3")))
 				continue;
@@ -62,9 +62,8 @@ public class CouponCodeGenerator {
 					ps.executeUpdate();
 					printCouponInfo(code, amount, type, canValid, null);
 					number--;
-					System.out.println(code);
 				} catch (SQLException ex) {
-					System.err.println("[에러] " + code + " : " + ex);
+					logger.debug("[에러] {} {}", code, ex);
 					continue;
 				}
 			}

@@ -4,12 +4,14 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import constants.ServerConstants;
 import tools.IniFileProcess;
 
 public enum RecvPacketOpcode {
-	
-	//hyuk. 추가
+	//추가(2016.12.29)
 	SERVER_MESSAGE_RESPONSE,
 	
     //퐁, 클라이언트.
@@ -241,8 +243,11 @@ public enum RecvPacketOpcode {
     STAR_PLANET_RANK,
     COMBAT_ANALYZE;
 
+	private static final Logger logger = LoggerFactory.getLogger(RecvPacketOpcode.class);
+	
     private short value;
     private final static Map<Short, RecvPacketOpcode> RecvOpcodes = new HashMap<>();
+    
     
     public static void initalized() {
         if (!RecvOpcodes.isEmpty()) {
@@ -267,9 +272,7 @@ public enum RecvPacketOpcode {
                         value = Short.parseShort(storage.getString("Receive", packet.name()));
                     }
                 } catch (NumberFormatException error) {
-                	if (!ServerConstants.realese) {
-                        System.out.println("누락된 RecvPacket Name : " + packet.name());
-                    }
+                	logger.debug("누락된 RecvPacket Name : {}", packet.name());
                 }
                 packet.setValue(value);
             }

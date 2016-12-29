@@ -1,12 +1,3 @@
-/*
- * ArcStory Project
- * √÷¡÷ø¯ sch2307@naver.com
- * ¿Ã¡ÿ junny_adm@naver.com
- * øÏ¡ˆ»∆ raccoonfox69@gmail.com
- * ∞≠¡§±‘ ku3135@nate.com
- * ±Ë¡¯»´ designer@inerve.kr
- */
-
 package server.maps;
 
 import client.MapleClient;
@@ -15,28 +6,28 @@ import packet.transfer.write.Packet;
 
 public class MapleMapEffect {
 
-    private String msg;
-    private int itemId;
-    private boolean active = true;
+	private String msg;
+	private int itemId;
+	private boolean active = true;
 
-    public MapleMapEffect(String msg, int itemId) {
-	this.msg = msg;
-	this.itemId = itemId;
-    }
+	public MapleMapEffect(String msg, int itemId) {
+		this.msg = msg;
+		this.itemId = itemId;
+	}
 
-    public void setActive(boolean active) {
-	this.active = active;
-    }
+	public void setActive(boolean active) {
+		this.active = active;
+	}
 
-    public Packet makeDestroyData() {
-	return MainPacketCreator.removeMapEffect();
-    }
+	public Packet makeDestroyData() {
+		return MainPacketCreator.removeMapEffect();
+	}
 
-    public Packet makeStartData() {
-	return MainPacketCreator.startMapEffect(msg, itemId, active);
-    }
+	public Packet makeStartData() {
+		return MainPacketCreator.startMapEffect(msg, itemId, active);
+	}
 
-    public void sendStartData(MapleClient c) {
-	c.getSession().write(MainPacketCreator.startMapEffect(msg, itemId, active));
-    }
+	public void sendStartData(MapleClient c) {
+		c.getSession().write(MainPacketCreator.startMapEffect(msg, itemId, active));
+	}
 }

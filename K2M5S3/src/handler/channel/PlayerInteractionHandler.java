@@ -1,15 +1,9 @@
-/*
- * ArcStory Project
- * 최주원 sch2307@naver.com
- * 이준 junny_adm@naver.com
- * 우지훈 raccoonfox69@gmail.com
- * 강정규 ku3135@nate.com
- * 김진홍 designer@inerve.kr
- */
-
 package handler.channel;
 
 import java.util.Arrays;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import client.MapleCharacter;
 import client.MapleClient;
@@ -35,7 +29,8 @@ import tools.Pair;
 import tools.Timer.ShowTimer;
 
 public class PlayerInteractionHandler {
-
+	private static final Logger logger = LoggerFactory.getLogger(PlayerInteractionHandler.class);
+	
 	public static final byte SET_ITEMS1 = 0, SET_ITEMS2 = 1, SET_ITEMS3 = 2, SET_ITEMS4 = 3, SET_MESO1 = 4,
 			SET_MESO2 = 5, SET_MESO3 = 6, SET_MESO4 = 7, CONFIRM_TRADE = 8, CONFIRM_TRADE2 = 9, CONFIRM_TRADE_MESO = 10,
 			CONFIRM_TRADE_MESO2 = 11, CREATE = 16, VISIT = 19, INVITE_TRADE = 21, DENY_TRADE = 22, CHAT = 24, EXIT = 28,
@@ -577,9 +572,7 @@ public class PlayerInteractionHandler {
 					correct = true;
 				}
 			} else {
-				System.out.println("----------- 경고 ---------");
-				System.out.println("삭제한 idcode 값 접근 발견!");
-				System.out.println("--------------------------");
+				logger.warn("삭제한 idcode 값 접근 발견! 계정 : {} 캐릭 : {}", c.getAccountName(), c.getPlayer().getName());
 				//TODO 2차 비밀번호는 필수 사용 항목이기 때문에 이 부분은 실행 되지 않을 것 같다.
 				//굳이 주석으로 막은 이유는 아래 c.getIdCode2() 메소드가 불필요하다는 판단에 의해
 				//삭제 했기 때문에 오류를 막기 위함이다.
@@ -595,7 +588,7 @@ public class PlayerInteractionHandler {
 			break;
 		}
 		default: {
-			System.out.println("Unhandled interaction action : " + action + ", " + rh.toString());
+			logger.debug("Unhandled interaction action : {}, {}", action, rh.toString());
 			break;
 		}
 		}

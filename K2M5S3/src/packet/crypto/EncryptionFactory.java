@@ -7,9 +7,14 @@ import org.apache.mina.filter.codec.ProtocolEncoder;
 
 public class EncryptionFactory implements ProtocolCodecFactory {
 
-	private final ProtocolEncoder encoder = new MapleEncoder();
-	private final ProtocolDecoder decoder = new MapleDecoder();
+	private final ProtocolEncoder encoder;
+	private final ProtocolDecoder decoder;
 
+	public EncryptionFactory(String clientKey) {
+		this.encoder = new MapleEncoder(clientKey); 
+		this.decoder = new MapleDecoder(clientKey);
+	}
+	
 	@Override
 	public ProtocolEncoder getEncoder(IoSession is) throws Exception {
 		return encoder;

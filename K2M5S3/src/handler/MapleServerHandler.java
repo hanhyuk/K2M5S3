@@ -40,7 +40,6 @@ import packet.creators.LoginPacket;
 import packet.creators.MainPacketCreator;
 import packet.creators.SoulWeaponPacket;
 import packet.crypto.MapleCrypto;
-import packet.crypto.MapleDecoder;
 import packet.opcode.RecvPacketOpcode;
 import packet.opcode.SendPacketOpcode;
 import packet.skills.KinesisSkill;
@@ -59,14 +58,17 @@ public class MapleServerHandler extends IoHandlerAdapter {
 	
 	private int channel = 0;
 	private ServerType type = null;
+	private String clientKey = null;
 	
-	public MapleServerHandler(final ServerType type) {
+	public MapleServerHandler(final ServerType type, final String clientKey) {
 		this.type = type;
+		this.clientKey = clientKey;
 	}
 
-	public MapleServerHandler(final ServerType type, final int channel) {
+	public MapleServerHandler(final ServerType type, final int channel, final String clientKey) {
 		this.channel = channel;
 		this.type = type;
+		this.clientKey = clientKey;
 	}
 	
 	@Override
@@ -93,16 +95,13 @@ public class MapleServerHandler extends IoHandlerAdapter {
 				session);
 		client.setChannel(channel);
 
-		MapleDecoder.DecoderState decoderState = new MapleDecoder.DecoderState();
-		session.setAttribute(MapleDecoder.DECODER_STATE_KEY, decoderState);
-
 		if (type.equals(ServerType.LOGIN)) {
 			session.write(LoginPacket.initializeConnection(ServerConstants.MAPLE_VERSION, ivSend, ivRecv, false));
 		} else {
 			session.write(LoginPacket.initializeConnection(ServerConstants.MAPLE_VERSION, ivSend, ivRecv, true));
 		}
 
-		session.setAttribute(MapleClient.CLIENT_KEY, client);
+		session.setAttribute(clientKey, client);
 		session.getConfig().setIdleTime(IdleStatus.BOTH_IDLE, 30);
 
 		switch (type) {
@@ -121,7 +120,7 @@ public class MapleServerHandler extends IoHandlerAdapter {
 
 	@Override
 	public void sessionClosed(final IoSession session) throws Exception {
-		final MapleClient client = (MapleClient) session.getAttribute(MapleClient.CLIENT_KEY);
+		final MapleClient client = (MapleClient) session.getAttribute(clientKey);
 		if (client != null) {
 			try {
 				if (client.getIdleTask() != null) {
@@ -131,7 +130,7 @@ public class MapleServerHandler extends IoHandlerAdapter {
 				client.disconnect(true, type == ServerType.CASHSHOP ? true : false);
 			} finally {
 				session.closeNow();
-				session.removeAttribute(MapleClient.CLIENT_KEY);
+				session.removeAttribute(clientKey);
 			}
 		}
 	}
@@ -142,7 +141,7 @@ public class MapleServerHandler extends IoHandlerAdapter {
 		final short header_num = rh.readShort();
 		RecvPacketOpcode recv = RecvPacketOpcode.getRecvOpcodes().get(header_num);
 		if (recv != null) {
-			final MapleClient c = (MapleClient) session.getAttribute(MapleClient.CLIENT_KEY);
+			final MapleClient c = (MapleClient) session.getAttribute(clientKey);
 			try {
 				handlePacket(recv, rh, c, type);
 			} catch (Exception e) {
@@ -185,7 +184,7 @@ public class MapleServerHandler extends IoHandlerAdapter {
 			short pString = rh.readShort();
 			if (pLocale != ServerConstants.check && pVersion != ServerConstants.MAPLE_VERSION
 					&& pString != ServerConstants.subVersion) {
-				System.err.println("Client Checksum Failed: " + c.getSessionIPAddress());
+				logger.debug("Client Checksum Failed: {}", c.getSessionIPAddress());
 				c.getSession().closeNow();
 			}
 			break;
@@ -266,10 +265,7 @@ public class MapleServerHandler extends IoHandlerAdapter {
 							.append(" MapID: ").append(c.getPlayer().getMapId()).toString();
 				}
 
-				String Recv = new StringBuilder().append(from).append("\r\n").append("SendOP(-38): ").append(op)
-						.append(" [").append(pHeaderStr).append("] (").append(badPacketSize - 4).append(")")
-						.append(rh.toString(false)).append("\r\n\r\n").toString();
-				System.out.println(Recv);
+				logger.debug("{}\n\nSendOP(-38):{} [{}] ({}){}\r\n\r\n", from, op, pHeaderStr, badPacketSize - 4, rh.toString(false));
 			}
 			break;
 		case DELETE_CHAR:
@@ -872,7 +868,7 @@ public class MapleServerHandler extends IoHandlerAdapter {
 			c.getSession().write(MainPacketCreator.getCombatAnalyze(rh.readByte()));
 			break;
 		default:
-			System.out.println("[UNHANDLED] Recv [" + header.toString() + "] found");
+			logger.warn("[UNHANDLED] Recv [{}] founcd", header.toString());
 			break;
 		}
 	}

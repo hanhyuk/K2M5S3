@@ -1,12 +1,3 @@
-/*
- * ArcStory Project
- * 최주원 sch2307@naver.com
- * 이준 junny_adm@naver.com
- * 우지훈 raccoonfox69@gmail.com
- * 강정규 ku3135@nate.com
- * 김진홍 designer@inerve.kr
- */
-
 package handler.duey;
 
 import static packet.creators.PacketProvider.getTime;
@@ -15,6 +6,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import client.MapleCharacter;
 import client.items.Equip;
@@ -34,7 +28,8 @@ import server.items.ItemInformation;
 import tools.Randomizer;
 
 public class DueyHandler {
-    
+	private static final Logger logger = LoggerFactory.getLogger(DueyHandler.class);
+	
     public static void DueyHandler(ReadingMaple rm, MapleCharacter chr) {
         int value = rm.readByte();
         switch(value) {
@@ -207,7 +202,6 @@ public class DueyHandler {
                     packet.writeAsciiString(rs.getString("recvname"), 13);
                     packet.writeInt(rs.getInt("mesos"));
                     packet.writeLong(PacketProvider.getTime(time.getTime()));
-                    System.out.println(PacketProvider.getTime(time.getTime()));
                     packet.write(1);
                     packet.writeAsciiString(rs.getString("recvname") + "님이 보낸 택배가 도착 하였습니다.",201);
                  if(rs.getInt("itemid") > 0) {
@@ -575,8 +569,8 @@ public class DueyHandler {
                 pse.executeUpdate();    
             }
             pse.close();
-        } catch (SQLException ex) {
-            System.out.println("Duey Saving error : " + ex);
+        } catch (SQLException e) {
+            logger.debug("Duey Saving error : {}" + e);
         }
     }
 }

@@ -1,46 +1,33 @@
-/*
- * ArcStory Project
- * 최주원 sch2307@naver.com
- * 이준 junny_adm@naver.com
- * 우지훈 raccoonfox69@gmail.com
- * 강정규 ku3135@nate.com
- * 김진홍 designer@inerve.kr
- */
-
 package client.items;
 
-import client.MapleAndroid;
-import client.MaplePet;
-import client.MapleCharacter;
-import constants.ServerConstants;
-import constants.GameConstants;
-import database.MYSQL;
-import database.MYSQLException;
-import handler.channel.AuctionHandler.AuctionItemPackage;
-import handler.channel.InventoryHandler;
-import server.items.MapleCashInventory;
-import server.items.MapleStorage;
-import server.items.ItemInformation;
-import server.items.MerchItemPackage;
-import tools.Pair;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import client.MapleAndroid;
+import client.MapleCharacter;
+import client.MaplePet;
+import constants.GameConstants;
+import constants.ServerConstants;
+import database.MYSQL;
+import database.MYSQLException;
+import handler.channel.AuctionHandler.AuctionItemPackage;
+import handler.channel.InventoryHandler;
 import launch.world.WorldAuction;
+import server.items.ItemInformation;
+import server.items.MapleCashInventory;
+import server.items.MapleStorage;
+import server.items.MerchItemPackage;
+import tools.Pair;
 
-/**
- *
- * @author T-Sun
- * 
- *   This file was written by T-Sun (doomgate17@naver.com)
- *
- *
- *
- */
 public class ItemFactory {
-
+	private static final Logger logger = LoggerFactory.getLogger(ItemFactory.class);
+	
     public enum InventoryType {
         INVENTORY, STORAGE, MERCHANT, CASHSHOP, AUCTION
     }
@@ -256,8 +243,7 @@ public class ItemFactory {
             }
 
         } catch (Exception e) {
-            System.err.println("DB에서 아이템을 로딩하는데 실패했습니다.");
-            if (!ServerConstants.realese) e.printStackTrace();
+        	logger.debug("DB에서 아이템을 로딩하는데 실패했습니다. {}", e);
         }
     }
 

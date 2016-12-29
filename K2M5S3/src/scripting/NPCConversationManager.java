@@ -12,6 +12,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import client.MapleCharacter;
 import client.MapleClient;
 import client.MaplePet;
@@ -74,6 +77,7 @@ import tools.StringUtil;
 import tools.Timer.EtcTimer;
 
 public class NPCConversationManager extends AbstractPlayerInteraction {
+	private static final Logger logger = LoggerFactory.getLogger(NPCConversationManager.class);
 
 	private MapleClient c;
 	private int npc, questid, MAX_REBORNS = 3;
@@ -560,7 +564,7 @@ public class NPCConversationManager extends AbstractPlayerInteraction {
 			}
 			sql.close();
 		} catch (SQLException ex) {
-			System.out.println(ex);
+			logger.debug("{}", ex);
 		}
 		chr.send(UIPacket.getMapleStar((byte) 8, chr.getClient(), first_rank, second_rank));
 	}
@@ -871,7 +875,7 @@ public class NPCConversationManager extends AbstractPlayerInteraction {
 			ps.close();
 
 		} catch (SQLException ex) {
-			System.err.println("Error gaining mesos in hired merchant" + ex);
+			logger.debug("Error gaining mesos in hired merchant {}", ex);
 		}
 		c.getPlayer().gainMeso((int) mesos, true);
 	}
@@ -892,7 +896,7 @@ public class NPCConversationManager extends AbstractPlayerInteraction {
 			rs.close();
 			ps.close();
 		} catch (SQLException ex) {
-			System.err.println("Error gaining mesos in hired merchant" + ex);
+			logger.debug("Error gaining mesos in hired merchant {}", ex);
 		}
 		return mesos;
 	}
@@ -1285,8 +1289,8 @@ public class NPCConversationManager extends AbstractPlayerInteraction {
 			}
 			ps.close();
 			getPlayer().getClient().getSession().close();
-		} catch (SQLException ex) {
-			System.out.println("닉네임 변경 실패");
+		} catch (SQLException e) {
+			logger.debug("{}", e);
 		}
 	}
 

@@ -5,7 +5,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-import constants.ServerConstants;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import database.MYSQL;
 
 /**
@@ -14,7 +16,8 @@ import database.MYSQL;
  * 랭킹 처리를 위한 쿼리 실행
  */
 public class MapleRankingWorker implements Runnable {
-
+	private static final Logger logger = LoggerFactory.getLogger(MapleRankingWorker.class);
+	
 	private Connection connect;
 	private long lastUpdate = 0;
 
@@ -23,16 +26,13 @@ public class MapleRankingWorker implements Runnable {
 			connect = MYSQL.getConnection();
 			connect.setAutoCommit(false);
 			updateAllJobRankings();
-		} catch (Exception error) {
-			System.out.println("[오류] 랭킹을 업데이트하는 도중 오류가 발생하였습니다. : ");
-			if (!ServerConstants.realese)
-				error.printStackTrace();
+		} catch (Exception e) {
+			logger.debug("[오류] 랭킹을 업데이트하는 도중 오류가 발생하였습니다. {}", e);
 			try {
 				connect.rollback();
 				connect.setAutoCommit(true);
-			} catch (SQLException errors) {
-				System.out.println("[오류] 롤백을 하던 도중 오류가 발생하였습니다. : ");
-				System.out.println(errors);
+			} catch (SQLException ex) {
+				logger.debug("[오류] 롤백을 하던 도중 오류가 발생하였습니다. : {}", ex);
 			}
 		} finally {
 			try {
@@ -69,8 +69,8 @@ public class MapleRankingWorker implements Runnable {
 				query.setInt(5, result.getInt("id"));
 				query.executeUpdate();
 			}
-		} catch (Exception error) {
-			System.out.println(error);
+		} catch (Exception e) {
+			logger.debug("{}", e);
 		} finally {
 			try {
 				if (result != null) {

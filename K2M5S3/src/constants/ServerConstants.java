@@ -4,7 +4,11 @@ import java.io.FileInputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.Properties;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class ServerConstants {
+	private static final Logger logger = LoggerFactory.getLogger(ServerConstants.class);
 	
 	/*
      * 서버를 구동 할때 로컬 환경 여부 true(로컬)
@@ -162,10 +166,7 @@ public class ServerConstants {
             maxDrop = Integer.parseInt(prop.getProperty(toUni("최대드랍아이템개수")));
                         
         } catch (Exception e) {
-            System.err.println("[오류] 서버 세팅파일을 불러오는데 실패하였습니다.");
-            if (!realese) {
-                e.printStackTrace();
-            }
+            logger.debug("[오류] 서버 세팅파일을 불러오는데 실패하였습니다. {}", e);
         }
     }
 

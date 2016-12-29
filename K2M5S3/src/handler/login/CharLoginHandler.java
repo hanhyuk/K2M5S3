@@ -4,6 +4,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import a.my.made.AccountStatusType;
 import a.my.made.CommonType;
 import client.MapleCharacter;
@@ -26,7 +29,8 @@ import packet.transfer.read.ReadingMaple;
 import tools.Randomizer;
 
 public class CharLoginHandler {
-
+	private static final Logger logger = LoggerFactory.getLogger(CharLoginHandler.class);
+	
 	/**
 	 * RECV LOGIN_PASSWORD 패킷 처리
 	 */
@@ -64,7 +68,7 @@ public class CharLoginHandler {
 						CharLoginHandler.getDisplayChannel(true, c);
 						c.clearLoginTryCount();
 					} else {
-						System.err.println("updateLoginState() - 사용자의 계정(" + login + ") 접속 상태값 변경 실패. 원인 파악 필요.");
+						logger.debug("updateLoginState() - 사용자의 계정(" + login + ") 접속 상태값 변경 실패. 원인 파악 필요.");
 						c.send(LoginPacket.getLoginFailed(6));
 						c.addLoginTryCount();
 					}
@@ -75,9 +79,7 @@ public class CharLoginHandler {
 					c.send(LoginPacket.getLoginFailed(7));
 					c.addLoginTryCount();
 				} else if (CommonType.LOGIN_IMPOSSIBLE == commonType) {
-					System.err.println("--------------------------------"
-							+ "\n계정 정보를 확인 할 수 없습니다.\n이런 경우가 자주 발생한다면 시스템적으로 문제가 있는지 점검이 필요함.\n"
-							+ "--------------------------------");
+					logger.warn("계정 정보를 확인 할 수 없습니다. 이런 경우가 자주 발생한다면 시스템적으로 문제가 있는지 점검이 필요함.");
 				}
 			}
 
@@ -109,8 +111,7 @@ public class CharLoginHandler {
 		int channel = rh.readByte();
 		c.setWorld(server);
 		c.setChannel(channel);
-		System.out.println("[알림] " + c.getSessionIPAddress().toString() + " 에서 " + c.getAccountName() + " 계정으로 "
-				+ (channel == 0 ? 1 : channel == 1 ? "20세이상" : channel) + " 채널로 연결을 시도중입니다.");
+		logger.info("[알림] {} 에서 {} 계정으로 {} 채널로 연결을 시도 중입니다.", c.getSessionIPAddress().toString(), c.getAccountName(), (channel == 0 ? 1 : channel == 1 ? "20세이상" : channel));
 		try {
 			List<MapleCharacter> chars = c.loadCharacters();
 			c.getSession().write(LoginPacket.charlist(c, c.isUsing2ndPassword(), chars));

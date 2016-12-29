@@ -1,16 +1,34 @@
-/*
- * ArcStory Project
- * 최주원 sch2307@naver.com
- * 이준 junny_adm@naver.com
- * 우지훈 raccoonfox69@gmail.com
- * 강정규 ku3135@nate.com
- * 김진홍 designer@inerve.kr
- */
-
 package launch;
 
-import client.MapleClient;
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+
+import org.apache.mina.core.buffer.CachedBufferAllocator;
+import org.apache.mina.core.buffer.IoBuffer;
+import org.apache.mina.core.service.IoAcceptor;
+import org.apache.mina.core.session.IdleStatus;
+import org.apache.mina.filter.codec.ProtocolCodecFilter;
+import org.apache.mina.transport.socket.nio.NioSocketAcceptor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import client.MapleCharacter;
+import client.MapleClient;
+import community.BuddyList;
+import community.BuddyList.BuddyOperation;
+import community.BuddylistEntry;
 import community.MapleAlliance;
 import community.MapleGuild;
 import community.MapleGuildCharacter;
@@ -18,25 +36,10 @@ import community.MapleGuildContents;
 import community.MapleParty;
 import community.MaplePartyCharacter;
 import community.MapleSquadLegacy;
-import community.BuddyList;
-import community.BuddyList.BuddyOperation;
-import community.BuddylistEntry;
 import constants.ServerConstants;
 import constants.subclasses.ServerType;
 import database.MYSQL;
 import handler.MapleServerHandler;
-import packet.creators.MainPacketCreator;
-import packet.crypto.EncryptionFactory;
-import packet.transfer.write.Packet;
-import scripting.EventScriptManager;
-import server.shops.HiredMerchant;
-import tools.Timer;
-import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.sql.SQLException;
-import java.util.*;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 import launch.helpers.ChracterTransfer;
 import launch.helpers.ShutdownServer;
 import launch.holder.MapleBuffValueHolder;
@@ -44,16 +47,17 @@ import launch.holder.MapleCoolDownValueHolder;
 import launch.holder.MapleDiseaseValueHolder;
 import launch.holder.MaplePlayerHolder;
 import launch.holder.WideObjectHolder;
-import org.apache.mina.core.buffer.IoBuffer;
-import org.apache.mina.core.service.IoAcceptor;
-import org.apache.mina.core.buffer.CachedBufferAllocator;
-import org.apache.mina.core.session.IdleStatus;
-import org.apache.mina.filter.codec.ProtocolCodecFilter;
-import org.apache.mina.transport.socket.nio.NioSocketAcceptor;
+import packet.creators.MainPacketCreator;
+import packet.crypto.EncryptionFactory;
+import packet.transfer.write.Packet;
+import scripting.EventScriptManager;
 import server.maps.MapleWorldMapProvider;
 import server.maps.PotSystem;
+import server.shops.HiredMerchant;
+import tools.Timer;
 
 public class ChannelServer {
+	private static final Logger logger = LoggerFactory.getLogger(ChannelServer.class);
 
 	private int expRate, mesoRate, dropRate, flag;
 	private short port = (short) ServerConstants.basePorts;
@@ -74,6 +78,7 @@ public class ChannelServer {
 	public boolean is얼리기 = false;
 	private boolean isforce = true;
 	private boolean isOp = false;
+	private final String CLIENT_KEY = "CHANNEL_SESSION_KEY";
 
 	public ChannelServer serverStart(int channelid) {
 		this.channel = channelid;
@@ -100,17 +105,14 @@ public class ChannelServer {
 			acceptor = new NioSocketAcceptor();
 			acceptor.getSessionConfig().setReadBufferSize(2048);
 			acceptor.getSessionConfig().setIdleTime(IdleStatus.BOTH_IDLE, 10);
-			acceptor.getFilterChain().addLast("codec", new ProtocolCodecFilter(new EncryptionFactory()));
-			acceptor.setHandler(new MapleServerHandler(ServerType.CHANNEL, channel));
+			acceptor.getFilterChain().addLast("codec", new ProtocolCodecFilter(new EncryptionFactory(CLIENT_KEY)));
+			acceptor.setHandler(new MapleServerHandler(ServerType.CHANNEL, channel, CLIENT_KEY));
 			acceptor.bind(new InetSocketAddress(port));
 			/* 소켓 설정 종료 */
-			System.out.println("[알림] 채널 " + (getChannel() == 0 ? 1 : getChannel() == 1 ? "20세이상" : getChannel()) + " 서버가 " + port + " 포트를 성공적으로 개방했습니다.");
+			logger.info("[알림] 채널 {} 서버가 {} 포트를 성공적으로 개방했습니다.", (getChannel() == 0 ? 1 : getChannel() == 1 ? "20세이상" : getChannel()), port);
 			eventManager.init();
 		} catch (IOException e) {
-			System.out.println("[오류] 채널서버가 " + port + " 포트를 개방하는데 실패했습니다.");
-			if (!ServerConstants.realese) {
-				e.printStackTrace();
-			}
+			logger.warn("[오류] 채널서버가 {} 포트를 개방하는데 실패했습니다. {}", port, e);
 		}
 		Runtime.getRuntime().addShutdownHook(new Thread(new ShutDownListener()));
 		return this;
@@ -118,7 +120,7 @@ public class ChannelServer {
 
 	public final void shutdown() {
 		shutdown = true;
-		System.out.println("[알림] " + channel + " 채널 서버가 종료를 시작합니다.");
+		logger.info("[알림] {} 채널 서버가 종료를 시작합니다.", channel);
 		closeAllMerchant();
 		PotSystem.SaveToDB();
 		players.disconnectAll();
@@ -282,10 +284,7 @@ public class ChannelServer {
 				instances.put(i, new ChannelServer().serverStart(i));
 			}
 		} catch (Exception e) {
-			System.out.println("[오류] 채널 서버 오픈이 실패했습니다.");
-			if (!ServerConstants.realese) {
-				e.printStackTrace();
-			}
+			logger.warn("[오류] 채널 서버 오픈이 실패했습니다. {}", e);
 		}
 	}
 
@@ -852,7 +851,7 @@ public class ChannelServer {
 	}
 
 	public static void shutdown(int time) {
-		System.out.println("[종료] 로그인서버를 닫는중입니다.");
+		logger.info("[종료] 로그인서버를 닫는중입니다.");
 		LoginServer.getInstance().shutdown();
 		for (ChannelServer cserv : ChannelServer.getAllInstances()) {
 			Timer.WorldTimer.getInstance().schedule(new ShutdownServer(cserv.getChannel()), time);

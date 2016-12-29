@@ -1,18 +1,23 @@
 package handler.channel;
 
-import client.MapleClient;
+import java.awt.Point;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import client.MapleCharacter;
+import client.MapleClient;
 import client.items.Equip;
 import client.items.IEquip;
 import client.items.MapleInventoryType;
 import client.stats.ClothesStats;
-import java.awt.Point;
 import packet.creators.MainPacketCreator;
 import packet.skills.ZeroSkill;
 import packet.transfer.read.ReadingMaple;
 
 public class ZeroHandler {
-    
+	private static final Logger logger = LoggerFactory.getLogger(ZeroHandler.class);
+	
     private static int type;
     private static int position;
     private static boolean ConfirmTag;
@@ -225,7 +230,7 @@ public class ZeroHandler {
         } else if (check == 0 && (bc & value) != 0) { 
             c.getPlayer().mBetaClothes(value);
         } else { 
-            //System.out.println("제로 공통 옷 처리 오류" + check + " " + bc + " " + value);
+        	logger.debug("제로 공통 옷 처리 오류 {}, {}, {}", check, bc, value);
         }
         c.send(ZeroSkill.Clothes(c.getPlayer().getBetaClothes()));
         c.send(ZeroSkill.Reaction());

@@ -5,6 +5,9 @@ import java.sql.ResultSet;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import client.MapleCharacter;
 import client.MapleQuestStatus;
 import client.items.InventoryException;
@@ -23,6 +26,8 @@ import tools.CurrentTime;
 import tools.Randomizer;
 
 public class MapleQuestAction {
+
+	private static final Logger logger = LoggerFactory.getLogger(MapleQuestAction.class);
 
 	private MapleQuestActionType type;
 	private MapleData data;
@@ -149,7 +154,7 @@ public class MapleQuestAction {
 					} catch (InventoryException ie) {
 						// it's better to catch this here so we'll atleast try
 						// to remove the other items
-						System.err.println("[h4x] Completing a quest without meeting the requirements" + ie);
+						logger.debug("[h4x] Completing a quest without meeting the requirements {}", ie);
 					}
 					c.getClient().getSession().write(MainPacketCreator.getShowItemGain(id, count, true));
 				} else { // add items
@@ -216,8 +221,8 @@ public class MapleQuestAction {
 			break;
 		case infoNumber: {
 			// System.out.println("quest : "+MapleDataTool.getInt(data, 0)+"");
-			// MapleQuest.getInstance(MapleDataTool.getInt(data,
-			// 0)).forceComplete(c, 0);
+			// MapleQuest.getInstance(MapleDataTool.getInt(data,0)).forceComplete(c,
+			// 0);
 			// break;
 		}
 		case insightEXP: {

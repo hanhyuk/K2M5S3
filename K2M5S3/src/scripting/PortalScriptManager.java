@@ -14,11 +14,15 @@ import javax.script.ScriptEngineFactory;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import client.MapleClient;
 import server.maps.MaplePortal;
 
 public class PortalScriptManager {
-
+	private static final Logger logger = LoggerFactory.getLogger(PortalScriptManager.class);
+	
 	private static final PortalScriptManager instance = new PortalScriptManager();
 	private final Map<String, PortalScript> scripts = new HashMap<String, PortalScript>();
 	private final static ScriptEngineFactory sef = new ScriptEngineManager().getEngineByName("nashorn").getFactory();
@@ -45,15 +49,15 @@ public class PortalScriptManager {
 			CompiledScript compiled = ((Compilable) portal).compile(fr);
 			compiled.eval();
 		} catch (final ScriptException e) {
-			System.err.println("THROW" + e);
+			logger.debug("{}", e);
 		} catch (final IOException e) {
-			System.err.println("THROW" + e);
+			logger.debug("{}", e);
 		} finally {
 			if (fr != null) {
 				try {
 					fr.close();
 				} catch (final IOException e) {
-					System.err.println("ERROR CLOSING" + e);
+					logger.debug("{}", e);
 				}
 			}
 		}
@@ -68,7 +72,7 @@ public class PortalScriptManager {
 		if (script != null) {
 			script.enter(new PortalPlayerInteraction(c, portal));
 		} else {
-			System.out.println("Unhandled portal script " + portal.getScriptName());
+			logger.debug("Unhandled portal script {}", portal.getScriptName());
 		}
 	}
 

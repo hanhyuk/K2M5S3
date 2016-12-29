@@ -1,37 +1,27 @@
-/*
- * ArcStory Project
- * √÷¡÷ø¯ sch2307@naver.com
- * ¿Ã¡ÿ junny_adm@naver.com
- * øÏ¡ˆ»∆ raccoonfox69@gmail.com
- * ∞≠¡§±‘ ku3135@nate.com
- * ±Ë¡¯»´ designer@inerve.kr
- */
-
 package server.movement;
 
 import packet.transfer.write.WritingPacket;
 import java.awt.Point;
 
-
 public class SunknownMovement extends AbstractLifeMovement {
 
-    private int unk;
+	private int unk;
 
-    public SunknownMovement(int type, Point position, int duration, int newstate) {
-	super(type, position, duration, newstate);
-    }
+	public SunknownMovement(int type, Point position, int duration, int newstate) {
+		super(type, position, duration, newstate);
+	}
 
-    public void setUnk(int unk) {
-	this.unk = unk;
-    }
-    
-    @Override
-    public void serialize(WritingPacket packet) {
-	packet.write(getType());
-	packet.writePos(getPosition());
-	packet.writeShort(unk);
-	packet.write(getNewstate());
-	packet.writeShort(getDuration());
-        packet.write(0);
-    }
+	public void setUnk(int unk) {
+		this.unk = unk;
+	}
+
+	@Override
+	public void serialize(WritingPacket packet) {
+		packet.write(getType());
+		packet.writePos(getPosition());
+		packet.writeShort(unk);
+		packet.write(getNewstate());
+		packet.writeShort(getDuration());
+		packet.write(0);
+	}
 }

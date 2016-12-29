@@ -1,12 +1,3 @@
-/*
- * ArcStory Project
- * ÃÖÁÖ¿ø sch2307@naver.com
- * ÀÌÁØ junny_adm@naver.com
- * ¿ìÁöÈÆ raccoonfox69@gmail.com
- * °­Á¤±Ô ku3135@nate.com
- * ±èÁøÈ« designer@inerve.kr
- */
-
 package launch.holder;
 
 import client.MapleClient;
@@ -26,15 +17,6 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import packet.transfer.write.Packet;
 
-/**
- *
- * @author T-Sun
- * 
- *   This file was written by T-Sun (doomgate17@naver.com)
- *
- *
- *
- */
 public class WideObjectHolder {
     
     private final Map<Integer, MapleParty> parties = new HashMap<Integer, MapleParty>();

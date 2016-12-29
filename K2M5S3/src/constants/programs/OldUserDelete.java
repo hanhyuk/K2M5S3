@@ -8,6 +8,9 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import database.MYSQL;
 
 /**
@@ -15,16 +18,13 @@ import database.MYSQL;
  */
 public class OldUserDelete {
 	
+	private static final Logger logger = LoggerFactory.getLogger(OldUserDelete.class);
+	
 	public static void main(String[] args) {
-		System.out.println("[알림] 데이터베이스 정리 프로그램 작동되었습니다.");
-		long startTime = System.currentTimeMillis();
 		int deletedrows = 0;
 
 		try {
 			Connection con = MYSQL.getConnection();
-
-			System.out.println("[알림] DB 삭제중입니다.");
-
 			PreparedStatement ps = con.prepareStatement("SELECT * FROM accounts");
 			ResultSet rs = ps.executeQuery();
 
@@ -58,8 +58,7 @@ public class OldUserDelete {
 			t.printStackTrace();
 		}
 
-		System.out.println("[알림] " + deletedrows + "개의 계정이 삭제되었습니다. 소요시간은 " + (System.currentTimeMillis() - startTime)
-				+ "ms 입니다.");
+		logger.debug("{} 개의 계정이 삭제되었습니다.", deletedrows);
 	}
 
 	public final static boolean deleteCharacter(final int accId, final int cid) {
@@ -170,7 +169,7 @@ public class OldUserDelete {
 			ps.close();
 			return true;
 		} catch (final SQLException e) {
-			System.err.println("DeleteChar error" + e);
+			logger.debug("DeleteChar error {}", e);
 		}
 		return false;
 	}

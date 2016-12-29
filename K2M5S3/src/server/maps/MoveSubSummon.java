@@ -1,17 +1,9 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package server.maps;
 
 import client.MapleCharacter;
 import java.awt.Point;
 import java.lang.ref.WeakReference;
 
-/**
- *
- * @author GOOD
- */
 public class MoveSubSummon {
     
     private final WeakReference<MapleCharacter> ownerchr;

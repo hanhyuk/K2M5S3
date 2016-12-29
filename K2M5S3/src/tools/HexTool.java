@@ -7,7 +7,6 @@ import org.apache.mina.core.buffer.IoBuffer;
 /**
  * Provides a class for manipulating hexadecimal numbers.
  *
- * @author Frz
  * @since Revision 206
  * @version 1.0
  */

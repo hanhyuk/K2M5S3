@@ -1,12 +1,3 @@
-/*
- * ArcStory Project
- * ÃÖÁÖ¿ø sch2307@naver.com
- * ÀÌÁØ junny_adm@naver.com
- * ¿ìÁöÈÆ raccoonfox69@gmail.com
- * °­Á¤±Ô ku3135@nate.com
- * ±èÁøÈ« designer@inerve.kr
- */
-
 package scripting;
 
 import constants.ServerConstants;
@@ -19,12 +10,6 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.nio.charset.Charset;
 
-/**
- *
- * @author Æ¼½ã
- *
- *         since 2012. 2. 19
- */
 public class NPCAutoWriterHelper {
 
 	private int npcID;

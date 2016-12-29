@@ -1,40 +1,31 @@
-/*
- * ArcStory Project
- * ÃÖÁÖ¿ø sch2307@naver.com
- * ÀÌÁØ junny_adm@naver.com
- * ¿ìÁöÈÆ raccoonfox69@gmail.com
- * °­Á¤±Ô ku3135@nate.com
- * ±èÁøÈ« designer@inerve.kr
- */
-
 package client;
 
 public class MaplePlayerIdNamePair {
 
-    private int id, level, job;
-    private String name;
+	private int id, level, job;
+	private String name;
 
-    public MaplePlayerIdNamePair(int id, String name, int level, int job) {
-        super();
-        this.id = id;
-        this.name = name;
-	this.level = level;
-	this.job = job;
-    }
-    
-    public int getId() {
-        return id;
-    }
+	public MaplePlayerIdNamePair(int id, String name, int level, int job) {
+		super();
+		this.id = id;
+		this.name = name;
+		this.level = level;
+		this.job = job;
+	}
 
-    public String getName() {
-        return name;
-    }
+	public int getId() {
+		return id;
+	}
 
-    public int getLevel() {
-	return level;
-    }
+	public String getName() {
+		return name;
+	}
 
-    public int getJob() {
-    	return job;
-    }
+	public int getLevel() {
+		return level;
+	}
+
+	public int getJob() {
+		return job;
+	}
 }

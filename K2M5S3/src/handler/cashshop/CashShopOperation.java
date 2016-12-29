@@ -1,43 +1,47 @@
-/*
- * ArcStory Project
- * 최주원 sch2307@naver.com
- * 이준 junny_adm@naver.com
- * 우지훈 raccoonfox69@gmail.com
- * 강정규 ku3135@nate.com
- * 김진홍 designer@inerve.kr
- */
-
 package handler.cashshop;
 
-import constants.ServerConstants;
-import constants.GameConstants;
-import client.MapleClient;
-import client.MaplePet;
-import client.MapleCharacter;
-import client.items.*;
-import database.MYSQL;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import a.my.made.AccountStatusType;
+import client.MapleCharacter;
+import client.MapleClient;
+import client.MaplePet;
+import client.items.Equip;
+import client.items.IItem;
+import client.items.Item;
+import client.items.ItemFactory;
+import client.items.MapleInventory;
+import client.items.MapleInventoryType;
+import constants.GameConstants;
+import constants.ServerConstants;
+import database.MYSQL;
 import launch.CashShopServer;
 import launch.ChannelServer;
 import launch.helpers.ChracterTransfer;
 import packet.creators.CashPacket;
 import packet.creators.MainPacketCreator;
 import packet.transfer.read.ReadingMaple;
-import server.items.*;
+import server.items.CashItemFactory;
+import server.items.CashItemInfo;
+import server.items.InventoryManipulator;
+import server.items.ItemInformation;
+import server.items.MapleCashInventory;
+import server.quest.MapleQuest;
 import tools.CurrentTime;
 import tools.Pair;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.List;
-
-import a.my.made.AccountStatusType;
-import server.quest.MapleQuest;
 
 public class CashShopOperation {
-
+	private static final Logger logger = LoggerFactory.getLogger(CashShopOperation.class);
+	
 	public static void LeaveCS(final ReadingMaple rh, final MapleClient ha, final MapleCharacter hp) {
 		final CashShopServer cs = CashShopServer.getInstance();
 		cs.getPlayerStorage().deregisterPlayer(hp);
@@ -48,15 +52,14 @@ public class CashShopOperation {
 		try {
 			if (hp.getCashInventory() != null) {
 				Connection con = MYSQL.getConnection();
-				PreparedStatement ps = con
-						.prepareStatement("DELETE FROM inventoryitems WHERE accountid = ? AND type = ?");
+				PreparedStatement ps = con.prepareStatement("DELETE FROM inventoryitems WHERE accountid = ? AND type = ?");
 				ps.setInt(1, ha.getAccID());
 				ps.setInt(2, ItemFactory.getType(ItemFactory.InventoryType.CASHSHOP));
 				ps.executeUpdate();
 				ps.close();
 				hp.getCashInventory().saveToDB();
 			} else {
-				System.err.println("캐시샵 인벤토리가 널 포인터가 발생하여 저장을 실패했습니다.");
+				logger.debug("캐시샵 인벤토리가 널 포인터가 발생하여 저장을 실패했습니다.");
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -140,8 +143,7 @@ public class CashShopOperation {
 			case 1: // 넥슨 캐시
 			case 2: // 메이플 포인트
 				ha.getPlayer().modifyCSPoints(type, item, false);
-				ha.getSession().write(
-						MainPacketCreator.serverNotice(1, item + (type == 1 ? " 캐시" : " 메이플 포인트") + "를 획득했습니다!"));
+				ha.getSession().write(MainPacketCreator.serverNotice(1, item + (type == 1 ? " 캐시" : " 메이플 포인트") + "를 획득했습니다!"));
 				break;
 			case 3: // 메소
 				ha.getPlayer().gainMeso(item, false);
@@ -252,22 +254,19 @@ public class CashShopOperation {
 				if (GameConstants.isEquip(item.getId())) {
 					Equip equip = new Equip(item.getId(), (short) 1, (short) 0);
 					if (item.getPeriod() > 0)
-						equip.setExpiration(
-								System.currentTimeMillis() + ((long) (item.getPeriod()) * ((long) 86400000)));
+						equip.setExpiration(System.currentTimeMillis() + ((long) (item.getPeriod()) * ((long) 86400000)));
 					equip.setCash(true);
 					tem = equip.copy();
 				} else {
 					Item itemr = new Item(item.getId(), (short) 1, (short) (item.getCount()), (short) 0);
 					itemr.setCash(true);
 					if (GameConstants.isPet(item.getId())) {
-						MaplePet pet = MaplePet.createPet(item.getId(),
-								System.currentTimeMillis() + ((long) (item.getPeriod()) * ((long) 86400000)));
+						MaplePet pet = MaplePet.createPet(item.getId(), System.currentTimeMillis() + ((long) (item.getPeriod()) * ((long) 86400000)));
 						itemr.setPet(pet);
 						itemr.setUniqueId(pet.getUniqueId());
 					}
 					if (item.getPeriod() > 0)
-						itemr.setExpiration(
-								System.currentTimeMillis() + ((long) (item.getPeriod()) * ((long) 86400000)));
+						itemr.setExpiration(System.currentTimeMillis() + ((long) (item.getPeriod()) * ((long) 86400000)));
 					tem = itemr.copy();
 				}
 				if (chr.getCashInventory() == null || item == null) {
@@ -275,8 +274,7 @@ public class CashShopOperation {
 					return;
 				}
 				if (tem != null) {
-					tem.setGMLog(
-							CurrentTime.getAllCurrentTime() + "에 " + c.getPlayer().getName() + "이(가) 캐시샵에서 구매한 아이템");
+					tem.setGMLog(CurrentTime.getAllCurrentTime() + "에 " + c.getPlayer().getName() + "이(가) 캐시샵에서 구매한 아이템");
 					chr.getCashInventory().addItem(tem);
 					c.getSession().write(CashPacket.showBoughtCSItem(tem, sn, c.getAccID()));
 				} else {
@@ -301,8 +299,7 @@ public class CashShopOperation {
 					chr.modifyCSPoints(1, -12000, false);
 					chr.getInventory(type).addSlot((byte) 8);
 					chr.inventoryslot_changed = true;
-					chr.dropMessage(1, "인벤토리 공간을 늘렸습니다. 현재 " + chr.getInventory(type).getSlotLimit()
-							+ " 슬롯이 되었습니다.\r\n\r\n캐시샵에서 늘려진 슬롯이 바로 보이지 않아도 실제로는 늘려졌으니, 캐시샵에서 나가시면 정상적으로 슬롯이 늘어난걸 볼 수 있습니다.");
+					chr.dropMessage(1, "인벤토리 공간을 늘렸습니다. 현재 " + chr.getInventory(type).getSlotLimit() + " 슬롯이 되었습니다.\r\n\r\n캐시샵에서 늘려진 슬롯이 바로 보이지 않아도 실제로는 늘려졌으니, 캐시샵에서 나가시면 정상적으로 슬롯이 늘어난걸 볼 수 있습니다.");
 				} else {
 					chr.dropMessage(1, "슬롯을 더 이상 늘릴 수 없습니다.");
 				}
@@ -313,8 +310,7 @@ public class CashShopOperation {
 					chr.modifyCSPoints(1, -8000, false);
 					chr.getInventory(type).addSlot((byte) 4);
 					chr.inventoryslot_changed = true;
-					chr.dropMessage(1, "인벤토리 공간을 늘렸습니다. 현재 " + chr.getInventory(type).getSlotLimit()
-							+ " 슬롯이 되었습니다.\r\n\r\n캐시샵에서 늘려진 슬롯이 바로 보이지 않아도 실제로는 늘려졌으니, 캐시샵에서 나가시면 정상적으로 슬롯이 늘어난걸 볼 수 있습니다.");
+					chr.dropMessage(1, "인벤토리 공간을 늘렸습니다. 현재 " + chr.getInventory(type).getSlotLimit() + " 슬롯이 되었습니다.\r\n\r\n캐시샵에서 늘려진 슬롯이 바로 보이지 않아도 실제로는 늘려졌으니, 캐시샵에서 나가시면 정상적으로 슬롯이 늘어난걸 볼 수 있습니다.");
 				} else {
 					chr.dropMessage(1, "슬롯을 더 이상 늘릴 수 없습니다.");
 				}
@@ -344,8 +340,7 @@ public class CashShopOperation {
 		} else if (action == 49) { // 펜던트 슬롯 추가
 			int data = rh.readInt();
 			c.getSession().write(CashPacket.showBoughtPendentSlot(data));
-			c.getPlayer().getQuestNAdd(MapleQuest.getInstance(GameConstants.PENDANT_SLOT))
-					.setCustomData("" + (System.currentTimeMillis() + ((1) * 24 * 60 * 60 * 1000)));
+			c.getPlayer().getQuestNAdd(MapleQuest.getInstance(GameConstants.PENDANT_SLOT)).setCustomData("" + (System.currentTimeMillis() + ((1) * 24 * 60 * 60 * 1000)));
 		} else if (action == 14) { // 캐시샵에서 아이템 꺼내기
 			MapleCashInventory csinv = chr.getCashInventory();
 			int uniqueid = rh.readInt();
@@ -446,24 +441,21 @@ public class CashShopOperation {
 								equip.setExpiration(System.currentTimeMillis() + (item.getPeriod() * 86400 * 1000));
 							tem = equip.copy();
 						} else {
-							Item itemr = new Item(p.getRight().getId(), (short) 1, (short) p.getRight().getCount(),
-									(short) 0);
+							Item itemr = new Item(p.getRight().getId(), (short) 1, (short) p.getRight().getCount(), (short) 0);
 							itemr.setCash(true);
 							if (GameConstants.isPet(p.getRight().getId())) {
-								MaplePet pet = MaplePet.createPet(p.getRight().getId(), System.currentTimeMillis()
-										+ ((long) (p.getRight().getPeriod()) * ((long) 86400000)));
+								MaplePet pet = MaplePet.createPet(p.getRight().getId(), System.currentTimeMillis() + ((long) (p.getRight().getPeriod()) * ((long) 86400000)));
 								itemr.setPet(pet);
 								itemr.setUniqueId(pet.getUniqueId());
 							}
 							if (p.getRight().getPeriod() > 0)
-								itemr.setExpiration(System.currentTimeMillis()
-										+ ((long) (p.getRight().getPeriod()) * ((long) 86400000)));
+								itemr.setExpiration(System.currentTimeMillis() + ((long) (p.getRight().getPeriod()) * ((long) 86400000)));
 							tem = itemr.copy();
 						}
 						if (chr.getCashInventory() == null) {
-							System.out.println("캐시 인벤토리가 널");
+							logger.warn("캐시 인벤토리가 널");
 						} else if (tem == null) {
-							System.out.println("아이템이 널");
+							logger.warn("아이템이 널");
 						}
 						if (tem != null) {
 							tem.setGMLog(CurrentTime.getAllCurrentTime() + "에 " + chr.getName() + "이 캐시샵에서 구매한 아이템");
@@ -487,12 +479,8 @@ public class CashShopOperation {
 				if (ItemInformation.getInstance().isQuestItem(item.getId())) {
 					if (chr.getInventory(GameConstants.getInventoryType(item.getId())).getNextFreeSlot() > -1) {
 						chr.gainMeso(-item.getPrice(), false);
-						InventoryManipulator.addById(c, item.getId(), (short) item.getCount(), null, null, 0,
-								CurrentTime.getAllCurrentTime() + "에 캐시샵에서 퀘스트 아이템 구매로 얻은 아이템.");
-						c.getSession()
-								.write(CashPacket.showBoughtCSQuestItem(
-										chr.getInventory(MapleInventoryType.ETC).findById(item.getId()).getPosition(),
-										item.getId()));
+						InventoryManipulator.addById(c, item.getId(), (short) item.getCount(), null, null, 0, CurrentTime.getAllCurrentTime() + "에 캐시샵에서 퀘스트 아이템 구매로 얻은 아이템.");
+						c.getSession().write(CashPacket.showBoughtCSQuestItem(chr.getInventory(MapleInventoryType.ETC).findById(item.getId()).getPosition(), item.getId()));
 					}
 				}
 			}
@@ -570,8 +558,7 @@ public class CashShopOperation {
 					return;
 				}
 				if (tem != null) {
-					tem.setGMLog(
-							CurrentTime.getAllCurrentTime() + "에 " + c.getPlayer().getName() + "이(가) 캐시샵에서 구매한 아이템");
+					tem.setGMLog(CurrentTime.getAllCurrentTime() + "에 " + c.getPlayer().getName() + "이(가) 캐시샵에서 구매한 아이템");
 					tem.setCash(true);
 					short slot = InventoryManipulator.addFromDrop(c, tem, false);
 					if (slot == -1) {
@@ -588,9 +575,6 @@ public class CashShopOperation {
 			} else {
 				c.send(MainPacketCreator.serverNotice(1, "정의되지 않은 상자입니다."));
 			}
-		} else {
-			// System.out.println("New Action: " + action + " Remaining: " +
-			// rh.toString());
 		}
 		c.getSession().write(CashPacket.showNXMapleTokens(chr));
 	}

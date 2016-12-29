@@ -4,10 +4,12 @@ import java.awt.Point;
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.Charset;
 
-import constants.ServerConstants;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ReadingMaple {
-
+	private static final Logger logger = LoggerFactory.getLogger(ReadingMaple.class);
+	
 	private ByteStream bs;
 
 	public ReadingMaple(ByteStream bs) {
@@ -139,9 +141,7 @@ public class ReadingMaple {
 		try {
 			bs.seek(offset);
 		} catch (Exception e) {
-			System.err.println("[오류] 건너뛰기에 실패했습니다.");
-			if (!ServerConstants.realese)
-				e.printStackTrace();
+			logger.debug("[오류] 건너뛰기에 실패했습니다. {}", e);
 		}
 	}
 
@@ -149,9 +149,7 @@ public class ReadingMaple {
 		try {
 			return bs.getPosition();
 		} catch (Exception e) {
-			System.err.println("[오류] 패킷의 현재 위치를 구하는데 실패했습니다.");
-			if (!ServerConstants.realese)
-				e.printStackTrace();
+			logger.debug("[오류] 패킷의 현재 위치를 구하는데 실패했습니다. {}", e);
 			return -1;
 		}
 	}

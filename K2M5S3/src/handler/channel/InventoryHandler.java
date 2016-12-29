@@ -1,7 +1,6 @@
 package handler.channel;
 
 import java.awt.Point;
-import java.io.File;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -11,6 +10,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import client.MapleAndroid;
 import client.MapleCharacter;
@@ -68,7 +70,8 @@ import tools.Pair;
 import tools.Randomizer;
 
 public class InventoryHandler {
-
+	private static final Logger logger = LoggerFactory.getLogger(InventoryHandler.class);
+	
     static boolean success = false;
 
     public static int potential(int level, int a, boolean top, int itemId) {
@@ -2653,7 +2656,7 @@ public class InventoryHandler {
                 } else if (itemId / 10000 == 553) {
                     InventoryHandler.receiveReward(slot, itemId, toUse, c);
                 } else {
-                    System.out.println("Unhandled CS item : " + itemId);
+                    logger.debug("Unhandled CS item : {}", itemId);
                 }
                 break;
         }

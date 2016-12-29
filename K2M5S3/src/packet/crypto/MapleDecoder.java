@@ -1,6 +1,7 @@
 package packet.crypto;
 
 import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.apache.mina.core.buffer.IoBuffer;
 import org.apache.mina.core.session.IoSession;
@@ -16,40 +17,40 @@ import packet.transfer.read.ReadingMaple;
 import tools.HexTool;
 
 public class MapleDecoder extends CumulativeProtocolDecoder {
-
 	private static final Logger logger = LoggerFactory.getLogger(MapleDecoder.class);
 	
-	public static final String DECODER_STATE_KEY = MapleDecoder.class.getName() + ".STATE";
-
-	public static class DecoderState {
-		public int packetlength = -1;
+	final Lock fairLock = new ReentrantLock(true);
+	private String clientKey;
+	
+	public MapleDecoder(String clientKey) {
+		this.clientKey = clientKey;
 	}
-
+	
 	@Override
-	protected boolean doDecode(IoSession session, IoBuffer in, ProtocolDecoderOutput out) throws Exception {
-		final DecoderState decoderState = (DecoderState) session.getAttribute(DECODER_STATE_KEY);
-		final MapleClient client = (MapleClient) session.getAttribute(MapleClient.CLIENT_KEY);
+	protected boolean doDecode(IoSession session, IoBuffer buffer, ProtocolDecoderOutput out) throws Exception {
+		final MapleClient client = (MapleClient) session.getAttribute(clientKey);
+
+		int packetLength = -1;
 		
-		if (decoderState.packetlength == -1) {
-			if (in.remaining() >= 4) {
-				final int packetHeader = in.getInt();
-				if (!client.getReceiveCrypto().checkPacket(packetHeader)) {
-					session.closeNow();
-					return false;
-				}
-				decoderState.packetlength = MapleCrypto.getPacketLength(packetHeader);
-			} else {
+		if (buffer.remaining() >= 4) {
+			final int packetHeader = buffer.getInt();
+			if (!client.getReceiveCrypto().checkPacket(packetHeader)) {
+				logger.warn("recv packet 헤더 검증 실패! 계정 : {} 캐릭명 : {}", client.getAccountName(), client.getPlayer().getName());
+				session.closeNow();
 				return false;
 			}
+			packetLength = MapleCrypto.getPacketLength(packetHeader);
+		} else {
+			return false;
 		}
-		if (in.remaining() >= decoderState.packetlength) {
-			final Lock mutex = client.getDecodeLock();
+		
+		if (buffer.remaining() >= packetLength) {
 			try {
-				mutex.lock();
+				fairLock.lock();
 				
-				final byte decryptedPacket[] = new byte[decoderState.packetlength];
-				in.get(decryptedPacket, 0, decoderState.packetlength);
-				decoderState.packetlength = -1;
+				final byte[] decryptedPacket = new byte[packetLength];
+				buffer.get(decryptedPacket, 0, packetLength);
+				
 				client.getReceiveCrypto().crypt(decryptedPacket);
 				out.write(decryptedPacket);
 				
@@ -63,7 +64,7 @@ public class MapleDecoder extends CumulativeProtocolDecoder {
 					}
 				}
 			} finally {
-				mutex.unlock();
+				fairLock.unlock();
 			}
 			return true;
 		}

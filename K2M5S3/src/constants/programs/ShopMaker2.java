@@ -13,6 +13,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import provider.MapleData;
 import provider.MapleDataProvider;
 import provider.MapleDataProviderFactory;
@@ -21,6 +24,8 @@ import server.items.ItemInformation;
 import tools.Triple;
 
 public class ShopMaker2 {
+	private static final Logger logger = LoggerFactory.getLogger(ShopMaker2.class);
+	
     private static int MIN_LEVEL = 0, MAX_LEVEL = 100;
     private static List<Integer> EXCPET_ITEMS = Arrays.asList(1003142, 1402037);
     private static List<String> EXCPET_ITEM_NAMES = Arrays.asList("위젯");
@@ -43,25 +48,22 @@ public class ShopMaker2 {
             try {
                 MESO_RATE = Integer.parseInt(c.readLine("아이템의 가격을 되팔기 가격의 몇 배로 하시겠습니까? : "));
             } catch (NumberFormatException nfe) {
-                System.out.println("숫자가 아닙니다.");
+                logger.debug("{}", nfe);
             } catch (Exception e) {
-                System.out.println("알 수 없는 오류입니다. : " + e);
+                logger.debug("{}", e);
             }
         }
-        System.out.println();
 
         while (NPC == -1) { //판매가 설정
             try {
                 NPC = Integer.parseInt(c.readLine("판매에 사용할 NPC 코드를 입력해주십시오. : "));
             } catch (NumberFormatException nfe) {
-                System.out.println("숫자가 아닙니다.");
+            	logger.debug("{}", nfe);
             } catch (Exception e) {
-                System.out.println("알 수 없는 오류입니다. : " + e);
+            	logger.debug("{}", e);
             }
         }
-        System.out.println();
 
-        System.out.println("모든 아이템 상점 파일 만들기를 시작합니다.");
         long start = System.currentTimeMillis();
         boolean isLast;
         try {
@@ -88,7 +90,7 @@ public class ShopMaker2 {
             }
             out.close();
         } catch (Exception e) {
-            System.out.println("아이템을 불러오는데 실패했습니다. : " + e);
+            logger.debug("{}", e);
             return;
         }
         List<Integer> common = new ArrayList<Integer>();
@@ -144,11 +146,10 @@ public class ShopMaker2 {
             for (String conname : EXCPET_ITEM_NAMES) name.print(conname + ", ");
             name.close();
         } catch (Exception e) {
-            System.out.println("알 수 없는 오류입니다.");
+            logger.debug("{}", e);
         }
         long end = System.currentTimeMillis();
-        System.out.println("완료되었습니다.");
-        System.out.println("AShopItems.sql, AShop.sql, desc.txt 파일을 확인해주십시오.");
+        logger.debug("AShopItems.sql, AShop.sql, desc.txt 파일을 확인해주십시오.");
         System.exit(0);
         return;
     }
@@ -227,7 +228,7 @@ public class ShopMaker2 {
 
                 EquipType type = EquipType.getEquipType(islot);
                 if (type == null){
-                    System.out.println("알 수 없는 아이템입니다.");
+                    logger.debug("알 수 없는 아이템입니다.");
                     continue;
                 }
 
@@ -252,7 +253,7 @@ public class ShopMaker2 {
                         list.add(new Triple<Integer, Integer, Integer>(id, shopId, price));
                     }
                 } catch (NullPointerException e) {
-                    System.out.println("포인터가 없습니다.");
+                	logger.debug("{}", e);
                 }
             }
         }

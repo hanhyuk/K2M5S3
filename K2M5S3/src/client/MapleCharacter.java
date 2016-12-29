@@ -386,7 +386,7 @@ public class MapleCharacter extends AnimatedHinaMapObjectExtend implements Inven
 			rs.close();
 			ps.close();
 		} catch (SQLException e) {
-			System.err.println("Error getting character default" + e);
+			logger.debug("Error getting character default {}", e);
 		}
 		return ret;
 	}
@@ -967,11 +967,8 @@ public class MapleCharacter extends AnimatedHinaMapObjectExtend implements Inven
 				rs.close();
 				ps.close();
 			}
-		} catch (SQLException ess) {
-			if (!ServerConstants.realese) {
-				ess.printStackTrace();
-			}
-			System.err.println("캐릭터 로딩에 실패했습니다.");
+		} catch (SQLException e) {
+			logger.debug("캐릭터 로딩에 실패했습니다. {}", e);
 		} finally {
 			try {
 				if (ps != null) {
@@ -1255,17 +1252,11 @@ public class MapleCharacter extends AnimatedHinaMapObjectExtend implements Inven
 
 			con.commit();
 		} catch (Exception e) {
-			if (!ServerConstants.realese) {
-				e.printStackTrace();
-			}
-			System.err.println("[charsave] Error saving character data");
+			logger.debug("[charsave] Error saving character data {}", e);
 			try {
 				con.rollback();
 			} catch (SQLException ex) {
-				if (!ServerConstants.realese) {
-					ex.printStackTrace();
-				}
-				System.err.println("[charsave] Error Rolling Back");
+				logger.debug("[charsave] Error Rolling Back {}", ex);
 			}
 		} finally {
 			try {
@@ -1281,10 +1272,7 @@ public class MapleCharacter extends AnimatedHinaMapObjectExtend implements Inven
 				con.setAutoCommit(true);
 				con.setTransactionIsolation(Connection.TRANSACTION_REPEATABLE_READ);
 			} catch (SQLException e) {
-				if (!ServerConstants.realese) {
-					e.printStackTrace();
-				}
-				System.err.println("[charsave] Error going back to autocommit mode");
+				logger.debug("[charsave] Error going back to autocommit mode {}", e);
 			}
 		}
 	}
@@ -1626,7 +1614,7 @@ public class MapleCharacter extends AnimatedHinaMapObjectExtend implements Inven
 				ps.close();
 				cashInv.saveToDB();
 			} else {
-				System.err.println("캐시샵 인벤토리가 널 포인터가 발생하여 저장을 실패했습니다.");
+				logger.debug("캐시샵 인벤토리가 널 포인터가 발생하여 저장을 실패했습니다.");
 			}
 		} catch (SQLException e) {
 			if (!ServerConstants.realese) {
@@ -1724,14 +1712,14 @@ public class MapleCharacter extends AnimatedHinaMapObjectExtend implements Inven
 			if (storage != null) {
 				storage.saveToDB();
 			} else {
-				System.err.println("창고 인벤토리가 널 포인터가 발생하여 저장을 실패했습니다.");
+				logger.debug("창고 인벤토리가 널 포인터가 발생하여 저장을 실패했습니다.");
 			}
 
 			/* 스틸 스킬 저장 */
 			if (steelskills != null) {
 				saveSteelSkills();
 			} else {
-				System.err.println("스틸 스킬 정보가 널 포인터가 발생하여 저장을 실패했습니다.");
+				logger.debug("스틸 스킬 정보가 널 포인터가 발생하여 저장을 실패했습니다.");
 			}
 
 			/* 퀵 슬롯 저장 */
@@ -1747,12 +1735,11 @@ public class MapleCharacter extends AnimatedHinaMapObjectExtend implements Inven
 			if (!ServerConstants.realese) {
 				e.printStackTrace();
 			}
-			System.err.println(LogUtils.getLogMessage(this, "[charsave] Error saving character data."));
+			logger.debug(LogUtils.getLogMessage(this, "[charsave] Error saving character data."));
 			try {
 				con.rollback();
 			} catch (SQLException ex) {
-				System.err.println(LogUtils.getLogMessage(this, "[charsave] Error Rolling Back"));
-				ex.printStackTrace();
+				logger.debug("{}, {}", LogUtils.getLogMessage(this, "[charsave] Error Rolling Back"), ex);
 			}
 		} finally {
 			try {
@@ -4247,7 +4234,7 @@ public class MapleCharacter extends AnimatedHinaMapObjectExtend implements Inven
 				ps.close();
 			}
 		} catch (SQLException ex) {
-			System.err.println("Error while banning" + ex);
+			logger.debug("Error while banning {}", ex);
 			return false;
 		}
 		return true;
@@ -4299,7 +4286,7 @@ public class MapleCharacter extends AnimatedHinaMapObjectExtend implements Inven
 			ps.close();
 			return ret;
 		} catch (SQLException ex) {
-			System.err.println("Error while banning" + ex);
+			logger.debug("Error while banning {}", ex);
 		}
 		return false;
 	}
@@ -4646,7 +4633,7 @@ public class MapleCharacter extends AnimatedHinaMapObjectExtend implements Inven
 			ps.execute();
 			ps.close();
 		} catch (SQLException e) {
-			System.err.println("ERROR writing famelog for char " + getName() + " to " + to.getName() + e);
+			logger.debug("ERROR writing famelog for char {} to {} {}", getName(), to.getName(), e);
 		}
 	}
 
@@ -4889,7 +4876,7 @@ public class MapleCharacter extends AnimatedHinaMapObjectExtend implements Inven
 			ps.executeUpdate();
 			ps.close();
 		} catch (SQLException se) {
-			System.err.println("SQL error: " + se.getLocalizedMessage() + se);
+			logger.debug("SQL error : {}", se);
 		}
 	}
 
@@ -5127,7 +5114,7 @@ public class MapleCharacter extends AnimatedHinaMapObjectExtend implements Inven
 				deleteWhereCharacterId(con, "DELETE FROM skills_cooldowns WHERE charid = ?");
 
 			} catch (SQLException e) {
-				System.err.println("Error while retriving cooldown from SQL storage");
+				logger.debug("Error while retriving cooldown from SQL storage {}", e);
 			}
 		}
 	}
@@ -5250,7 +5237,7 @@ public class MapleCharacter extends AnimatedHinaMapObjectExtend implements Inven
 			ps.executeUpdate();
 			ps.close();
 		} catch (SQLException e) {
-			System.err.println("Unable to send note" + e);
+			logger.debug("Unable to send note {}", e);
 		}
 	}
 
@@ -5267,7 +5254,7 @@ public class MapleCharacter extends AnimatedHinaMapObjectExtend implements Inven
 			ps.close();
 			client.getSession().write(MainPacketCreator.showNotes(rs, count));
 		} catch (SQLException e) {
-			System.err.println("Unable to show note" + e);
+			logger.debug("Unable to show note {}", e);
 		}
 	}
 
@@ -5279,7 +5266,7 @@ public class MapleCharacter extends AnimatedHinaMapObjectExtend implements Inven
 			ps.execute();
 			ps.close();
 		} catch (SQLException e) {
-			System.err.println("Unable to delete note" + e);
+			logger.debug("Unable to delete note {}", e);
 		}
 	}
 
@@ -5696,10 +5683,7 @@ public class MapleCharacter extends AnimatedHinaMapObjectExtend implements Inven
 			}
 			ps.close();
 		} catch (Exception e) {
-			System.err.println("[오류] 커스텀 값들을 저장하는데 실패했습니다.");
-			if (!ServerConstants.realese) {
-				e.printStackTrace();
-			}
+			logger.debug("[오류] 커스텀 값들을 저장하는데 실패했습니다. {}", e);
 		}
 	}
 
@@ -5724,10 +5708,7 @@ public class MapleCharacter extends AnimatedHinaMapObjectExtend implements Inven
 			ps.close();
 			rs.close();
 		} catch (Exception e) {
-			System.err.println("[오류] 커스텀 값들을 불러오는데 실패했습니다.");
-			if (!ServerConstants.realese) {
-				e.printStackTrace();
-			}
+			logger.debug("[오류] 커스텀 값들을 불러오는데 실패했습니다. {}", e);
 		}
 	}
 
@@ -5751,10 +5732,7 @@ public class MapleCharacter extends AnimatedHinaMapObjectExtend implements Inven
 			}
 			ps.close();
 		} catch (Exception e) {
-			System.err.println("[오류] 스틸 스킬 정보를 저장하는데 실패했습니다.");
-			if (!ServerConstants.realese) {
-				e.printStackTrace();
-			}
+			logger.debug("[오류] 스틸 스킬 정보를 저장하는데 실패했습니다. {}", e);
 		}
 	}
 
@@ -5784,10 +5762,7 @@ public class MapleCharacter extends AnimatedHinaMapObjectExtend implements Inven
 			ps.close();
 			rs.close();
 		} catch (Exception e) {
-			System.err.println("[오류] 스틸 스킬 정보들을 불러오는데 실패했습니다.");
-			if (!ServerConstants.realese) {
-				e.printStackTrace();
-			}
+			logger.debug("[오류] 스틸 스킬 정보들을 불러오는데 실패했습니다. {}", e);
 		}
 	}
 

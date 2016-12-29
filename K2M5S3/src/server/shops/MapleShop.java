@@ -10,6 +10,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import client.MapleClient;
 import client.MaplePet;
 import client.items.IItem;
@@ -24,6 +27,8 @@ import server.items.ItemInformation;
 import tools.CurrentTime;
 
 public class MapleShop {
+	private static final Logger logger = LoggerFactory.getLogger(MapleShop.class);
+
 	private static final Set<Integer> rechargeableItems = new LinkedHashSet<Integer>();
 	private int id;
 	private int npcId;
@@ -74,7 +79,7 @@ public class MapleShop {
 
 	public void sendShop(MapleClient c) {
 		if (items == null) {
-			System.out.println("[알림] 상점에 아무정보가 없습니다.");
+			logger.debug("[알림] 상점에 아무정보가 없습니다.");
 			return;
 		}
 		c.getPlayer().setShop(this);
@@ -270,7 +275,7 @@ public class MapleShop {
 			rs.close();
 			ps.close();
 		} catch (SQLException e) {
-			System.err.println("Could not load shop" + e);
+			logger.debug("Could not load shop {}", e);
 		}
 		return ret;
 	}

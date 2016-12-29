@@ -1,12 +1,3 @@
-/*
- * ArcStory Project
- * 최주원 sch2307@naver.com
- * 이준 junny_adm@naver.com
- * 우지훈 raccoonfox69@gmail.com
- * 강정규 ku3135@nate.com
- * 김진홍 designer@inerve.kr
- */
-
 package handler.channel;
 
 import java.util.Iterator;
@@ -16,7 +7,8 @@ import client.MapleClient;
 import client.skills.ISkill;
 import client.skills.SkillFactory;
 import client.skills.SkillStatEffect;
-import community.*;
+import community.MapleGuild;
+import community.MapleGuildResponse;
 import launch.ChannelServer;
 import packet.creators.MainPacketCreator;
 import packet.transfer.read.ReadingMaple;

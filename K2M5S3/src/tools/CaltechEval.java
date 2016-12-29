@@ -1,12 +1,3 @@
-/*
- * ArcStory Project
- * 최주원 sch2307@naver.com
- * 이준 junny_adm@naver.com
- * 우지훈 raccoonfox69@gmail.com
- * 강정규 ku3135@nate.com
- * 김진홍 designer@inerve.kr
- */
-
 package tools;
 
 // Simple Java Math Expression Evaluator
@@ -20,8 +11,12 @@ package tools;
 
 import java.util.Vector;
 
-public class CaltechEval
-{
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+public class CaltechEval {
+	private static final Logger logger = LoggerFactory.getLogger(CaltechEval.class);
+	
     String expression;
     String[] Operators;
     int[] OperatorsArgs;

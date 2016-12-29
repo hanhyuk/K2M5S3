@@ -8,6 +8,9 @@ import java.sql.SQLException;
 
 import javax.swing.JOptionPane;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import database.MYSQL;
 
 /**
@@ -15,6 +18,8 @@ import database.MYSQL;
  */
 public class RollingCreator extends javax.swing.JFrame {
 
+	private static final Logger logger = LoggerFactory.getLogger(RollingCreator.class);
+	
     /**
      * Creates new form RollingCreator
      */
@@ -127,8 +132,8 @@ public class RollingCreator extends javax.swing.JFrame {
                 ps = con.prepareStatement(query);
                 ps.executeUpdate();
                 ps.close();
-        } catch (SQLException ex) {
-            System.out.println(ex);
+        } catch (SQLException e) {
+        	logger.debug("{}", e);
         }
         JOptionPane.showMessageDialog(null, "아이템을 추가 하였습니다.");
     }//GEN-LAST:event_jButton1ActionPerformed

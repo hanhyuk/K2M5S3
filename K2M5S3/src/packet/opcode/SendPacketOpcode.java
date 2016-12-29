@@ -1,17 +1,12 @@
-/*
- * ArcStory Project
- * 최주원 sch2307@naver.com
- * 이준 junny_adm@naver.com
- * 우지훈 raccoonfox69@gmail.com
- * 강정규 ku3135@nate.com
- * 김진홍 designer@inerve.kr
- */
-
 package packet.opcode;
+
+import java.io.File;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import constants.ServerConstants;
 import tools.IniFileProcess;
-import java.io.File;
 
 public enum SendPacketOpcode {
     
@@ -297,7 +292,9 @@ public enum SendPacketOpcode {
     PSYCHIC_DAMAGE,
     PSYCHIC_ULTIMATE,
     CANCEL_PSYCHIC_GREP;
-    
+   
+	private static final Logger logger = LoggerFactory.getLogger(SendPacketOpcode.class);
+	
     private short value = -2;
    
     public static String getOpcodeName(int value) {
@@ -318,9 +315,7 @@ public enum SendPacketOpcode {
                 try {
                     value = Short.parseShort(storage.getString("Send", packet.name()));
                 } catch (NumberFormatException error) {
-                    if (!ServerConstants.realese) {
-                        System.out.println("누락된 SendPacket Name : " + packet.name());
-                    }
+                    logger.debug("누락된 SendPacket Name : {}", packet.name());
                 }
                 packet.setValue(value);
             }

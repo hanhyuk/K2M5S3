@@ -1,18 +1,22 @@
-/*
- * ArcStory Project
- * √÷¡÷ø¯ sch2307@naver.com
- * ¿Ã¡ÿ junny_adm@naver.com
- * øÏ¡ˆ»∆ raccoonfox69@gmail.com
- * ∞≠¡§±‘ ku3135@nate.com
- * ±Ë¡¯»´ designer@inerve.kr
- */
-
 package scripting;
 
-import constants.ServerConstants;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Map.Entry;
+import java.util.Properties;
+import java.util.WeakHashMap;
+import java.util.concurrent.ScheduledFuture;
+
+import javax.script.Invocable;
+import javax.script.ScriptException;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import client.MapleCharacter;
 import community.MapleParty;
 import community.MapleSquadLegacy;
+import constants.ServerConstants;
 import launch.ChannelServer;
 import packet.creators.MainPacketCreator;
 import server.life.MapleLifeProvider;
@@ -22,17 +26,10 @@ import server.maps.MapleMap;
 import server.maps.MapleMapObject;
 import server.maps.MapleWorldMapProvider;
 import tools.Timer.EventTimer;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map.Entry;
-import java.util.Properties;
-import java.util.WeakHashMap;
-import java.util.concurrent.ScheduledFuture;
-import javax.script.Invocable;
-import javax.script.ScriptException;
 
 public class EventManager {
-
+	private static final Logger logger = LoggerFactory.getLogger(EventManager.class);
+	
 	private Invocable iv;
 	private ChannelServer cserv;
 	private WeakHashMap<String, EventInstanceManager> instances = new WeakHashMap<String, EventInstanceManager>();
@@ -64,13 +61,9 @@ public class EventManager {
 				try {
 					iv.invokeFunction(methodName, (Object) null);
 				} catch (ScriptException ex) {
-					if (!ServerConstants.realese)
-						ex.printStackTrace();
-					System.out.println("method Name : " + methodName + "");
+					logger.debug("method Name : {}, {}", methodName, ex);
 				} catch (NoSuchMethodException ex) {
-					if (!ServerConstants.realese)
-						ex.printStackTrace();
-					System.out.println("method Name : " + methodName + "");
+					logger.debug("method Name : {}, {}", methodName, ex);
 				}
 			}
 		}, delay);
@@ -83,13 +76,9 @@ public class EventManager {
 				try {
 					iv.invokeFunction(methodName, eim);
 				} catch (ScriptException ex) {
-					if (!ServerConstants.realese)
-						ex.printStackTrace();
-					System.out.println("method Name : " + methodName + "");
+					logger.debug("method Name : {}, {}", methodName, ex);
 				} catch (NoSuchMethodException ex) {
-					if (!ServerConstants.realese)
-						ex.printStackTrace();
-					System.out.println("method Name : " + methodName + "");
+					logger.debug("method Name : {}, {}", methodName, ex);
 				}
 			}
 		}, delay);

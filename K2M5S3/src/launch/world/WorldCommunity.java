@@ -1,12 +1,3 @@
-/*
- * ArcStory Project
- * 최주원 sch2307@naver.com
- * 이준 junny_adm@naver.com
- * 우지훈 raccoonfox69@gmail.com
- * 강정규 ku3135@nate.com
- * 김진홍 designer@inerve.kr
- */
-
 package launch.world;
 
 import client.MapleCharacter;
@@ -32,8 +23,6 @@ import tools.Pair;
 import tools.Timer;
 
 /** 서버 전체에 커뮤니티 (메신저, 친구, 파티 등) 기능을 제공하는 함수들.
- *
- * @author 티썬
  *
  * since 2012. 2. 24
  * @since Revision 33

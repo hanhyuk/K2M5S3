@@ -8,7 +8,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import constants.ServerConstants;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import constants.subclasses.HighRankingType;
 import database.MYSQL;
 import launch.ChannelServer;
@@ -18,7 +20,8 @@ import tools.Timer.WorldTimer;
  * TODO 분석필요. 
  */
 public class HighRanking {
-
+	private static final Logger logger = LoggerFactory.getLogger(HighRanking.class);
+	
 	private static HighRanking instance = null;
 	private Map<Integer, RankingDataHolder> rankingData = new HashMap<Integer, RankingDataHolder>();
 
@@ -114,9 +117,7 @@ public class HighRanking {
 			// </editor-fold>
 
 		} catch (Exception e) {
-			System.err.println("[오류] 하이 랭킹 데이터를 갱신하는 중 오류가 발생했습니다.");
-			if (!ServerConstants.realese)
-				e.printStackTrace();
+			logger.debug("[오류] 하이 랭킹 데이터를 갱신하는 중 오류가 발생했습니다. {}", e);
 		}
 	}
 

@@ -1,27 +1,5 @@
-/*
-This file is part of the ZeroFusion MapleStory Server
-Copyright (C) 2008 Patrick Huy <patrick.huy@frz.cc> 
-Matthias Butz <matze@odinms.de>
-Jan Christian Meyer <vimes@odinms.de>
-ZeroFusion organized by "RMZero213" <RMZero213@hotmail.com>
-
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU Affero General Public License version 3
-as published by the Free Software Foundation. You may not use, modify
-or distribute this program under any other version of the
-GNU Affero General Public License.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU Affero General Public License for more details.
-
-You should have received a copy of the GNU Affero General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
 package community;
 
-import database.MYSQL;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -29,12 +7,18 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collection;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import database.MYSQL;
 import launch.ChannelServer;
 import packet.creators.MainPacketCreator;
 import packet.transfer.write.Packet;
 
 public class MapleAlliance implements java.io.Serializable {
-
+	private static final Logger logger = LoggerFactory.getLogger(MapleAlliance.class);
+	
     private static enum GAOp {
 
         NONE, DISBAND, NEWGUILD
@@ -72,8 +56,7 @@ public class MapleAlliance implements java.io.Serializable {
             rs.close();
             ps.close();
         } catch (SQLException se) {
-            System.err.println("unable to read guild information from sql");
-            se.printStackTrace();
+        	logger.debug("unable to read guild information from sql {}", se);
             return;
         }
     }
@@ -94,8 +77,7 @@ public class MapleAlliance implements java.io.Serializable {
             rs.close();
             ps.close();
         } catch (SQLException se) {
-            System.err.println("unable to read guild information from sql");
-            se.printStackTrace();
+        	logger.debug("unable to read guild information from sql {}", se);
         }
         return ret;
     }
@@ -141,9 +123,8 @@ public class MapleAlliance implements java.io.Serializable {
             }
             rs.close();
             ps.close();
-        } catch (SQLException SE) {
-            System.err.println("SQL THROW");
-            SE.printStackTrace();
+        } catch (SQLException se) {
+        	logger.debug("SQL THROW {}", se);
         }
         return ret;
     }
@@ -164,7 +145,7 @@ public class MapleAlliance implements java.io.Serializable {
             ps.execute();
             ps.close();
         } catch (SQLException SE) {
-            System.err.println("SQL THROW" + SE);
+        	logger.debug("SQL THROW {}", SE);
             return false;
         }
         return true;
@@ -211,9 +192,8 @@ public class MapleAlliance implements java.io.Serializable {
             ps.setInt(14, allianceid);
             ps.executeUpdate();
             ps.close();
-        } catch (SQLException SE) {
-            System.err.println("SQL THROW");
-            SE.printStackTrace();
+        } catch (SQLException se) {
+        	logger.debug("SQL THROW {}", se);
         }
     }
 
