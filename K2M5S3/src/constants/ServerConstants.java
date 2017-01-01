@@ -29,9 +29,6 @@ public class ServerConstants {
     public static int ChannelPort;
     public static int CashShopPort;
     public static int BuddyChatPort;
-    
-    
-    
         
     public static int defaultExpRate;
     public static int defaultMesoRate;
