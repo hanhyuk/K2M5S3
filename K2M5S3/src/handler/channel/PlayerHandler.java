@@ -1721,7 +1721,7 @@ public class PlayerHandler {
 			}
 			logger.debug("Movement Parse Error : {}", rh.toString());
 		}
-		if (res != null) { // TODO more validation of input data
+		if (res != null) {
 			MapleMap map = c.getPlayer().getMap();
 			if (chr.isHidden()) {
 				chr.setLastRes(res);

@@ -269,7 +269,6 @@ public class WorldCommunity {
      * @param <maplePartyOperation> 파티업데이트 작업
      * @param <maplePartyCharacter> 업데이트되는 대상
      */
-    //TODO only notify channels where partymembers are?
     public static void updateParty(int partyid, MaplePartyOperation operation, MaplePartyCharacter target) {
 	final MapleParty party = WideObjectHolder.getInstance().getParty(partyid);
 	if (party == null) {

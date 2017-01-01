@@ -101,7 +101,7 @@ public class PlayerShopPacket {
             }
             packet.writeLong(merch.getMeso());
         }
-        packet.writeInt(7763); // TODO : value
+        packet.writeInt(7763); //value
         packet.writeMapleAsciiString(merch.getDescription());
         packet.write(0x10); 
         packet.writeLong(merch.getMeso()); 

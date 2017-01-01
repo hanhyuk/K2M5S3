@@ -260,7 +260,6 @@ public class MapleCharacterStat {
 					chra.updateSingleStat(client.stats.PlayerStat.MP, this.mp);
 					chra.Message("럭 오브 팬텀시프의 효과로 죽음의 운명을 회피했습니다.");
 					chra.cancelEffectFromBuffStat(BuffStats.LUCK_PHANTOM_THIEF, -1);
-					// TODO: 이펙트가 있나? 있다면 이펙트 추가 필요
 				} else if (chra.getBuffedValue(BuffStats.SOUL_STONE) != null) { // 소울
 																				// 스톤
 					int percentage = chra.getBuffedValue(BuffStats.SOUL_STONE).intValue();
@@ -270,7 +269,6 @@ public class MapleCharacterStat {
 					chra.updateSingleStat(client.stats.PlayerStat.MP, this.mp);
 					chra.Message("소울 스톤에 보존된 영혼으로 제자리에서 부활됩니다.");
 					chra.cancelEffectFromBuffStat(BuffStats.SOUL_STONE, -1);
-					// TODO: 이펙트가 있나? 있다면 이펙트 추가 필요
 				} else if (chra.getBuffedValue(BuffStats.HEAVENS_DOOR) != null) {
 					this.hp = chra.getStat().getMaxHp();
 					chra.updateSingleStat(PlayerStat.HP, this.hp);
@@ -907,10 +905,7 @@ public class MapleCharacterStat {
 		case 3110:
 		case 3111:
 		case 3112: {
-			final ISkill critSkill = (Skill) SkillFactory.getSkill(31100006); // TODO
-																				// LEGEND,
-																				// not
-																				// final
+			final ISkill critSkill = (Skill) SkillFactory.getSkill(31100006);
 			final int critlevel = player.getSkillLevel(critSkill);
 			if (critlevel > 0) {
 				this.passive_sharpeye_rate += (short) (critSkill.getEffect(critlevel).getCr());

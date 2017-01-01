@@ -825,8 +825,7 @@ public class MapleClient {
 		return chars;
 	}
 
-	public final List<MapleCharacter> loadCharacters() { // TODO make this less
-															// costly zZz
+	public final List<MapleCharacter> loadCharacters() {
 		final List<MapleCharacter> chars = new LinkedList<MapleCharacter>();
 		for (final CharNameAndId cni : loadCharactersInternal()) {
 			final MapleCharacter chr = MapleCharacter.loadCharFromDB(cni.id, this, false);

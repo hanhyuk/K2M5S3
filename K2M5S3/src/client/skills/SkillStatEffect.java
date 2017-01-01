@@ -2260,8 +2260,7 @@ public class SkillStatEffect {
 			}
 		} else if (!primary && isResurrection()) {
 			hpchange = stat.getMaxHp();
-			applyto.setStance(0); // TODO fix death bug, player doesnt spawn on
-									// other screen
+			applyto.setStance(0);
 		}
 		if (isDispel() && makeChanceResult()) {
 			applyto.dispelDebuffs();

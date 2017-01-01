@@ -291,8 +291,6 @@ public class MobSkill {
                             }
                             break;
                     }
-		    // Get spawn coordinates (This fixes monster lock)
-                    // TODO get map left and right wall.
                     switch (monster.getMap().getId()) {
                         case 220080001: //Pap map
                             if (xpos < -890) {

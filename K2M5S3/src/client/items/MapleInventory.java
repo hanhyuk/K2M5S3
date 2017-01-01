@@ -169,7 +169,7 @@ public class MapleInventory implements Iterable<IItem>, InventoryContainer, Seri
 
     public void removeItem(short slot, short quantity, boolean allowZero) {
 	IItem item = inventory.get(slot);
-	if (item == null) { // TODO is it ok not to throw an exception here?
+	if (item == null) {
 	    return;
 	}
 	item.setQuantity((short) (item.getQuantity() - quantity));

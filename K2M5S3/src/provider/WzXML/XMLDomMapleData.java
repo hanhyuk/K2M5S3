@@ -156,7 +156,7 @@ public class XMLDomMapleData implements MapleData, Serializable {
     public MapleDataEntity getParent() {
 	final Node parentNode = node.getParentNode();
 	if (parentNode.getNodeType() == Node.DOCUMENT_NODE) {
-	    return null; // can't traverse outside the img file - TODO is this a problem?
+	    return null;
 	}
 	final XMLDomMapleData parentData = new XMLDomMapleData(parentNode);
 	parentData.imageDataDir = imageDataDir.getParentFile();

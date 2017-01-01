@@ -412,7 +412,7 @@ public class LoginPacket {
 		w.write(0); // 1.2.238+
 		w.writeInt(chars.size()); // 1.2.238+
 		for (final MapleCharacter chr : chars) { // 1.2.238+
-			w.writeInt(chr.getId()); // TODO : 캐릭터 위치.
+			w.writeInt(chr.getId());
 		}
 		w.write(chars.size()); // 1.2.238+
 		for (final MapleCharacter chr : chars) {

@@ -847,7 +847,7 @@ public class AbstractPlayerInteraction {
     public final boolean allExpeditionMembersHere() {
 	boolean allHere = true;
         for (final MapleParty party : c.getPlayer().getParty().getExpedition().getPartys()) {
-            for (final MapleCharacter partymem : c.getChannelServer().getPartyMembers(party)) { // TODO, store info in MaplePartyCharacter instead
+            for (final MapleCharacter partymem : c.getChannelServer().getPartyMembers(party)) {
                 if (partymem.getMapId() != c.getPlayer().getMapId()) {
                     allHere = false;
                     break;
@@ -855,7 +855,7 @@ public class AbstractPlayerInteraction {
             }
         }
         for (final MapleParty party : c.getPlayer().getParty().getExpedition().getPartys()) {
-            for (final MaplePartyCharacter partymem : party.getMembers()) { // TODO, store info in MaplePartyCharacter instead
+            for (final MaplePartyCharacter partymem : party.getMembers()) {
                 if (partymem.getChannel() != c.getChannel()) {
                     allHere = false;
                     break;

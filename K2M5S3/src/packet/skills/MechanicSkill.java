@@ -214,7 +214,7 @@ public class MechanicSkill {
         packet.writeInt(0);
         packet.writeInt(0);
         packet.writeInt(0);
-        packet.writeShort(0); //TODO : Color
+        packet.writeShort(0); //Color
         packet.writeInt(30000227);
         packet.write0(13);
         for (int i = 0; i < 4; i++) {

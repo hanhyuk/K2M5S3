@@ -1409,7 +1409,7 @@ public class MapleMonster extends AbstractLoadedMapleLife {
                     oldPartyAttacker.lastAttackTime = System.currentTimeMillis();
                 }
             } else {
-                // TODO actually this causes wrong behaviour when the party changes between attacks
+                // actually this causes wrong behaviour when the party changes between attacks
                 // only the last setup will get exp - but otherwise we'd have to store the full party
                 // constellation for every attack/everytime it changes, might be wanted/needed in the
                 // future but not now

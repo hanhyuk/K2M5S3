@@ -76,7 +76,7 @@ public class MobHandler {
 											mobSkill.applyEffect(c.getPlayer(), monster, true);
 										}
 									}
-								}, 1000L); // TODO delay
+								}, 1000L);
 							}
 						}
 					}
@@ -167,7 +167,7 @@ public class MobHandler {
 				return;
 			}
 			mob_to.damage(chr, damage, true);
-			// TODO : Get the real broadcast damage packet
+			//Get the real broadcast damage packet
 			chr.getMap().broadcastMessage(chr, MobPacket.damageMonster(to, damage), false);
 		}
 	}

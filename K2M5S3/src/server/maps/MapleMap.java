@@ -1470,8 +1470,7 @@ public class MapleMap {
 		spawnAndAddRangedMapObject(monster, new DelayedPacketCreation() {
 			@Override
 			public final void sendPackets(MapleClient c) {
-				c.getSession().write(MobPacket.spawnMonster(monster, -2, 0, oid, monster.isEliteMonster())); // TODO
-																												// effect
+				c.getSession().write(MobPacket.spawnMonster(monster, -2, 0, oid, monster.isEliteMonster()));
 			}
 		}, null);
 		updateMonsterController(monster, -1, 0);

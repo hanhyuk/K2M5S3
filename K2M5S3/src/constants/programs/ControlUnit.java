@@ -1302,7 +1302,6 @@ public class ControlUnit extends javax.swing.JFrame {
 	}// GEN-LAST:event_chatbanMouseClicked
 
 	private void chatbanFocusGained(java.awt.event.FocusEvent evt) {// GEN-FIRST:event_chatbanFocusGained
-		// TODO add your handling code here:
 	}// GEN-LAST:event_chatbanFocusGained
 
 	private void chatbanComponentShown(java.awt.event.ComponentEvent evt) {// GEN-FIRST:event_chatbanComponentShown
@@ -1360,15 +1359,12 @@ public class ControlUnit extends javax.swing.JFrame {
 	}// GEN-LAST:event_formWindowClosed
 
 	private void serverMessageActionPerformed(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_serverMessageActionPerformed
-		// TODO add your handling code here:
 	}// GEN-LAST:event_serverMessageActionPerformed
 
 	private void noticMessageActionPerformed(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_noticMessageActionPerformed
-		// TODO add your handling code here:
 	}// GEN-LAST:event_noticMessageActionPerformed
 
 	private void jButton20ActionPerformed(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_jButton20ActionPerformed
-		// TODO add your handling code here:
 		SendPacketOpcode.loadOpcode();
 		RecvPacketOpcode.loadOpcode();
 		logger.info("[알림] 옵코드 재설정이 완료되었습니다.");

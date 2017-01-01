@@ -183,7 +183,6 @@ public class MapleQuestAction {
 			}
 			break;
 		case skill:
-			// TODO needs gain/lost message?
 			for (MapleData sEntry : data) {
 				final int skillid = MapleDataTool.getInt(sEntry.getChildByPath("id"));
 				int skillLevel = MapleDataTool.getInt(sEntry.getChildByPath("skillLevel"), 0);
