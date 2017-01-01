@@ -1,17 +1,21 @@
 package client.skills;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import constants.GameConstants;
-import constants.ServerConstants;
 import provider.MapleData;
+import provider.MapleDataProviderFactory;
 import provider.MapleDataTool;
 import server.life.Element;
 import tools.StringUtil;
-import java.util.ArrayList;
-import java.util.List;
-import provider.MapleDataProviderFactory;
 
 public class Skill implements ISkill {
-
+	private static final Logger logger = LoggerFactory.getLogger(Skill.class);
+	
     private String name;
     private final List<SkillStatEffect> effects = new ArrayList<>();
     private Element element;
@@ -98,10 +102,8 @@ public class Skill implements ISkill {
                     ret.animationTime = MapleDataTool.getIntConvert("delay", effectEntry, 0);
                 }
             }
-        } catch (Exception ex) {
-            if (ServerConstants.realese) {
-                ex.printStackTrace();
-            }
+        } catch (Exception e) {
+        	logger.debug("{}", e);
         }
         return ret;
     }

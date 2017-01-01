@@ -7,6 +7,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import client.MapleCharacter;
 import client.MapleCharacterStat;
 import client.MapleClient;
@@ -45,7 +48,8 @@ import tools.Randomizer;
 import tools.Timer.EtcTimer;
 
 public class DamageParse {
-    
+	private static final Logger logger = LoggerFactory.getLogger(DamageParse.class);
+	
     public static MapleClient c;
     public DamageParse(MapleClient c) {
         DamageParse.c = c;
@@ -1005,9 +1009,7 @@ public class DamageParse {
                     }
                     monster.damage(player, totDamageToOneMonster, true);
                    } catch (Exception e) {
-                       if (!ServerConstants.realese) {
-                           e.printStackTrace();
-                        }
+                	   logger.debug("{}", e);
                     }
             } else {
                 player.send(MobPacket.killMonster(oned.objectid, 1));
@@ -1200,9 +1202,7 @@ public class DamageParse {
                             }
                         }
                     } catch (Exception e) {
-                        if (!ServerConstants.realese) {
-                            e.printStackTrace();
-                        }
+                    	logger.debug("{}", e);
                     }
                     
                     if (monster.getBuff(MonsterStatus.MAGIC_DAMAGE_REFLECT) != null) {
@@ -1217,9 +1217,7 @@ public class DamageParse {
                         }
                         monster.damage(player, totDamageToOneMonster, true);
                    } catch (Exception e) {
-                       if (!ServerConstants.realese) {
-                           e.printStackTrace();
-                        }
+                       logger.debug("{}", e);
                     }
                     
                     switch (attack.skill) {

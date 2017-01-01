@@ -62,9 +62,7 @@ public class NPCHandler {
 			try {
 				shop.sell(c, GameConstants.getInventoryType(itemId), slot, quantity);
 			} catch (Exception e) {
-				if (!ServerConstants.realese) {
-					e.printStackTrace();
-				}
+				logger.debug("{}", e);
 			}
 			break;
 		}

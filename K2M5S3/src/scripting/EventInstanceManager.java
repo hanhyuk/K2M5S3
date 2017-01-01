@@ -1,11 +1,27 @@
 package scripting;
 
-import constants.ServerConstants;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+
+import javax.script.ScriptException;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import client.MapleCharacter;
 import client.MapleQuestStatus;
 import community.MapleParty;
 import community.MaplePartyCharacter;
 import community.MapleSquadLegacy;
+import constants.ServerConstants;
 import packet.creators.MainPacketCreator;
 import packet.creators.UIPacket;
 import packet.transfer.write.Packet;
@@ -14,14 +30,10 @@ import server.maps.MapleMap;
 import server.maps.MapleWorldMapProvider;
 import server.quest.MapleQuest;
 import tools.Timer.EventTimer;
-import java.util.*;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
-import javax.script.ScriptException;
 
 public class EventInstanceManager {
-
+	private static final Logger logger = LoggerFactory.getLogger(EventInstanceManager.class);
+	
     private List<MapleCharacter> chars = new LinkedList<MapleCharacter>();
     private List<MapleMonster> mobs = new LinkedList<MapleMonster>();
     private Map<MapleCharacter, Integer> killCount = new HashMap<MapleCharacter, Integer>();
@@ -54,10 +66,10 @@ public class EventInstanceManager {
 	    }
 	    chr.setEventInstance(this);
 	    em.getIv().invokeFunction("playerEntry", this, chr);
-	} catch (ScriptException ex) {
-	    if (!ServerConstants.realese) ex.printStackTrace();
-	} catch (NoSuchMethodException ex) {
-	    if (!ServerConstants.realese) ex.printStackTrace();
+	} catch (ScriptException e) {
+		logger.debug("{}", e);
+	} catch (NoSuchMethodException e) {
+		logger.debug("{}", e);
 	}
     }
 
@@ -65,10 +77,10 @@ public class EventInstanceManager {
 	try {
 	    em.getIv().invokeFunction("changedMap", this, chr, mapid);
 	} catch (NullPointerException npe) {
-	} catch (ScriptException ex) {
-	    if (!ServerConstants.realese) ex.printStackTrace();
-	} catch (NoSuchMethodException ex) {
-	    if (!ServerConstants.realese) ex.printStackTrace();
+	} catch (ScriptException e) {
+		logger.debug("{}", e);
+	} catch (NoSuchMethodException e) {
+		logger.debug("{}", e);
 	}
     }
 
@@ -78,11 +90,12 @@ public class EventInstanceManager {
 	    public void run() {
 		try {
 		    em.getIv().invokeFunction("scheduledTimeout", eim);
-		} catch (NullPointerException npe) {
-		} catch (ScriptException ex) {
-		    if (!ServerConstants.realese) ex.printStackTrace();
-		} catch (NoSuchMethodException ex) {
-		    if (!ServerConstants.realese) ex.printStackTrace();
+		} catch (NullPointerException e) {
+			logger.debug("{}", e);
+		} catch (ScriptException e) {
+			logger.debug("{}", e);
+		} catch (NoSuchMethodException e) {
+			logger.debug("{}", e);
 		}
 	    }
 	}, delay);
@@ -271,10 +284,10 @@ public class EventInstanceManager {
 	if (mobs.isEmpty()) {
 	    try {
 		em.getIv().invokeFunction("allMonstersDead", this);
-	    } catch (ScriptException ex) {
-		if (!ServerConstants.realese) ex.printStackTrace();
-	    } catch (NoSuchMethodException ex) {
-		if (!ServerConstants.realese) ex.printStackTrace();
+	    } catch (ScriptException e) {
+	    	logger.debug("{}", e);
+	    } catch (NoSuchMethodException e) {
+	    	logger.debug("{}", e);
 	    }
 	}
     }
@@ -282,10 +295,10 @@ public class EventInstanceManager {
     public void playerKilled(MapleCharacter chr) {
 	try {
 	    em.getIv().invokeFunction("playerDead", this, chr);
-	} catch (ScriptException ex) {
-	    if (!ServerConstants.realese) ex.printStackTrace();
-	} catch (NoSuchMethodException ex) {
-	    if (!ServerConstants.realese) ex.printStackTrace();
+	} catch (ScriptException e) {
+		logger.debug("{}", e);
+	} catch (NoSuchMethodException e) {
+		logger.debug("{}", e);
 	}
     }
 
@@ -295,10 +308,10 @@ public class EventInstanceManager {
 	    if (b instanceof Boolean) {
 		return (Boolean) b;
 	    }
-	} catch (ScriptException ex) {
-	    if (!ServerConstants.realese) ex.printStackTrace();
-	} catch (NoSuchMethodException ex) {
-	    if (!ServerConstants.realese) ex.printStackTrace();
+	} catch (ScriptException e) {
+		logger.debug("{}", e);
+	} catch (NoSuchMethodException e) {
+		logger.debug("{}", e);
 	}
 	return true;
     }
@@ -355,10 +368,10 @@ public class EventInstanceManager {
 		    mutex.unlock();
 		}
 	    }
-	} catch (ScriptException ex) {
-	    if (!ServerConstants.realese) ex.printStackTrace();
-	} catch (NoSuchMethodException ex) {
-	    if (!ServerConstants.realese) ex.printStackTrace();
+	} catch (ScriptException e) {
+		logger.debug("{}", e);
+	} catch (NoSuchMethodException e) {
+		logger.debug("{}", e);
 	}
     }
 
@@ -378,10 +391,10 @@ public class EventInstanceManager {
 	    }
 	    killCount.put(chr, kc);
             em.getIv().invokeFunction("monsterKilled", this, chr, mob.getStats().getCP());
-	} catch (ScriptException ex) {
-	    if (!ServerConstants.realese) ex.printStackTrace();
-	} catch (NoSuchMethodException ex) {
-	    if (!ServerConstants.realese) ex.printStackTrace();
+	} catch (ScriptException e) {
+		logger.debug("{}", e);
+	} catch (NoSuchMethodException e) {
+		logger.debug("{}", e);
 	}
     }
 
@@ -465,10 +478,10 @@ public class EventInstanceManager {
 		try {
 		    em.getIv().invokeFunction(methodName, EventInstanceManager.this);
 		} catch (NullPointerException npe) {
-		} catch (ScriptException ex) {
-		    if (!ServerConstants.realese) ex.printStackTrace();
-		} catch (NoSuchMethodException ex) {
-		    if (!ServerConstants.realese) ex.printStackTrace();
+		} catch (ScriptException e) {
+			logger.debug("{}", e);
+		} catch (NoSuchMethodException e) {
+			logger.debug("{}", e);
 		}
 	    }
 	}, delay);
@@ -493,20 +506,20 @@ public class EventInstanceManager {
     public final void leftParty(final MapleCharacter chr) {
 	try {
 	    em.getIv().invokeFunction("leftParty", this, chr);
-	} catch (ScriptException ex) {
-	    if (!ServerConstants.realese) ex.printStackTrace();
-	} catch (NoSuchMethodException ex) {
-	    if (!ServerConstants.realese) ex.printStackTrace();
+	} catch (ScriptException e) {
+		logger.debug("{}", e);
+	} catch (NoSuchMethodException e) {
+		logger.debug("{}", e);
 	}
     }
 
     public final void disbandParty() {
 	try {
 	    em.getIv().invokeFunction("disbandParty", this);
-	} catch (ScriptException ex) {
-	    if (!ServerConstants.realese) ex.printStackTrace();
-	} catch (NoSuchMethodException ex) {
-	    if (!ServerConstants.realese) ex.printStackTrace();
+	} catch (ScriptException e) {
+		logger.debug("{}", e);
+	} catch (NoSuchMethodException e) {
+		logger.debug("{}", e);
 	}
     }
     
@@ -515,10 +528,10 @@ public class EventInstanceManager {
         clear = true;
 	try {
 	    em.getIv().invokeFunction("clearPQ", this);
-	} catch (ScriptException ex) {
-	    if (!ServerConstants.realese) ex.printStackTrace();
-	} catch (NoSuchMethodException ex) {
-	    if (!ServerConstants.realese) ex.printStackTrace();
+	} catch (ScriptException e) {
+		logger.debug("{}", e);
+	} catch (NoSuchMethodException e) {
+		logger.debug("{}", e);
 	}
     }
     
@@ -529,18 +542,18 @@ public class EventInstanceManager {
     public final void removePlayer(final MapleCharacter chr) {
 	try {
 	    em.getIv().invokeFunction("playerExit", this, chr);
-	} catch (ScriptException ex) {
-	    if (!ServerConstants.realese) ex.printStackTrace();
-	} catch (NoSuchMethodException ex) {
-	    if (!ServerConstants.realese) ex.printStackTrace();
+	} catch (ScriptException e) {
+		logger.debug("{}", e);
+	} catch (NoSuchMethodException e) {
+		logger.debug("{}", e);
 	}
     }
 
     public void onMapLoad(final MapleCharacter chr) {
 	try {
 	    em.getIv().invokeFunction("onMapLoad", this, chr);
-	} catch (ScriptException ex) {
-	    if (!ServerConstants.realese) ex.printStackTrace();
+	} catch (ScriptException e) {
+		logger.debug("{}", e);
 	} catch (NoSuchMethodException ex) {
 	    // Ignore, we don't want to update this for all events.
 	}

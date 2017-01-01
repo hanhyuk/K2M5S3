@@ -1,27 +1,31 @@
 package handler.channel;
 
-import constants.ServerConstants;
-import constants.GameConstants;
-import client.MapleClient;
-import client.MapleCharacter;
-import client.items.IItem;
-import client.items.ItemFactory;
-import client.items.MapleInventoryType;
-import database.MYSQL;
-import launch.ChannelServer;
-import launch.world.WorldConnected;
-import packet.creators.PlayerShopPacket;
-import packet.transfer.read.ReadingMaple;
-import server.items.InventoryManipulator;
-import server.items.MerchItemPackage;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import client.MapleCharacter;
+import client.MapleClient;
+import client.items.IItem;
+import client.items.ItemFactory;
+import client.items.MapleInventoryType;
+import constants.GameConstants;
+import database.MYSQL;
+import launch.ChannelServer;
+import launch.world.WorldConnected;
 import packet.creators.MainPacketCreator;
+import packet.creators.PlayerShopPacket;
+import packet.transfer.read.ReadingMaple;
+import server.items.InventoryManipulator;
+import server.items.MerchItemPackage;
 
 public class HiredMerchantHandler {
-
+	private static final Logger logger = LoggerFactory.getLogger(HiredMerchantHandler.class);
+	
 	public static final void UseHiredMerchant(final ReadingMaple rh, final MapleClient c) {
 		if (c.getPlayer().getMap().allowPersonalShop()) {
 			final byte state = checkExistance(c.getAccID());
@@ -216,8 +220,7 @@ public class HiredMerchantHandler {
 
 			return pack;
 		} catch (SQLException e) {
-			if (!ServerConstants.realese)
-				e.printStackTrace();
+			logger.debug("{}", e);
 			return null;
 		}
 	}

@@ -2667,9 +2667,7 @@ public class MapleMap {
 				try {
 					reactor.hitReactor(c);
 				} catch (Exception e) {
-					if (!ServerConstants.realese) {
-						e.printStackTrace();
-					}
+					logger.debug("{}", e);
 				}
 				reactor.setTimerActive(false);
 

@@ -13,8 +13,7 @@ public class ServerConstants {
 	/*
      * 서버를 구동 할때 로컬 환경 여부 true(로컬)
      */
-	public static final boolean isLocal = true; //TODO log4j 설정으로 변경필요
-	public static final boolean realese = false; //TODO log4j 설정으로 변경필요
+	public static final boolean isLocal = true;
     public static final String ROOT_PATH = "";
     public static final String LOCAL_ROOT_PATH = "D:/KMS_PROJECT/KMS_253_SERVER/";
 	public static int createMaxAccount = 2;
@@ -72,7 +71,8 @@ public class ServerConstants {
     public static boolean useMaxDrop;
     public static boolean useBossMaxDrop;
     
-    //TODO showPackets flag 값을 사용하지 않도록 관련 로직 모두 걷어내자.
+    //TODO [해결] showPackets flag 값을 사용하지 않도록 관련 로직 모두 걷어내자.
+    //소스에서 참조하는 부분들 모두 삭제 했음. ini 파일 수정하고 이 변수 삭제하면 됨
     public static boolean showPackets;
     
     

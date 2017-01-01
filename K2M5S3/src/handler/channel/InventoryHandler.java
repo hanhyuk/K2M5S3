@@ -2351,8 +2351,8 @@ public class InventoryHandler {
                             break;
                         }
                     }
-                } catch (Exception ex) {
-                    if (!ServerConstants.realese) ex.printStackTrace();
+                } catch (Exception e) {
+                	logger.debug("{}", e);
                 }
                 break;
             }
@@ -2701,8 +2701,7 @@ public class InventoryHandler {
                         ps.close();
                     }
                 } catch (Exception e) {
-
-                    if (!ServerConstants.realese) e.printStackTrace();
+                	logger.debug("{}", e);
                 }
             }
             remove(c, itemId);
@@ -2880,8 +2879,8 @@ public class InventoryHandler {
                     c.getPlayer().ea();
                 }
             }
-        } catch (Exception ex) {
-            if (!ServerConstants.realese) ex.printStackTrace();
+        } catch (Exception e) {
+        	logger.debug("{}", e);
         }
     }
 

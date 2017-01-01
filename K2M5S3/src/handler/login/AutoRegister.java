@@ -4,12 +4,16 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import a.my.made.CommonType;
 import client.MapleClient;
 import constants.ServerConstants;
 import database.MYSQL;
 
 public class AutoRegister {
+	private static final Logger logger = LoggerFactory.getLogger(AutoRegister.class);
 
 	/**
 	 * 계정 생성이 가능한지 체크한다.
@@ -57,10 +61,8 @@ public class AutoRegister {
 			query.setString(2, password);
 			query.setString(3, account.getSessionIPAddress());
 			query.executeUpdate();
-		} catch (Exception error) {
-			if (!ServerConstants.realese) {
-				error.printStackTrace();
-			}
+		} catch (Exception e) {
+			logger.debug("{}", e);
 		} finally {
 			try {
 				if (connect != null) {
@@ -72,10 +74,8 @@ public class AutoRegister {
 				if (result != null) {
 					result.close();
 				}
-			} catch (Exception error) {
-				if (!ServerConstants.realese) {
-					error.printStackTrace();
-				}
+			} catch (Exception e) {
+				logger.debug("{}", e);
 			}
 		}
 	}

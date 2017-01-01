@@ -152,9 +152,7 @@ public class InterServerHandler {
 		try {
 			player.expirationTask();
 		} catch (Exception e) {
-			if (!ServerConstants.realese) {
-				e.printStackTrace();
-			}
+			logger.debug("{}", e);
 		}
 
 		if (player.getInventory(MapleInventoryType.EQUIPPED).getItem((short) -27) != null
@@ -204,9 +202,7 @@ public class InterServerHandler {
 				}
 			}
 		} catch (Exception e) {
-			if (!ServerConstants.realese) {
-				e.printStackTrace();
-			}
+			logger.debug("{}", e);
 		}
 		player.showNote();
 		player.updatePartyMemberHP();

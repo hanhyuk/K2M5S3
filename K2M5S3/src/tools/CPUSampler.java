@@ -1,6 +1,5 @@
 package tools;
 
-import constants.ServerConstants;
 import java.io.IOException;
 import java.io.Writer;
 import java.lang.Thread.State;
@@ -10,11 +9,15 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class CPUSampler {
-
+	private static final Logger logger = LoggerFactory.getLogger(CPUSampler.class);
+	
 	private List<String> included = new LinkedList<String>();
 	private static CPUSampler instance = new CPUSampler();
 	private long interval = 5;
@@ -222,8 +225,7 @@ public class CPUSampler {
 			try {
 				rthread.join();
 			} catch (InterruptedException e) {
-				if (!ServerConstants.realese)
-					e.printStackTrace();
+				logger.debug("{}", e);
 			}
 		}
 

@@ -589,10 +589,8 @@ public class MapleClient {
 			}
 			rs.close();
 			ps.close();
-		} catch (SQLException ex) {
-			if (!ServerConstants.realese) {
-				ex.printStackTrace();
-			}
+		} catch (SQLException e) {
+			logger.debug("{}", e);
 		}
 		return chrslot;
 	}
@@ -617,8 +615,7 @@ public class MapleClient {
 				return Integer.parseInt(result.getString("lastconnect"));
 			}
 		} catch (SQLException e) {
-			if (!ServerConstants.realese)
-				e.printStackTrace();
+			logger.debug("{}", e);
 		} finally {
 			try {
 				if (query != null) {
@@ -812,8 +809,7 @@ public class MapleClient {
 				usingSecondPassword = rs.getByte("using2ndpassword") == 1;
 			}
 		} catch (Exception e) {
-			if (!ServerConstants.realese)
-				e.printStackTrace();
+			logger.debug("{}", e);
 		}
 	}
 
@@ -954,9 +950,7 @@ public class MapleClient {
 			rs.close();
 			ps.close();
 		} catch (SQLException e) {
-			if (!ServerConstants.realese) {
-				e.printStackTrace();
-			}
+			logger.debug("{}", e);
 		}
 		return true;
 	}
@@ -1116,8 +1110,7 @@ public class MapleClient {
 			ps.close();
 
 		} catch (SQLException e) {
-			if (!ServerConstants.realese)
-				e.printStackTrace();
+			logger.debug("{}", e);
 		}
 	}
 

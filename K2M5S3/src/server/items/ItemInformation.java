@@ -2400,10 +2400,8 @@ public class ItemInformation {
 				ps.executeUpdate();
 				ps.close();
 			}
-		} catch (SQLException ex) {
-			if (ServerConstants.realese) {
-				ex.printStackTrace();
-			}
+		} catch (SQLException e) {
+			logger.debug("{}", e);
 		}
 		equip.setStr(getRandStatFire(equip.getStr(), 60, isFirst, "str", equip.getUniqueId()));
 		equip.setDex(getRandStatFire(equip.getDex(), 60, isFirst, "dex", equip.getUniqueId()));
@@ -2445,10 +2443,8 @@ public class ItemInformation {
 				RS.close();
 				ps.close();
 			}
-		} catch (SQLException ex) {
-			if (ServerConstants.realese) {
-				ex.printStackTrace();
-			}
+		} catch (SQLException e) {
+			logger.debug("{}", e);
 		}
 		short value = 0;
 		if (rate >= 7) {
@@ -2461,10 +2457,8 @@ public class ItemInformation {
 			ps.setInt(2, uniqueid);
 			ps.executeUpdate();
 			ps.close();
-		} catch (SQLException ex) {
-			if (ServerConstants.realese) {
-				ex.printStackTrace();
-			}
+		} catch (SQLException e) {
+			logger.debug("{}", e);
 		}
 		return (short) (defaultValue + value);
 	}

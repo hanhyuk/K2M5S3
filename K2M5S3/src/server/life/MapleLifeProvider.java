@@ -263,9 +263,8 @@ public class MapleLifeProvider {
 			rs.close();
 			ps.close();
 			return npc;
-		} catch (Exception ex) {
-			if (!ServerConstants.realese)
-				ex.printStackTrace();
+		} catch (Exception e) {
+			logger.debug("{}", e);
 		} finally {
 			try {
 				if (ps != null) {

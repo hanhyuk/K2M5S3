@@ -1,16 +1,19 @@
 package client.commands;
 
-import constants.ServerConstants;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import client.MapleClient;
 
 public class HelpCommand implements Command {
-
+	private static final Logger logger = LoggerFactory.getLogger(HelpCommand.class);
+	
     @Override
     public void execute(MapleClient c, String[] splittedLine) throws Exception, IllegalCommandSyntaxException {
         try {
             CommandProcessor.getInstance().dropHelp(c.getPlayer(), CommandProcessor.getOptionalIntArg(splittedLine, 1, 1));
         } catch (Exception e) {
-            if (!ServerConstants.realese) e.printStackTrace();
+            logger.debug("{}", e);
         }
     }
 

@@ -128,10 +128,8 @@ public class MapleAndroid {
 			ps.setInt(6, uniqueid);
 			ps.executeUpdate();
 			ps.close();
-		} catch (final SQLException ex) {
-			if (!ServerConstants.realese) {
-				ex.printStackTrace();
-			}
+		} catch (final SQLException e) {
+			logger.debug("{}", e);
 		}
 	}
 
@@ -154,9 +152,8 @@ public class MapleAndroid {
 			ps.setInt(6, 0);
 			ps.executeUpdate();
 			ps.close();
-		} catch (final SQLException ex) {
-			if (!ServerConstants.realese)
-				ex.printStackTrace();
+		} catch (final SQLException e) {
+			logger.debug("{}", e);
 			return null;
 		}
 		MapleAndroid newandroid = new MapleAndroid(itemid, ret);

@@ -1,17 +1,21 @@
 package scripting;
 
-import constants.ServerConstants;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+
 import javax.script.Invocable;
 import javax.script.ScriptEngine;
 import javax.script.ScriptException;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import launch.ChannelServer;
 
 public class EventScriptManager extends AbstractScriptManager {
-
+	private static final Logger logger = LoggerFactory.getLogger(EventScriptManager.class);
+	
 	private class EventEntry {
 
 		public EventEntry(final String script, final Invocable iv, final EventManager em) {
@@ -58,12 +62,10 @@ public class EventScriptManager extends AbstractScriptManager {
 			try {
 				((ScriptEngine) entry.iv).put("em", entry.em);
 				entry.iv.invokeFunction("init", (Object) null);
-			} catch (final ScriptException ex) {
-				if (!ServerConstants.realese)
-					ex.printStackTrace();
-			} catch (final NoSuchMethodException ex) {
-				if (!ServerConstants.realese)
-					ex.printStackTrace();
+			} catch (final ScriptException e) {
+				logger.debug("{}", e);
+			} catch (final NoSuchMethodException e) {
+				logger.debug("{}", e);
 			}
 		}
 	}

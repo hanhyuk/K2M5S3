@@ -1389,9 +1389,7 @@ public class MapleCharacter extends AnimatedHinaMapObjectExtend implements Inven
 			}
 			ps.close();
 		} catch (SQLException e) {
-			if (!ServerConstants.realese) {
-				e.printStackTrace();
-			}
+			logger.debug("{}", e);
 		}
 	}
 
@@ -1426,9 +1424,7 @@ public class MapleCharacter extends AnimatedHinaMapObjectExtend implements Inven
 				}
 				ps.close();
 			} catch (SQLException e) {
-				if (!ServerConstants.realese) {
-					e.printStackTrace();
-				}
+				logger.debug("{}", e);
 			}
 		}
 	}
@@ -1465,9 +1461,7 @@ public class MapleCharacter extends AnimatedHinaMapObjectExtend implements Inven
 				}
 			}
 		} catch (SQLException e) {
-			if (!ServerConstants.realese) {
-				e.printStackTrace();
-			}
+			logger.debug("{}", e);
 		}
 	}
 
@@ -1515,9 +1509,7 @@ public class MapleCharacter extends AnimatedHinaMapObjectExtend implements Inven
 			}
 			ps.close();
 		} catch (SQLException e) {
-			if (!ServerConstants.realese) {
-				e.printStackTrace();
-			}
+			logger.debug("{}", e);
 		}
 	}
 
@@ -1565,9 +1557,7 @@ public class MapleCharacter extends AnimatedHinaMapObjectExtend implements Inven
 				}
 			}
 		} catch (SQLException e) {
-			if (!ServerConstants.realese) {
-				e.printStackTrace();
-			}
+			logger.debug("{}", e);
 		}
 	}
 
@@ -1587,9 +1577,7 @@ public class MapleCharacter extends AnimatedHinaMapObjectExtend implements Inven
 			}
 			ps.close();
 		} catch (SQLException e) {
-			if (!ServerConstants.realese) {
-				e.printStackTrace();
-			}
+			logger.debug("{}", e);
 		}
 	}
 
@@ -1617,9 +1605,7 @@ public class MapleCharacter extends AnimatedHinaMapObjectExtend implements Inven
 				logger.debug("캐시샵 인벤토리가 널 포인터가 발생하여 저장을 실패했습니다.");
 			}
 		} catch (SQLException e) {
-			if (!ServerConstants.realese) {
-				e.printStackTrace();
-			}
+			logger.debug("{}", e);
 		}
 	}
 
@@ -1650,9 +1636,7 @@ public class MapleCharacter extends AnimatedHinaMapObjectExtend implements Inven
 				}
 			}
 		} catch (SQLException e) {
-			if (!ServerConstants.realese) {
-				e.printStackTrace();
-			}
+			logger.debug("{}", e);
 		}
 	}
 
@@ -1670,9 +1654,7 @@ public class MapleCharacter extends AnimatedHinaMapObjectExtend implements Inven
 				keylayout.saveKeys(id);
 				mount.saveMount(id);
 			} catch (SQLException e) {
-				if (!ServerConstants.realese) {
-					e.printStackTrace();
-				}
+				logger.debug("{}", e);
 			}
 
 			/* 캐릭터 저장 */
@@ -1732,9 +1714,7 @@ public class MapleCharacter extends AnimatedHinaMapObjectExtend implements Inven
 			}
 			con.commit();
 		} catch (Exception e) {
-			if (!ServerConstants.realese) {
-				e.printStackTrace();
-			}
+			logger.debug("{}", e);
 			logger.debug(LogUtils.getLogMessage(this, "[charsave] Error saving character data."));
 			try {
 				con.rollback();
@@ -1747,9 +1727,7 @@ public class MapleCharacter extends AnimatedHinaMapObjectExtend implements Inven
 				con.setAutoCommit(true);
 				LockObj.unlock();
 			} catch (SQLException e) {
-				if (ServerConstants.realese) {
-					e.printStackTrace();
-				}
+				logger.debug("{}", e);
 			}
 		}
 	}
@@ -2374,10 +2352,8 @@ public class MapleCharacter extends AnimatedHinaMapObjectExtend implements Inven
 			if (!overwrite) {
 				cancelPlayerBuffs(buffstats, effect.getSourceId());
 			}
-		} catch (Exception ex) {
-			if (!ServerConstants.realese) {
-				ex.printStackTrace();
-			}
+		} catch (Exception e) {
+			logger.debug("{}", e);
 		}
 	}
 
@@ -6012,9 +5988,7 @@ public class MapleCharacter extends AnimatedHinaMapObjectExtend implements Inven
 			ps.executeUpdate();
 			ps.close();
 		} catch (Exception e) {
-			if (!ServerConstants.realese) {
-				e.printStackTrace();
-			}
+			logger.debug("{}", e);
 		}
 	}
 
@@ -6031,9 +6005,7 @@ public class MapleCharacter extends AnimatedHinaMapObjectExtend implements Inven
 			ps.close();
 			rs.close();
 		} catch (SQLException e) {
-			if (!ServerConstants.realese) {
-				e.printStackTrace();
-			}
+			logger.debug("{}", e);
 		}
 		return rewards;
 
@@ -6049,10 +6021,8 @@ public class MapleCharacter extends AnimatedHinaMapObjectExtend implements Inven
 			ps.setInt(3, cid);
 			ps.executeUpdate();
 			ps.close();
-		} catch (SQLException ex) {
-			if (!ServerConstants.realese) {
-				ex.printStackTrace();
-			}
+		} catch (SQLException e) {
+			logger.debug("{}", e);
 		}
 	}
 
@@ -6358,9 +6328,7 @@ public class MapleCharacter extends AnimatedHinaMapObjectExtend implements Inven
 
 			}
 		} catch (Exception e) {
-			if (!ServerConstants.realese) {
-				e.printStackTrace();
-			}
+			logger.debug("{}", e);
 		}
 	}
 

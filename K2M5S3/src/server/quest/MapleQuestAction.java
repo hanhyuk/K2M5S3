@@ -399,8 +399,7 @@ public class MapleQuestAction {
 							try {
 								InventoryManipulator.removeById(c.getClient(), MapleInventoryType.EQUIPPED, id, (count * -1), true, false);
 							} catch (Exception e) {
-								if (!ServerConstants.realese)
-									e.printStackTrace();
+								logger.debug("{}", e);
 							}
 						}
 					}

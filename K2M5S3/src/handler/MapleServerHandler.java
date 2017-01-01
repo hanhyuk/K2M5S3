@@ -145,9 +145,7 @@ public class MapleServerHandler extends IoHandlerAdapter {
 			try {
 				handlePacket(recv, rh, c, type);
 			} catch (Exception e) {
-				if (!ServerConstants.realese) {
-					e.printStackTrace();
-				}
+				logger.debug("{}", e);
 				c.getSession().write(MainPacketCreator.resetActions());
 			}
 		}
@@ -166,17 +164,17 @@ public class MapleServerHandler extends IoHandlerAdapter {
 
 	@Override
 	public void exceptionCaught(final IoSession session, final Throwable cause) throws Exception {
-		if (!ServerConstants.realese) {
-			cause.printStackTrace();
-		}
+		logger.debug("{}", cause);
 	}
 
 	public static final void handlePacket(final RecvPacketOpcode header, final ReadingMaple rh, final MapleClient c,
 			final ServerType type) throws InterruptedException {
 		switch (header) {
 		case SERVER_MESSAGE_RESPONSE:
-			//TODO MainPacketCreator.serverNotice(1, ...) 옵션으로 클라에 팝업창 띄우고, 유저가 확인 버튼 눌렀을때 응답 패킷
-			//구현필요.
+			//TODO 클라이언트에서 팝업창 띄울때 해당 패킷이 전달되는걸로 추측.
+			//확인, 취소, 기타 등등의 버튼들을 눌렀을떄 발생하며. 패킷값들을 보면
+			//각 팝업창에 해당하는 고유값이 존재하는것으로 보인다.
+			//한번 조사해보면 쓸만한걸 건질수 있을지도... 급한건 아니다. 나중에...
 			break;
 		case CLIENT_HELLO:
 			byte pLocale = rh.readByte();
@@ -215,6 +213,7 @@ public class MapleServerHandler extends IoHandlerAdapter {
 			break;
 		case REDISPLAY_CHANNEL:
 			//TODO RECV REDISPLAY_CHANNEL 패킷이 언제 호출되는지 확인 필요.
+			logger.warn("REDISPLAY_CHANNEL 패킷 발견!");
 			CharLoginHandler.getDisplayChannel(false, c);
 			break;
 		case ENTER_CREATE_CHAR:

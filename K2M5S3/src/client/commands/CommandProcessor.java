@@ -1,21 +1,25 @@
 package client.commands;
 
-import constants.ServerConstants;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.LinkedList;
-import client.MapleCharacter;
-import client.MapleClient;
-import tools.StringUtil;
-import tools.Pair;
-import tools.Timer.WorldTimer;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-public class CommandProcessor {
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import client.MapleCharacter;
+import client.MapleClient;
+import tools.Pair;
+import tools.StringUtil;
+import tools.Timer.WorldTimer;
+
+public class CommandProcessor {
+	private static final Logger logger = LoggerFactory.getLogger(CommandProcessor.class);
+	
     private final List<Pair<String, String>> gmlog = new LinkedList<Pair<String, String>>();
     private final Map<String, DefinitionCommandPair> commands = new LinkedHashMap<String, DefinitionCommandPair>();
     private static CommandProcessor instance = new CommandProcessor();
@@ -148,11 +152,10 @@ public class CommandProcessor {
 		    try {
 			definitionCommandPair.getCommand().execute(c, splitted);
 		    } catch (IllegalCommandSyntaxException e) {
-			//e.printStackTrace();
+		    	logger.debug("{}", e);
 			return true;
 		    } catch (Exception e) {
-			//e.printStackTrace();
-                       // if (!ServerConstants.realese) e.printStackTrace();
+		    	logger.debug("{}", e);
 			return true;
 		    }
                     if (c != null)

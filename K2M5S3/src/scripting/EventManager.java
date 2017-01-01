@@ -45,12 +45,10 @@ public class EventManager {
 	public void cancel() {
 		try {
 			iv.invokeFunction("cancelSchedule", (Object) null);
-		} catch (ScriptException ex) {
-			if (!ServerConstants.realese)
-				ex.printStackTrace();
-		} catch (NoSuchMethodException ex) {
-			if (!ServerConstants.realese)
-				ex.printStackTrace();
+		} catch (ScriptException e) {
+			logger.debug("{}", e);
+		} catch (NoSuchMethodException e) {
+			logger.debug("{}", e);
 		}
 	}
 
@@ -90,12 +88,10 @@ public class EventManager {
 			public void run() {
 				try {
 					iv.invokeFunction(methodName, (Object) null);
-				} catch (ScriptException ex) {
-					if (!ServerConstants.realese)
-						ex.printStackTrace();
-				} catch (NoSuchMethodException ex) {
-					if (!ServerConstants.realese)
-						ex.printStackTrace();
+				} catch (ScriptException e) {
+					logger.debug("{}", e);
+				} catch (NoSuchMethodException e) {
+					logger.debug("{}", e);
 				}
 			}
 		}, timestamp);
@@ -142,12 +138,10 @@ public class EventManager {
 	public void startInstance() {
 		try {
 			iv.invokeFunction("setup", (Object) null);
-		} catch (ScriptException ex) {
-			if (!ServerConstants.realese)
-				ex.printStackTrace();
-		} catch (NoSuchMethodException ex) {
-			if (!ServerConstants.realese)
-				ex.printStackTrace();
+		} catch (ScriptException e) {
+			logger.debug("{}", e);
+		} catch (NoSuchMethodException e) {
+			logger.debug("{}", e);
 		}
 	}
 
@@ -166,12 +160,10 @@ public class EventManager {
 		try {
 			EventInstanceManager eim = (EventInstanceManager) (iv.invokeFunction("setup", (Object) null));
 			eim.registerPlayer(character);
-		} catch (ScriptException ex) {
-			if (!ServerConstants.realese)
-				ex.printStackTrace();
-		} catch (NoSuchMethodException ex) {
-			if (!ServerConstants.realese)
-				ex.printStackTrace();
+		} catch (ScriptException e) {
+			logger.debug("{}", e);
+		} catch (NoSuchMethodException e) {
+			logger.debug("{}", e);
 		}
 	}
 
@@ -180,12 +172,10 @@ public class EventManager {
 		try {
 			EventInstanceManager eim = (EventInstanceManager) (iv.invokeFunction("setup", (Object) null));
 			eim.registerParty(party, map);
-		} catch (ScriptException ex) {
-			if (!ServerConstants.realese)
-				ex.printStackTrace();
-		} catch (NoSuchMethodException ex) {
-			if (!ServerConstants.realese)
-				ex.printStackTrace();
+		} catch (ScriptException e) {
+			logger.debug("{}", e);
+		} catch (NoSuchMethodException e) {
+			logger.debug("{}", e);
 		}
 	}
 
@@ -194,12 +184,10 @@ public class EventManager {
 		try {
 			EventInstanceManager eim = (EventInstanceManager) (iv.invokeFunction("setup", (Object) null));
 			return eim;
-		} catch (ScriptException ex) {
-			if (!ServerConstants.realese)
-				ex.printStackTrace();
-		} catch (NoSuchMethodException ex) {
-			if (!ServerConstants.realese)
-				ex.printStackTrace();
+		} catch (ScriptException e) {
+			logger.debug("{}", e);
+		} catch (NoSuchMethodException e) {
+			logger.debug("{}", e);
 		}
 		return null;
 	}
@@ -209,12 +197,10 @@ public class EventManager {
 		try {
 			iv.invokeFunction("setup", eim);
 			eim.setProperty("leader", leader);
-		} catch (ScriptException ex) {
-			if (!ServerConstants.realese)
-				ex.printStackTrace();
-		} catch (NoSuchMethodException ex) {
-			if (!ServerConstants.realese)
-				ex.printStackTrace();
+		} catch (ScriptException e) {
+			logger.debug("{}", e);
+		} catch (NoSuchMethodException e) {
+			logger.debug("{}", e);
 		}
 	}
 
@@ -222,12 +208,10 @@ public class EventManager {
 		try {
 			EventInstanceManager eim = (EventInstanceManager) (iv.invokeFunction("setup", squad.getLeader().getId()));
 			eim.registerSquad(squad, map);
-		} catch (ScriptException ex) {
-			if (!ServerConstants.realese)
-				ex.printStackTrace();
-		} catch (NoSuchMethodException ex) {
-			if (!ServerConstants.realese)
-				ex.printStackTrace();
+		} catch (ScriptException e) {
+			logger.debug("{}", e);
+		} catch (NoSuchMethodException e) {
+			logger.debug("{}", e);
 		}
 	}
 

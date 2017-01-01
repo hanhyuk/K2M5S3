@@ -2,14 +2,17 @@ package server.maps;
 
 import java.awt.Point;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import client.MapleClient;
-import constants.ServerConstants;
 import launch.ChannelServer;
 import packet.creators.MainPacketCreator;
 import scripting.PortalScriptManager;
 
 public class MapleGenericPortal implements MaplePortal {
-
+	private static final Logger logger = LoggerFactory.getLogger(MapleGenericPortal.class);
+	
 	private String name, target, scriptName;
 	private Point position;
 	private int targetmap, type, id;
@@ -92,8 +95,7 @@ public class MapleGenericPortal implements MaplePortal {
 				}
 			} catch (final Exception e) {
 				c.getSession().write(MainPacketCreator.resetActions());
-				if (!ServerConstants.realese)
-					e.printStackTrace();
+				logger.debug("{}", e);
 			}
 		} else if (getTargetMapId() != 999999999) {
 			MapleMap to = null;

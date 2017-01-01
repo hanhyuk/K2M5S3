@@ -331,14 +331,6 @@ public class CharCommands implements Command {
                 ServerConstants.feverTime = true;
                 c.getPlayer().dropMessage(5, "[GM알림] 피버타임이 설정되었습니다.");
             }
-        } else if (splitted[0].equals("!패킷출력")) {
-            if (ServerConstants.showPackets) {
-                ServerConstants.showPackets = false;
-                c.getPlayer().dropMessage(5, "[GM알림] 패킷출력이 해제되었습니다.");
-            } else {
-                ServerConstants.showPackets = true;
-                c.getPlayer().dropMessage(5, "[GM알림] 패킷출력이 설정되었습니다.");
-            }
         } else if (splitted[0].equals("!서버점검")) {
             if (ServerConstants.serverCheck) {
                 ServerConstants.serverCheck = false;

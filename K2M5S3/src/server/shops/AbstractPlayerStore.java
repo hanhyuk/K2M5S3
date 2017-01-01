@@ -240,9 +240,8 @@ public abstract class AbstractPlayerStore extends AbstractHinaMapObject implemen
 			}
 			ItemFactory.saveItemsFromMerchant(new Pair(packageid, itemlist));
 			return true;
-		} catch (SQLException se) {
-			if (!ServerConstants.realese)
-				se.printStackTrace();
+		} catch (SQLException e) {
+			logger.debug("{}", e);
 		}
 		return false;
 	}

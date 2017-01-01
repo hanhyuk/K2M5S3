@@ -1,12 +1,5 @@
 package client;
 
-import constants.ServerConstants;
-import database.MYSQL;
-import server.items.MapleItemIdenfier;
-import server.items.ItemInformation;
-import server.movement.AbsoluteLifeMovement;
-import server.movement.LifeMovement;
-import server.movement.LifeMovementFragment;
 import java.awt.Point;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -14,8 +7,20 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 
-public class MaplePet {
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import constants.ServerConstants;
+import database.MYSQL;
+import server.items.ItemInformation;
+import server.items.MapleItemIdenfier;
+import server.movement.AbsoluteLifeMovement;
+import server.movement.LifeMovement;
+import server.movement.LifeMovementFragment;
+
+public class MaplePet {
+	private static final Logger logger = LoggerFactory.getLogger(MaplePet.class);
+	
     private String name;
     private int Fh = 0, stance = 0, fullness = 100, level = 1, closeness = 0, skillValue = 0, buffSkillId = 0, uniqueid, petitemid, flags;
     private Point pos;
@@ -95,8 +100,8 @@ public class MaplePet {
 	    ps.setInt(8, uniqueid); // Set ID
 	    ps.executeUpdate(); // Execute statement
 	    ps.close();
-	} catch (final SQLException ex) {
-	    if (!ServerConstants.realese) ex.printStackTrace();
+	} catch (final SQLException e) {
+		logger.debug("{}", e);
 	}
     }
 
@@ -112,8 +117,8 @@ public class MaplePet {
             ps.setLong(6, expireDate);
 	    ps.executeUpdate();
 	    ps.close();
-	} catch (final SQLException ex) {
-	    if (!ServerConstants.realese) ex.printStackTrace();
+	} catch (final SQLException e) {
+		logger.debug("{}", e);
 	    return null;
 	}
 	final MaplePet pet = new MaplePet(itemid);

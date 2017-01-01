@@ -118,9 +118,7 @@ public class CharLoginHandler {
 			chars.clear();
 			chars = null;
 		} catch (Exception e) {
-			if (!ServerConstants.realese) {
-				e.printStackTrace();
-			}
+			logger.debug("{}", e);
 		}
 	}
 

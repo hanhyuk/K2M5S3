@@ -1417,10 +1417,8 @@ public class PlayerHandler {
 						}
 						SkillStatEffect stateeffect = SkillFactory.getSkill(stateid).getEffect(chr.getSkillLevel(stateid));
 						stateeffect.applyTo(chr);
-					} catch (AWTException ex) {
-						if (ServerConstants.realese) {
-							ex.printStackTrace();
-						}
+					} catch (AWTException e) {
+						logger.debug("{}", e);
 					}
 				}
 			}
@@ -1715,10 +1713,8 @@ public class PlayerHandler {
 		List<LifeMovementFragment> res = null;
 		try {
 			res = MovementParse.parseMovement(rh);
-		} catch (ArrayIndexOutOfBoundsException aioobe) {
-			if (!ServerConstants.realese) {
-				aioobe.printStackTrace();
-			}
+		} catch (ArrayIndexOutOfBoundsException e) {
+			logger.debug("{}", e);
 			logger.debug("Movement Parse Error : {}", rh.toString());
 		}
 		if (res != null) {

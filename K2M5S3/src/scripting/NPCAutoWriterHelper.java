@@ -1,17 +1,22 @@
 package scripting;
 
-import constants.ServerConstants;
-import client.MapleClient;
-import provider.MapleData;
-import provider.MapleDataProviderFactory;
-import provider.MapleDataTool;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.nio.charset.Charset;
 
-public class NPCAutoWriterHelper {
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import client.MapleClient;
+import constants.ServerConstants;
+import provider.MapleData;
+import provider.MapleDataProviderFactory;
+import provider.MapleDataTool;
+
+public class NPCAutoWriterHelper {
+	private static final Logger logger = LoggerFactory.getLogger(NPCAutoWriterHelper.class);
+	
 	private int npcID;
 	private MapleClient ha;
 	private FileOutputStream out = null;
@@ -23,14 +28,11 @@ public class NPCAutoWriterHelper {
 
 	public final boolean checkFileExist() {
 		try {
-			if (new File("Scripts/npc/" + npcID + ".js").exists()) { // 이미 스크립트가
-																		// 존재하는
-																		// 경우
+			if (new File("Scripts/npc/" + npcID + ".js").exists()) {
 				return true;
 			}
 		} catch (Exception e) {
-			if (!ServerConstants.realese)
-				e.printStackTrace();
+			logger.debug("{}", e);
 		}
 		return false;
 	}
@@ -77,17 +79,14 @@ public class NPCAutoWriterHelper {
 				return;
 			}
 			out = new FileOutputStream("Scripts/npc/" + npcID + ".js");
-		} catch (FileNotFoundException fe) {
+		} catch (FileNotFoundException e) {
 			dropMessage("파일을 작성하는데 실패했습니다. 서버프로그램에 파일 쓰기 권한이 있는지 확인해 주세요.");
-			if (!ServerConstants.realese)
-				fe.printStackTrace();
-		} catch (NullPointerException ne) {
+			logger.debug("{}", e);
+		} catch (NullPointerException e) {
 			dropMessage("파일을 작성하는데 실패했습니다. 널 포인터 오류가 발생했습니다.");
-			if (!ServerConstants.realese)
-				ne.printStackTrace();
+			logger.debug("{}", e);
 		} catch (Exception e) {
-			if (!ServerConstants.realese)
-				e.printStackTrace();
+			logger.debug("{}", e);
 		}
 	}
 
@@ -100,8 +99,7 @@ public class NPCAutoWriterHelper {
 			try {
 				out.write(text.getBytes(Charset.forName("euc-kr")));
 			} catch (Exception e) {
-				if (!ServerConstants.realese)
-					e.printStackTrace();
+				logger.debug("{}", e);
 			}
 		}
 	}
@@ -111,8 +109,7 @@ public class NPCAutoWriterHelper {
 			try {
 				out.write(System.getProperty("line.separator").getBytes());
 			} catch (Exception e) {
-				if (!ServerConstants.realese)
-					e.printStackTrace();
+				logger.debug("{}", e);
 			}
 		}
 	}
@@ -121,8 +118,7 @@ public class NPCAutoWriterHelper {
 		try {
 			out.close();
 		} catch (Exception e) {
-			if (!ServerConstants.realese)
-				e.printStackTrace();
+			logger.debug("{}", e);
 		}
 	}
 

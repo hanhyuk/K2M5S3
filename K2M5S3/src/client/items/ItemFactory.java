@@ -407,9 +407,7 @@ public class ItemFactory {
             ps.close();
             pse.close();
         } catch (Exception e) {
-            if (!ServerConstants.realese) {
-                e.printStackTrace();
-            }
+        	logger.debug("{}", e);
         }
     }
 
@@ -421,9 +419,7 @@ public class ItemFactory {
             ps.executeUpdate();
             ps.close();
         } catch (Exception e) {
-            if (!ServerConstants.realese) { 
-                e.printStackTrace();
-            }
+        	logger.debug("{}", e);
         }
     }
         
@@ -437,9 +433,7 @@ public class ItemFactory {
             ps.close();
             /* 인벤토리 장비 삭제 종료 */
         } catch (Exception e) {
-            if (!ServerConstants.realese) {
-                e.printStackTrace();
-            }
+        	logger.debug("{}", e);
         }
     }
 }

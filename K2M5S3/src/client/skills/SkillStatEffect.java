@@ -2645,9 +2645,7 @@ public class SkillStatEffect {
 								null, false);
 						mob.applyStatus(applyfrom, mobeff, false, getStatusDuration(), false);
 					} catch (Exception e) {
-						if (!ServerConstants.realese) {
-							e.printStackTrace();
-						}
+						logger.debug("{}", e);
 					}
 					for (MonsterStatus statlulz : cancel) {
 						mob.cancelStatus(statlulz);

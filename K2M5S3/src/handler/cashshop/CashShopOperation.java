@@ -470,8 +470,7 @@ public class CashShopOperation {
 					c.getPlayer().message(1, "필요한 캐시 또는 메이플 포인트가 부족합니다.");
 				}
 			} catch (Exception e) {
-				if (!ServerConstants.realese)
-					e.printStackTrace();
+				logger.debug("{}", e);
 			}
 		} else if (action == 37) {
 			final CashItemInfo item = CashItemFactory.getInstance().getItem(rh.readInt());
