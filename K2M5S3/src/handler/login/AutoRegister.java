@@ -9,7 +9,6 @@ import org.slf4j.LoggerFactory;
 
 import a.my.made.CommonType;
 import client.MapleClient;
-import constants.ServerConstants;
 import database.MYSQL;
 
 public class AutoRegister {
@@ -32,7 +31,6 @@ public class AutoRegister {
 			if( rs.next() ) {
 				accountType = CommonType.ACCOUNT_EXISTS;
 			}
-			//FIXME 亥 贸府 咯何 眉农
 		} catch (Exception e) {
 			e.printStackTrace();
 		} finally {

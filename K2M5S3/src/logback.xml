@@ -11,7 +11,7 @@
     	-->
 		<useJansi>true</useJansi>
         <encoder>
-			<pattern>[%d{HH:mm:ss} %highlight(%-5level)] %highlight(%msg) %replace(%caller{1}){'Caller\+\d\s*at\s', ''}</pattern>
+			<pattern>[%d{HH:mm:ss} %highlight(%-5level)] #%highlight(%msg)# %replace(%caller{1}){'Caller\+\d\s*at\s', ''}</pattern>
 		</encoder>
     </appender>
 

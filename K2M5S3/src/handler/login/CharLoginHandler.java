@@ -51,7 +51,6 @@ public class CharLoginHandler {
 			String pwd = rh.readMapleAsciiString(); // 비밀번호
 
 			CommonType checkType = AutoRegister.checkAccount(login);
-
 			if (CommonType.ACCOUNT_CREATE_POSSIBLE == checkType) {
 				AutoRegister.registerAccount(c, login, pwd);
 				c.send(MainPacketCreator.serverNotice(1, "계정이 생성 되었습니다.\r\n다시 로그인 하세요."));
