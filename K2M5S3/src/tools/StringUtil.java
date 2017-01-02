@@ -1,9 +1,6 @@
 package tools;
 
-import java.io.IOException;
 import java.nio.charset.Charset;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 
 /**
  * Provides a suite of utilities for manipulating strings.
@@ -14,6 +11,24 @@ import java.nio.file.Paths;
  */
 public class StringUtil {
 
+	/**
+	 * 문자열이 null 또는 "" 또는 길이가 0 인경우 true, 그외 false
+	 * 
+	 */
+	public static boolean isEmpty(String s) {
+		boolean result = false;
+		
+		if( s == null || "".equals(s) || s.length() == 0 ) {
+			return true;
+		}
+		
+		return result;
+	}
+	
+	public static boolean isNotEmpty(String s) {
+		return !isEmpty(s);
+	}
+	
 	/**
 	 * Gets a string padded from the left to <code>length</code> by
 	 * <code>padchar</code>.
