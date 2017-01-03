@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import a.my.made.AccountStatusType;
+import a.my.made.SessionFlag;
 import client.MapleCharacter;
 import client.MapleClient;
 import client.MapleQuestStatus;
@@ -386,13 +387,23 @@ public class InterServerHandler {
 		c.getSession().write(MainPacketCreator.buddyHello(c));
 	}
 
-	public static void getGameQuitRequest(ReadingMaple rh, MapleClient c) {
+	/**
+	 * (C -> S)클라에서 하단에 시스템 메뉴 -> 게임종료 버튼 클릭시 호출.
+	 * 
+	 * @param rh
+	 * @param client
+	 */
+	public static void getGameQuitRequest(ReadingMaple rh, MapleClient client) {
 		String account = rh.readMapleAsciiString();
-		if (!c.isLoggedIn() && !c.getAccountName().equals(account)) { // hack
-			c.getSession().closeNow();
+		
+		//TODO 아래 로직이 제대로 동작하는지 확인이 필요하다.
+		if (!client.isLoggedIn() && !client.getAccountName().equals(account)) {
+			SessionFlag.forceDisconnect(client.getSession());
+			client.getSession().closeNow();
 			return;
 		}
-		c.getSession().write(MainPacketCreator.serverNotice(4, ""));
-		c.getSession().write(LoginPacket.getKeyGuardResponse((account) + "," + (c.getPassword(account))));
+		
+		client.getSession().write(MainPacketCreator.serverNotice(4, ""));
+		client.getSession().write(LoginPacket.getKeyGuardResponse((account) + "," + (client.getPassword(account))));
 	}
 }

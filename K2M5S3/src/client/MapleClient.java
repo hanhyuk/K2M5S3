@@ -530,8 +530,7 @@ public class MapleClient {
 	/**
 	 * 현재 계정의 loggedin 상태값을 조회한다.
 	 * 
-	 * 현재 이 메소드가 사용되는 경우는 다음과 같다. 1. 캐시샵 입장 할때 2. ingame(채널 접속) 할때 3. 1차 로그인 할때
-	 * 4. 서버 관리기(controlUnit 클래스)에서 벤처리 할때
+	 * @see AccountStatusType
 	 * 
 	 */
 	public final int getLoginState() {
@@ -935,8 +934,7 @@ public class MapleClient {
 	/**
 	 * 사용자의 계정 접속 상태값을 변경한다.
 	 * 
-	 * @param state
-	 *            변경할 상태값
+	 * @param state 변경할 상태값
 	 * @param sessionIp
 	 * @return true(성공)
 	 */

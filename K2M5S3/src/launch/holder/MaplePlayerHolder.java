@@ -135,7 +135,7 @@ public class MaplePlayerHolder {
 			while (itr.hasNext()) {
 				chr = itr.next();
 				chr.getClient().disconnect(false, false);
-				chr.getClient().getSession().close();
+				chr.getClient().getSession().closeNow();
 				itr.remove();
 			}
 		} finally {

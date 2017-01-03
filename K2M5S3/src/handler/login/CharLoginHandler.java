@@ -186,17 +186,16 @@ public class CharLoginHandler {
 	}
 
 	/**
-	 * TODO 게임 클라에서 사용하는 건지 확신할수 없다. 확인 필요.
+	 * (C -> S)클라에서 캐릭터 생성 완료후 ingame 할때 사용.
 	 * 
 	 * @param rh
-	 * @param c
+	 * @param client
 	 */
-	public static void getIPRequest(ReadingMaple rh, MapleClient c) {
-		if (!c.isLoggedIn()) { // hack
-			return;
-		}
-		c.updateLoginState(AccountStatusType.SERVER_TRANSITION.getValue(), c.getSessionIPAddress());
-		c.getSession().write(MainPacketCreator.getServerIP(c, ServerConstants.basePorts + c.getChannel(), ServerConstants.BuddyChatPort, rh.readInt()));
+	public static void getIPRequest(ReadingMaple rh, MapleClient client) {
+		//TODO 1,2차 로그인 이후 캐릭터 생성을 완료 할때 호출되는데
+		//1,2차 로그인 상태인지 확인하는 처리가 필요하다.
+		
+		client.getSession().write(MainPacketCreator.getServerIP(client, ServerConstants.basePorts + client.getChannel(), ServerConstants.BuddyChatPort, rh.readInt()));
 	}
 
 	/**
@@ -561,11 +560,12 @@ public class CharLoginHandler {
 			return; // Attempting to delete other character
 		}
 		byte state = 0;
-		if (chr.getMeso() < 5000000) {
-			c.getSession().write(MainPacketCreator.serverNotice(1, "캐릭터 삭제를 하기위해선 삭제하고자 하는 캐릭터에 5,000,000 메소를 소지하고 있어야 합니다."));
-			c.getSession().write(LoginPacket.getLoginFailed(20));
-			return;
-		}
+		//TODO 캐릭터 삭제 가능 조건 로직
+//		if (chr.getMeso() < 5000000) {
+//			c.getSession().write(MainPacketCreator.serverNotice(1, "캐릭터 삭제를 하기위해선 삭제하고자 하는 캐릭터에 5,000,000 메소를 소지하고 있어야 합니다."));
+//			c.getSession().write(LoginPacket.getLoginFailed(20));
+//			return;
+//		}
 		if (Secondpw_Client == null) { // Client's hacking
 			c.getSession().closeNow();
 			return;

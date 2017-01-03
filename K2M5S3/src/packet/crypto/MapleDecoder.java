@@ -77,7 +77,7 @@ public class MapleDecoder extends CumulativeProtocolDecoder {
 					
 					if (header_num != RecvPacketOpcode.MOVE_LIFE.getValue() && header_num != RecvPacketOpcode.MOVE_PLAYER.getValue()) {
 						//logger.debug("RECV - [{}] {} \n {} ", RecvPacketOpcode.getOpcodeName(header_num), HexTool.toString(data), HexTool.toStringFromAscii(data));
-						logger.debug("RECV - [{}] {}", RecvPacketOpcode.getOpcodeName(header_num), HexTool.toString(data));
+						logger.debug("{} RECV - [{}] {}", type, RecvPacketOpcode.getOpcodeName(header_num), HexTool.toString(data));
 					}
 				}
 			} finally {

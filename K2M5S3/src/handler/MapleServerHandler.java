@@ -218,10 +218,8 @@ public class MapleServerHandler extends IoHandlerAdapter {
 			CharLoginHandler.setBurningCharacter(rh, client);
 			break;
 		case CLIENT_QUIT:
-			//TODO CLIENT_QUIT 패킷을 언제 호출하는지 확인 필요.
-			//확인이 되기 전까지는 관련 로직을 수행하지 않도록 주석 처리.
-			logger.warn("CLIENT_QUIT 패킷 발견!\n 해당 패킷의 경우 계정 ID, 비밀번호를 클라이언트로 전송한다.\n");
-			//InterServerHandler.getGameQuitRequest(rh, c);
+			//클라에서 하단에 시스템 메뉴 -> 게임종료 버튼 클릭시 호출.
+			InterServerHandler.getGameQuitRequest(rh, client);
 			break;
 		case LOGIN_REQUEST:
 			logger.warn("LOGIN_REQUEST 패킷 발견!");
@@ -232,7 +230,7 @@ public class MapleServerHandler extends IoHandlerAdapter {
 			logger.warn("REDISPLAY_CHANNEL 패킷 발견!");
 			CharLoginHandler.getDisplayChannel(false, client);
 			break;
-		case ENTER_CREATE_CHAR:
+		case ENTER_CREATE_CHAR: //캐릭터 생성을 완료 했을때.
 			logger.warn("ENTER_CREATE_CHAR 패킷 발견!");
 			CharLoginHandler.getIPRequest(rh, client);
 			break;
@@ -863,7 +861,7 @@ public class MapleServerHandler extends IoHandlerAdapter {
 		case ZERO_SCROLL_START:
 			ZeroHandler.ZeroScrollStart(rh, client.getPlayer(), client);
 			break;
-		case GAME_END:
+		case GAME_END: //클라이언트 강제(?) 종료 할 경우
 			client.getPlayer().send(MainPacketCreator.GameEnd());
 			break;
 		case STARDUST:

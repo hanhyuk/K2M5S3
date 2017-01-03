@@ -77,18 +77,7 @@ public class CashShopOperation {
 		c.setAccID(chr.getAccountID());
 		c.isCS = true;
 
-		final int state = c.getLoginState();
-		boolean allowLogin = true;
-		if (state == AccountStatusType.SERVER_TRANSITION.getValue() || state == AccountStatusType.CHANGE_CHANNEL.getValue()) {
-			if (!ChannelServer.isCharacterListConnected(c.loadCharacterNames(), false)) {
-				allowLogin = true;
-			}
-		}
-		if (!allowLogin) {
-			c.setPlayer(null);
-			c.getSession().closeNow();
-			return;
-		}
+		//TODO 캐시샵 입장시 중복 로그인 또는 현재 접속중인지 체크해야 한다.
 		c.updateLoginState(AccountStatusType.IN_CASHSHOP.getValue(), c.getSessionIPAddress());
 
 		cashShopServer.getPlayerStorage().registerPlayer(chr);

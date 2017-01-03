@@ -38,7 +38,7 @@ public class MapleEncoder implements ProtocolEncoder {
 			final byte[] data = ((Packet) message).getBytes();
 			final ReadingMaple rh = new ReadingMaple(new ByteStream(data));
 			final short header_num = rh.readShort();
-			logger.debug("SEND - [{}] {} \n {} ", SendPacketOpcode.getOpcodeName(header_num), HexTool.toString(data), HexTool.toStringFromAscii(data));
+			logger.debug("{} SEND - [{}] {} \n {} ", type, SendPacketOpcode.getOpcodeName(header_num), HexTool.toString(data), HexTool.toStringFromAscii(data));
 		}
 		
 		if (client != null) {

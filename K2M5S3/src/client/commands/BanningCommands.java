@@ -33,9 +33,8 @@ public class BanningCommands implements Command {
 				for (ChannelServer server : ChannelServer.getAllInstances()) {
 					MapleCharacter player = server.getPlayerStorage().getCharacterByName(charName);
 					if( player != null ) {
-						player.getClient().getSession().setAttribute(SessionFlag.KEY_CHAR_SAVE, "N");
 						//TODO 채널 서버 뿐만 아니라 로그인, 버디, 캐시샵 쪽도 연결을 종료해야 하는지 확인이 필요하다.
-						player.getClient().getSession().closeNow();
+						SessionFlag.forceDisconnect(player.getClient().getSession());
 					}
 				}
 				
