@@ -79,6 +79,7 @@ public class CharLoginHandler {
 					c.addLoginTryCount();
 				} else if (CommonType.LOGIN_IMPOSSIBLE == commonType) {
 					logger.warn("계정 정보를 확인 할 수 없습니다. 이런 경우가 자주 발생한다면 시스템적으로 문제가 있는지 점검이 필요함.");
+					c.send(LoginPacket.getLoginFailed(8));
 				}
 			}
 
@@ -141,6 +142,11 @@ public class CharLoginHandler {
 		}
 	}
 
+	/**
+	 * RECV SECONDPW_RESULT_R 패킷 - 2차 비밀번호를 사용하는지 여부를 체크한다.(C -> S)
+	 * @param rh
+	 * @param c
+	 */
 	public static void getSPCheck(ReadingMaple rh, MapleClient c) {
 		if (c.getSecondPassword() != null) {
 			c.getSession().write(LoginPacket.getSecondPasswordCheck(true, false, true));
@@ -180,7 +186,7 @@ public class CharLoginHandler {
 	}
 
 	/**
-	 * @deprecated 게임 클라에서 사용하는 건지 확신할수 없다. 그래서 사용하지 않도록 하고, 이후 확인해서 삭제를 하던가 하자.
+	 * TODO 게임 클라에서 사용하는 건지 확신할수 없다. 확인 필요.
 	 * 
 	 * @param rh
 	 * @param c
@@ -585,7 +591,7 @@ public class CharLoginHandler {
 			return;
 		}
 		if (c.CheckSecondPassword(password)) {
-			c.updateLoginState(AccountStatusType.SERVER_TRANSITION.getValue(), c.getSessionIPAddress());
+			c.updateLoginState(AccountStatusType.SECOND_LOGIN.getValue(), c.getSessionIPAddress());
 			c.getSession().write(MainPacketCreator.getServerIP(c, ServerConstants.ChannelPort + c.getChannel(), ServerConstants.BuddyChatPort, charId));
 		} else {
 			c.getSession().write(LoginPacket.secondPwError((byte) 0x14));

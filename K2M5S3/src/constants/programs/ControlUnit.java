@@ -1136,10 +1136,10 @@ public class ControlUnit extends javax.swing.JFrame {
 			if (hp == null && !check) {
 				check = false;
 			} else if (hp != null) {
-				final MapleClient c = null;
+				final MapleClient client = hp.getClient();
 				check = true;
-				hp.ban(jTextField8.getText(), true, false);
-				c.getSession().write(MainPacketCreator.getNPCTalk(2007, (byte) 0,
+				client.ban("");
+				client.getSession().write(MainPacketCreator.getNPCTalk(2007, (byte) 0,
 						"해당 계정은 지금부터 사용 할 수 없습니다.\r\n(3초 뒤 자동적으로 종료 됩니다.)", "00 00", (byte) 2));
 				BanList.addElement(hp.getClient().getAccountName());
 				ban.setModel(BanList);
@@ -1147,8 +1147,8 @@ public class ControlUnit extends javax.swing.JFrame {
 				tMan.schedule(new Runnable() {
 					@Override
 					public void run() {
-						c.disconnect(true, (c.getLoginState() == 4 || c.getLoginState() == 5));
-						c.getSession().closeNow();
+						client.disconnect(true, (client.getLoginState() == 4 || client.getLoginState() == 5));
+						client.getSession().closeNow();
 					}
 				}, 3000);
 				JOptionPane.showMessageDialog(null, jTextField8.getText() + "유저를 밴 하였습니다.");

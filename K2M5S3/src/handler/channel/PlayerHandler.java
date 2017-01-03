@@ -2041,6 +2041,12 @@ public class PlayerHandler {
 	}
 
 	public static void getHyperSkill(ReadingMaple rh, MapleClient c) {
+		//4C 01 
+		//05 00 
+		//68 79 70 65 72 
+		//1D 00 00 00 
+		//01 00 00 00
+		
 		String value = rh.readMapleAsciiString();
 		if (value.equals("honorLeveling")) {
 			return;

@@ -1,7 +1,6 @@
 package launch;
 
 import java.net.InetSocketAddress;
-import java.sql.PreparedStatement;
 
 import org.apache.mina.core.buffer.CachedBufferAllocator;
 import org.apache.mina.core.buffer.IoBuffer;
@@ -12,10 +11,11 @@ import org.apache.mina.transport.socket.nio.NioSocketAcceptor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import a.my.made.dao.AccountDAO;
+import a.my.made.dao.ParamMap;
 import community.MapleGuildCharacter;
 import constants.ServerConstants;
 import constants.subclasses.ServerType;
-import database.MYSQL;
 import handler.MapleServerHandler;
 import launch.holder.WideObjectHolder;
 import packet.crypto.EncryptionFactory;
@@ -56,10 +56,9 @@ public class LoginServer {
 			eventMessage = ServerConstants.eventMessage;
 			flag = ServerConstants.defaultFlag;
 
-			PreparedStatement ps = MYSQL.getConnection().prepareStatement("UPDATE accounts SET loggedin = 0");
-			ps.executeUpdate();
-			ps.close();
-			ps = null;
+			final ParamMap params = new ParamMap();
+			params.put("loggedin", 0);
+			AccountDAO.setAccountInfo(AccountDAO.DEFAULT_ACCOUNT_ID, params);
 
 			/*
 			 * 아래 2라인에 관한 자세한 설명은 아래 링크를 참고 http://civan.tistory.com/160,
@@ -68,13 +67,13 @@ public class LoginServer {
 			 */
 			IoBuffer.setUseDirectBuffer(false);
 			IoBuffer.setAllocator(new CachedBufferAllocator());
+//			IoBuffer.setAllocator(new SimpleBufferAllocator());
 
 			acceptor = new NioSocketAcceptor();
 			acceptor.getSessionConfig().setReadBufferSize(2048);
 			acceptor.getSessionConfig().setIdleTime(IdleStatus.BOTH_IDLE, 10);
-			// acceptor.getFilterChain().addFirst("ipCheck", new
-			// IpCheckFilter());
-			acceptor.getFilterChain().addLast("codec", new ProtocolCodecFilter(new EncryptionFactory(CLIENT_KEY)));
+			// acceptor.getFilterChain().addFirst("ipCheck", new IpCheckFilter());
+			acceptor.getFilterChain().addLast("codec", new ProtocolCodecFilter(new EncryptionFactory(ServerType.LOGIN, CLIENT_KEY)));
 			acceptor.setHandler(new MapleServerHandler(ServerType.LOGIN, CLIENT_KEY));
 			acceptor.bind(new InetSocketAddress(LOGIN_PORT));
 

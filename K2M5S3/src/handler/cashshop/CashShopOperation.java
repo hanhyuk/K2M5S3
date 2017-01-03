@@ -45,7 +45,7 @@ public class CashShopOperation {
 	public static void LeaveCS(final ReadingMaple rh, final MapleClient ha, final MapleCharacter hp) {
 		final CashShopServer cs = CashShopServer.getInstance();
 		cs.getPlayerStorage().deregisterPlayer(hp);
-		ha.updateLoginState(AccountStatusType.SERVER_TRANSITION.getValue(), ha.getSessionIPAddress());
+		ha.updateLoginState(AccountStatusType.OUT_CASHSHOP.getValue(), ha.getSessionIPAddress());
 		ChannelServer.getInstance(ha.getChannel()).ChannelChange_Data(new ChracterTransfer(hp), hp.getId(), ha.getChannel());
 		ha.getSession().write(MainPacketCreator.getChannelChange(ha, ServerConstants.basePorts + (ha.getChannel())));
 		hp.saveToDB(false, true);

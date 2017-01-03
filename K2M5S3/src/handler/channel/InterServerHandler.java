@@ -122,24 +122,11 @@ public class InterServerHandler {
 		}
 		c.setPlayer(player);
 		c.setAccID(player.getAccountID());
-		c.loadAuthData();
+		c.setAuthData();
 		c.getPlayer().setmorphGage(0);
 
-		final int state = c.getLoginState();
-
-		boolean allowLogin = false;
-
-		if (state == AccountStatusType.SERVER_TRANSITION.getValue() || state == AccountStatusType.CHANGE_CHANNEL.getValue()) {
-			if (!ChannelServer.isCharacterListConnected(c.loadCharacterNames(), true)) {
-				allowLogin = true;
-			}
-		}
-		if (!allowLogin) {
-			c.setPlayer(null);
-			c.getSession().closeNow();
-			logger.debug("not allow login - {} from {} state : {}", c.getAccountName(), c.getSessionIPAddress(), state);
-			return;
-		}
+		//TODO 중복 로그인인지 체크하는 로직이 필요.
+		//패킷 센더를 통해 중복 로그인이 가능한 경우가 있으므로 거기에 대한 방어 코드가 필요하다.
 		c.updateLoginState(AccountStatusType.IN_CHANNEL.getValue(), c.getSessionIPAddress());
 
 		final ChannelServer cserv = ChannelServer.getInstance(c.getChannel());

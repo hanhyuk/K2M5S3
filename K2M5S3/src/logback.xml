@@ -11,7 +11,8 @@
     	-->
 		<useJansi>true</useJansi>
         <encoder>
-			<pattern>[%d{HH:mm:ss} %highlight(%-5level)] #%highlight(%msg)# %replace(%caller{1}){'Caller\+\d\s*at\s', ''}</pattern>
+<!-- 			<pattern>[%d{HH:mm:ss} %highlight(%-5level)] #%highlight(%msg)# %replace(%caller{1}){'Caller\+\d\s*at\s', ''}</pattern> -->
+				<pattern>[%d{HH:mm:ss.SSS}] %msg%n</pattern>
 		</encoder>
     </appender>
 
@@ -57,11 +58,11 @@
     <!-- mina -->
     <logger name="org.apache.mina.filter.codec" level="INFO"/> 
     
-    <!-- 패킷 로그는 파일로 기록한다. -->
+    <!-- 패킷 로그는 파일로 기록한다.
     <logger name="packet.crypto" level="DEBUG" additivity="false">
     	<appender-ref ref="PACKET_LOG" />
     </logger>
-
+ -->
 	<!-- 
 		패키지별로 로그 레벨을 지정하지 않은 경우, root level에 따라 로그가 출력된다.
 		root level 의 경우 기본값은 운영 "INFO", 개발 "DEBUG" 사용.

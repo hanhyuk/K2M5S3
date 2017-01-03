@@ -5,11 +5,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -27,13 +25,16 @@ import a.my.made.AccountStatusType;
 import a.my.made.CommonType;
 import a.my.made.LogUtils;
 import a.my.made.UserType;
+import a.my.made.dao.AccountDAO;
+import a.my.made.dao.ParamMap;
+import a.my.made.dao.ResultMap;
+import a.my.made.util.StringUtils;
 import client.stats.BuffStatsValueHolder;
 import community.MapleGuildCharacter;
 import community.MapleMultiChatCharacter;
 import community.MaplePartyCharacter;
 import community.MaplePartyOperation;
 import community.MapleUserTrade;
-import constants.ServerConstants;
 import constants.programs.ControlUnit;
 import database.MYSQL;
 import database.MYSQLException;
@@ -72,7 +73,7 @@ public class MapleClient {
 	/**
 	 * account 테이블의 id 값(AI PK)
 	 */
-	private int accId = 1;
+	private int accountId = 1;
 	private int world;
 	/**
 	 * 로그인 성공 여부 true : 성공 TODO 이값은 boolean 값이 아니라 AccountStatusType 값으로 수정되어야
@@ -140,70 +141,8 @@ public class MapleClient {
 		loginTryCount++;
 	}
 
-	public void banMacs() {
-		Connection con = MYSQL.getConnection();
-		try {
-			loadMacsIfNescessary();
-			List<String> filtered = new LinkedList<String>();
-			PreparedStatement ps = con.prepareStatement("SELECT filter FROM macfilters");
-			ResultSet rs = ps.executeQuery();
-			while (rs.next()) {
-				filtered.add(rs.getString("filter"));
-			}
-			rs.close();
-			ps.close();
-
-			ps = con.prepareStatement("INSERT INTO macbans (mac) VALUES (?)");
-			for (String mac : macs) {
-				boolean matched = false;
-				for (String filter : filtered) {
-					if (mac.matches(filter)) {
-						matched = true;
-						break;
-					}
-				}
-				if (!matched) {
-					ps.setString(1, mac);
-					try {
-						ps.executeUpdate();
-					} catch (SQLException e) {
-						// can fail because of UNIQUE key, we dont care
-					}
-				}
-			}
-			ps.close();
-		} catch (SQLException e) {
-			logger.debug("Error banning MACs {}", e);
-		}
-	}
-
 	public boolean canClickNPC() {
 		return lastNpcClick + 500 < System.currentTimeMillis();
-	}
-
-	public final boolean CheckIPAddress() {
-		try {
-			final PreparedStatement ps = MYSQL.getConnection().prepareStatement("SELECT SessionIP FROM accounts WHERE id = ?");
-			ps.setInt(1, this.accId);
-			final ResultSet rs = ps.executeQuery();
-
-			boolean canlogin = false;
-
-			if (rs.next()) {
-				final String sessionIP = rs.getString("SessionIP");
-
-				if (sessionIP != null) { // Probably a login proced skipper?
-					canlogin = getSessionIPAddress().equals(sessionIP.split(":")[0]);
-				}
-			}
-			rs.close();
-			ps.close();
-
-			return canlogin;
-		} catch (SQLException e) {
-			logger.debug("{}", e);
-		}
-		return false;
 	}
 
 	/**
@@ -222,52 +161,30 @@ public class MapleClient {
 	public CommonType checkLoginAvailability(final String loginId, final String loginPassword) {
 		CommonType result = CommonType.LOGIN_IMPOSSIBLE;
 
-		PreparedStatement ps = null;
-		ResultSet rs = null;
-
-		try {
-			ps = MYSQL.getConnection().prepareStatement("SELECT * FROM accounts WHERE name = ? and password = ?");
-			ps.setString(1, loginId);
-			ps.setString(2, loginPassword);
-
-			rs = ps.executeQuery();
-			if (rs.next()) {
+		final List<ResultMap> accountInfo = AccountDAO.getAccountInfo(loginId, loginPassword);
+		
+		for( ResultMap rm : accountInfo ) {
+			if (rm.getInt("banned") > 0) {
 				// TODO "banned" 관련 파일 검색한 다음 쓸모 없는 것들 다 삭제하고,
 				// banned 컬럼을 사용하지 않도록 전체 소스를 수정하자.
 				// 앞으로는 밴 처리도 "loggedin" 컬럼의 값을 이용하려고 한다.
-				if (rs.getInt("banned") > 0) {
-					result = CommonType.ACCOUNT_BAN;
-				} else if (rs.getByte("loggedin") != AccountStatusType.NOT_LOGIN.getValue()) {
-					result = CommonType.LOGIN_ING;
-				} else {
-					accountName = rs.getString("name");
-					accId = rs.getInt("id");
-					gender = rs.getByte("gender");
-					gm = rs.getInt("gm") >= UserType.PUBLIC_GM.getValue();
+				result = CommonType.ACCOUNT_BAN;
+			} else if (rm.getInt("loggedin") != AccountStatusType.NOT_LOGIN.getValue()) {
+				result = CommonType.LOGIN_ING;
+			} else {
+				accountName = rm.getString("name");
+				accountId = rm.getInt("id");
+				gender = (byte)rm.getInt("gender");
+				gm = rm.getInt("gm") >= UserType.PUBLIC_GM.getValue();
 
-					secondPassword = rs.getString("2ndpassword");
-					chrslot = rs.getInt("chrslot");
-					usingSecondPassword = rs.getByte("using2ndpassword") == 1;
+				secondPassword = rm.getString("2ndpassword");
+				chrslot = rm.getInt("chrslot");
+				usingSecondPassword = rm.getInt("using2ndpassword") == 1;
 
-					result = CommonType.LOGIN_POSSIBLE;
-				}
-			}
-		} catch (SQLException e) {
-			e.printStackTrace();
-		} finally {
-			try {
-				if (ps != null) {
-					ps.close();
-					ps = null;
-				}
-				if (rs != null) {
-					rs.close();
-					rs = null;
-				}
-			} catch (SQLException e) {
-				e.printStackTrace();
+				result = CommonType.LOGIN_POSSIBLE;
 			}
 		}
+		
 		return result;
 	}
 
@@ -296,7 +213,7 @@ public class MapleClient {
 			final Connection con = MYSQL.getConnection();
 			PreparedStatement ps = con.prepareStatement("SELECT id, guildid, guildrank, name, alliancerank FROM characters WHERE id = ? AND accountid = ?");
 			ps.setInt(1, cid);
-			ps.setInt(2, accId);
+			ps.setInt(2, accountId);
 			ResultSet rs = ps.executeQuery();
 
 			if (!rs.next()) {
@@ -501,7 +418,7 @@ public class MapleClient {
 			PreparedStatement ps = con.prepareStatement("UPDATE character_slots SET charslots = ? WHERE worldid = ? AND accid = ?");
 			ps.setInt(1, charslots);
 			ps.setInt(2, world);
-			ps.setInt(3, accId);
+			ps.setInt(3, accountId);
 			ps.executeUpdate();
 			ps.close();
 		} catch (SQLException sqlE) {
@@ -512,7 +429,7 @@ public class MapleClient {
 	}
 
 	public int getAccID() {
-		return this.accId;
+		return this.accountId;
 	}
 
 	public final String getAccountName() {
@@ -532,7 +449,7 @@ public class MapleClient {
 		try {
 			Connection con = MYSQL.getConnection();
 			PreparedStatement ps = con.prepareStatement("SELECT * FROM charactercard WHERE accountid = ?");
-			ps.setInt(1, accId);
+			ps.setInt(1, accountId);
 			ResultSet rs = ps.executeQuery();
 			while (rs.next()) {
 				chrcard.put(rs.getInt("position"), rs.getInt("cardid"));
@@ -555,14 +472,14 @@ public class MapleClient {
 		try {
 			Connection con = MYSQL.getConnection();
 			PreparedStatement ps = con.prepareStatement("SELECT * FROM character_slots WHERE accid = ? AND worldid = ?");
-			ps.setInt(1, accId);
+			ps.setInt(1, accountId);
 			ps.setInt(2, world);
 			ResultSet rs = ps.executeQuery();
 			if (rs.next()) {
 				charslots = rs.getInt("charslots");
 			} else {
 				PreparedStatement psu = con.prepareStatement("INSERT INTO character_slots (accid, worldid, charslots) VALUES (?, ?, ?)");
-				psu.setInt(1, accId);
+				psu.setInt(1, accountId);
 				psu.setInt(2, world);
 				psu.setInt(3, charslots);
 				psu.executeUpdate();
@@ -578,20 +495,12 @@ public class MapleClient {
 	}
 
 	public int getChrSlot() {
-		Connection con = MYSQL.getConnection();
-		PreparedStatement ps;
-		try {
-			ps = con.prepareStatement("SELECT * FROM accounts WHERE id = ?");
-			ps.setInt(1, accId);
-			ResultSet rs = ps.executeQuery();
-			if (rs.next()) {
-				chrslot = rs.getInt("chrslot");
-			}
-			rs.close();
-			ps.close();
-		} catch (SQLException e) {
-			logger.debug("{}", e);
+		final List<ResultMap> accountInfo = AccountDAO.getAccountInfo(this.accountId);
+		
+		for( ResultMap rm : accountInfo ) {
+			chrslot = rm.getInt("chrslot");
 		}
+		
 		return chrslot;
 	}
 
@@ -604,30 +513,14 @@ public class MapleClient {
 	}
 
 	public final int getLastConnection() {
-		final Connection connect = MYSQL.getConnection();
-		PreparedStatement query = null;
-		ResultSet result = null;
-		try {
-			query = connect.prepareStatement("SELECT lastconnect FROM accounts WHERE id = ?");
-			query.setInt(1, accId);
-			result = query.executeQuery();
-			if (result.next()) {
-				return Integer.parseInt(result.getString("lastconnect"));
-			}
-		} catch (SQLException e) {
-			logger.debug("{}", e);
-		} finally {
-			try {
-				if (query != null) {
-					query.close();
-				}
-				if (result != null) {
-					result.close();
-				}
-			} catch (SQLException e) {
-			}
+		int result = 1999123100;
+		
+		final List<ResultMap> accountInfo = AccountDAO.getAccountInfo(getAccID());
+		for( ResultMap rm : accountInfo ) {
+			result = Integer.parseInt(rm.getString("lastconnect")); 
 		}
-		return 2012010101;
+		
+		return result;
 	}
 
 	public final long getLastPong() {
@@ -643,46 +536,12 @@ public class MapleClient {
 	 */
 	public final int getLoginState() {
 		int state = -1;
-		PreparedStatement ps = null;
-		ResultSet rs = null;
-		try {
-			ps = MYSQL.getConnection().prepareStatement("SELECT loggedin, lastlogin FROM accounts WHERE id = ?");
-			ps.setInt(1, getAccID());
-			rs = ps.executeQuery();
-
-			if (rs.next()) {
-				// TODO AccountStatusType 클래스를 사용하도록 관련 된 모든 부분 변경해야 함.
-				state = rs.getByte("loggedin");
-
-				// TODO "현접"문제를 어느정보 보완하기 위한 패치 인 것으로 보인다.
-				// 하지만 20초 후에 비로그인 상태로 DB 만 업데이트 하면, 중복 로그인이 가능 할 것으로 보인다.
-				// 이 방법을 유지 하려면 클라이언트까지 종료
-				// 업데이트도 치고, 클라이언트를 종료시켜야 한다.(세션을 끊어버려야함)
-				// if (state == AccountStatusType.SERVER_TRANSITION.getValue()
-				// || state == AccountStatusType.CHANGE_CHANNEL.getValue()) {
-				// if (rs.getTimestamp("lastlogin").getTime() + 20000 <
-				// System.currentTimeMillis()) {
-				// state = AccountStatusType.NOT_LOGIN.getValue();
-				// updateLoginState(state, null);
-				// }
-				// }
-			}
-		} catch (SQLException e) {
-			e.printStackTrace();
-		} finally {
-			try {
-				if (ps != null) {
-					ps.close();
-					ps = null;
-				}
-				if (rs != null) {
-					rs.close();
-					rs = null;
-				}
-			} catch (SQLException e) {
-				e.printStackTrace();
-			}
+		
+		final List<ResultMap> accountInfo = AccountDAO.getAccountInfo(getAccID());
+		for( ResultMap rm : accountInfo ) {
+			state = rm.getInt("loggedin");
 		}
+		
 		return state;
 	}
 
@@ -697,22 +556,20 @@ public class MapleClient {
 		return Collections.unmodifiableSet(macs);
 	}
 
-	public String getPassword(String login) {
-		String password = null;
-		try {
-			Connection con = MYSQL.getConnection();
-			PreparedStatement ps = con.prepareStatement("SELECT * FROM accounts WHERE name = ?");
-			ps.setString(1, login);
-			ResultSet rs = ps.executeQuery();
-			if (rs.next()) {
-				password = rs.getString("password");
-			}
-			rs.close();
-			ps.close();
-		} catch (SQLException ex) {
-			ex.printStackTrace();
+	/**
+	 * 사용자의 계정 비밀번호를 반환한다.
+	 * @param loginId
+	 * @return
+	 */
+	public String getPassword(String loginId) {
+		String result = null;
+
+		final List<ResultMap> accountInfo = AccountDAO.getAccountInfo(loginId);
+		for( ResultMap rm : accountInfo ) {
+			result = rm.getString("password");
 		}
-		return password;
+		
+		return result;
 	}
 
 	public MapleCharacter getPlayer() {
@@ -798,18 +655,11 @@ public class MapleClient {
 		return usingSecondPassword;
 	}
 
-	public void loadAuthData() {
-		try {
-			Connection con = MYSQL.getConnection();
-			PreparedStatement ps = con.prepareStatement("SELECT 2ndpassword, using2ndpassword FROM accounts WHERE id = ?");
-			ps.setInt(1, this.accId);
-			ResultSet rs = ps.executeQuery();
-			if (rs.next()) {
-				secondPassword = rs.getString("2ndpassword");
-				usingSecondPassword = rs.getByte("using2ndpassword") == 1;
-			}
-		} catch (Exception e) {
-			logger.debug("{}", e);
+	public void setAuthData() {
+		final List<ResultMap> accountInfo = AccountDAO.getAccountInfo(getAccID());
+		for( ResultMap rm : accountInfo ) {
+			secondPassword = rm.getString("2ndpassword");
+			usingSecondPassword = rm.getInt("using2ndpassword") == 1;
 		}
 	}
 
@@ -836,7 +686,7 @@ public class MapleClient {
 		try {
 			Connection con = MYSQL.getConnection();
 			PreparedStatement ps = con.prepareStatement("SELECT id, name FROM characters WHERE accountid = ?");
-			ps.setInt(1, accId);
+			ps.setInt(1, accountId);
 
 			ResultSet rs = ps.executeQuery();
 			while (rs.next()) {
@@ -848,27 +698,6 @@ public class MapleClient {
 			logger.debug("error loading characters internal {}", e);
 		}
 		return chars;
-	}
-
-	private void loadMacsIfNescessary() throws SQLException {
-		if (macs.isEmpty()) {
-			Connection con = MYSQL.getConnection();
-			PreparedStatement ps = con.prepareStatement("SELECT macs FROM accounts WHERE id = ?");
-			ps.setInt(1, accId);
-			ResultSet rs = ps.executeQuery();
-			if (rs.next()) {
-				String[] macData = rs.getString("macs").split(", ");
-				for (String mac : macData) {
-					if (!mac.equals("")) {
-						macs.add(mac);
-					}
-				}
-			} else {
-				throw new RuntimeException("No valid account associated with this client.");
-			}
-			rs.close();
-			ps.close();
-		}
 	}
 
 	public final boolean login_Auth(final int id) {
@@ -922,7 +751,7 @@ public class MapleClient {
 	}
 
 	public void setAccID(int id) {
-		this.accId = id;
+		this.accountId = id;
 	}
 
 	public final void setAccountName(final String accountName) {
@@ -963,12 +792,12 @@ public class MapleClient {
 		try {
 			Connection con = MYSQL.getConnection();
 			PreparedStatement ps = con.prepareStatement("DELETE FROM charactercard WHERE accountid = ?");
-			ps.setInt(1, accId);
+			ps.setInt(1, accountId);
 			ps.executeUpdate();
 			ps.close();
 			for (Entry<Integer, Integer> cardlist : card.entrySet()) {
 				PreparedStatement psu = con.prepareStatement("INSERT INTO charactercard (accountid, cardid, position) VALUES (?, ?, ?)");
-				psu.setInt(1, accId);
+				psu.setInt(1, accountId);
 				psu.setInt(2, cardlist.getValue());
 				psu.setInt(3, cardlist.getKey());
 				psu.executeUpdate();
@@ -980,32 +809,19 @@ public class MapleClient {
 	}
 
 	public final void setChrSlot(int id) {
-		try {
-			PreparedStatement ps = MYSQL.getConnection().prepareStatement("UPDATE accounts SET chrslot = ? WHERE id = ?");
-			ps.setInt(1, (getChrSlot() + 1));
-			ps.setInt(2, id);
-			ps.executeUpdate();
-			ps.close();
-		} catch (SQLException e) {
-			logger.debug("{}", e);
-		}
+		final ParamMap params = new ParamMap();
+		params.put("chrslot", (getChrSlot() + 1));
+		AccountDAO.setAccountInfo(id, params);
 	}
 
 	public void setClickedNPC() {
 		lastNpcClick = System.currentTimeMillis();
 	}
 
-	public void setGender(byte i) {
-		final Connection con = MYSQL.getConnection();
-		try {
-			PreparedStatement ps = con.prepareStatement("UPDATE accounts SET gender = ? WHERE id = ?");
-			ps.setInt(1, i);
-			ps.setInt(2, accId);
-			ps.executeUpdate();
-			ps.close();
-		} catch (SQLException ex) {
-			ex.printStackTrace();
-		}
+	public void setGender(int i) {
+		final ParamMap params = new ParamMap();
+		params.put("gender", i);
+		AccountDAO.setAccountInfo(accountId, params);
 	}
 
 	public final void setIdleTask(final ScheduledFuture<?> idleTask) {
@@ -1034,41 +850,63 @@ public class MapleClient {
 		this.world = world;
 	}
 
-	private void unban() {
-		try {
-			Connection con = MYSQL.getConnection();
-			PreparedStatement ps = con.prepareStatement("UPDATE accounts SET banned = 0 and banreason = '' WHERE id = ?");
-			ps.setInt(1, accId);
-			ps.executeUpdate();
-			ps.close();
-		} catch (SQLException e) {
-			logger.debug("Error while unbanning {}", e);
-		}
+	public final boolean ban(String reason) {
+		boolean result = false;
+		
+		final ParamMap params = new ParamMap();
+		params.put("banned", 1);
+		params.put("banreason", reason);
+		result = AccountDAO.setAccountInfo(this.accountId, params);
+		
+		return result;
 	}
-
-	public byte unban(String charname) {
+	
+	/**
+	 * 캐릭터명으로 계정을 찾아서 언밴 처리.
+	 * @param charname
+	 * @return true(성공) false(실패)
+	 */
+	public boolean unBan(final String charname) {
+		boolean result = false;
+		
+		Connection con = null;
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		
 		try {
-			Connection con = MYSQL.getConnection();
-			PreparedStatement ps = con.prepareStatement("SELECT accountid from characters where name = ?");
+			con = MYSQL.getConnection();
+			ps = con.prepareStatement("SELECT accountid FROM characters WHERE name = ?");
 			ps.setString(1, charname);
-
-			ResultSet rs = ps.executeQuery();
-			if (!rs.next()) {
-				return -1;
+			rs = ps.executeQuery();
+			
+			int accountId = 0;
+			if( rs.next() ) {
+				accountId = rs.getInt("accountid");
 			}
-			final int accid = rs.getInt(1);
-			rs.close();
-			ps.close();
+			ps.close(); ps = null; 
+			rs.close(); rs = null;
 
-			ps = con.prepareStatement("UPDATE accounts SET banned = 0 and banreason = '' WHERE id = ?");
-			ps.setInt(1, accid);
-			ps.executeUpdate();
-			ps.close();
-		} catch (SQLException e) {
-			logger.debug("Error while unbanning {}", e);
-			return -2;
+			if( accountId != 0 ) {
+				final ParamMap params = new ParamMap();
+				params.put("banned", 0);
+				params.put("banreason", "");
+				result = AccountDAO.setAccountInfo(accountId, params);
+			}
+		} catch(Exception e) {
+			logger.debug("{}", e);
+		} finally {
+			try {
+				if( ps != null ) {
+					ps.close(); ps = null;
+				}
+				if( rs != null ) {
+					rs.close(); rs = null;
+				}
+			} catch(SQLException e) {
+				logger.debug("{}", e);
+			}
 		}
-		return 0;
+		return result;
 	}
 
 	public void updateCharCard(Map<Integer, Integer> cid) {
@@ -1095,26 +933,6 @@ public class MapleClient {
 	}
 
 	/**
-	 * @deprecated 마지막으로 로그인 한 날짜를 업데이트 한다. 이 기능은 accounts 테이블에 lastlogin 컬럼값을
-	 *             사용할 경우 의미가 없는 작업이다.
-	 * 
-	 */
-	public final void updateLastConnection(String time) {
-		try {
-			Connection con = MYSQL.getConnection();
-
-			PreparedStatement ps = con.prepareStatement("UPDATE accounts SET lastconnect = ? WHERE id = ?");
-			ps.setString(1, time);
-			ps.setInt(2, accId);
-			ps.executeUpdate();
-			ps.close();
-
-		} catch (SQLException e) {
-			logger.debug("{}", e);
-		}
-	}
-
-	/**
 	 * 사용자의 계정 접속 상태값을 변경한다.
 	 * 
 	 * @param state
@@ -1124,74 +942,34 @@ public class MapleClient {
 	 */
 	public final boolean updateLoginState(final int state, final String sessionIp) {
 		boolean result = false;
-		PreparedStatement ps = null;
-		try {
-			ps = MYSQL.getConnection().prepareStatement("UPDATE accounts SET loggedin = ?, SessionIP = ?, lastlogin = ? WHERE id = ?");
-			ps.setInt(1, state);
-			ps.setString(2, sessionIp);
-			ps.setTimestamp(3, new Timestamp(System.currentTimeMillis()));
-			ps.setInt(4, getAccID());
-			if (ps.executeUpdate() > 0) {
-				result = true;
-			}
-		} catch (SQLException e) {
-			e.printStackTrace();
-		} finally {
-			try {
-				if (ps != null) {
-					ps.close();
-					ps = null;
-				}
-			} catch (SQLException e) {
-				e.printStackTrace();
-			}
-		}
+		
+		final ParamMap params = new ParamMap();
+		params.put("loggedin", state);
+		params.put("SessionIP", StringUtils.isEmpty(sessionIp) ? "":sessionIp);
+		params.put("lastlogin", new Timestamp(System.currentTimeMillis()));
+		result = AccountDAO.setAccountInfo(accountId, params);
+		
 		// FIXME 아래 로직이 필요한 건지 검토필요.
-		if (state == AccountStatusType.NOT_LOGIN.getValue()) {
-			loggedIn = false;
-			serverTransition = false;
-		} else {
-			serverTransition = (state == AccountStatusType.SERVER_TRANSITION.getValue() || state == AccountStatusType.CHANGE_CHANNEL.getValue());
-			loggedIn = !serverTransition;
-		}
+//		if (state == AccountStatusType.NOT_LOGIN.getValue()) {
+//			loggedIn = false;
+//			serverTransition = false;
+//		} else {
+//			serverTransition = (state == AccountStatusType.SERVER_TRANSITION.getValue() || state == AccountStatusType.CHANGE_CHANNEL.getValue());
+//			loggedIn = !serverTransition;
+//		}
 
 		return result;
 	}
 
-	public void updateMacs(String macData) {
-		macs.addAll(Arrays.asList(macData.split(", ")));
-		StringBuilder newMacData = new StringBuilder();
-		Iterator<String> iter = macs.iterator();
-		while (iter.hasNext()) {
-			newMacData.append(iter.next());
-			if (iter.hasNext()) {
-				newMacData.append(", ");
-			}
-		}
-		try {
-			Connection con = MYSQL.getConnection();
-			PreparedStatement ps = con.prepareStatement("UPDATE accounts SET macs = ? WHERE id = ?");
-			ps.setString(1, newMacData.toString());
-			ps.setInt(2, accId);
-			ps.executeUpdate();
-			ps.close();
-		} catch (SQLException e) {
-			logger.debug("Error saving MACs {}", e);
-		}
-	}
-
-	public final void updateSecondPassword() {
-		try {
-			final Connection con = MYSQL.getConnection();
-
-			PreparedStatement ps = con.prepareStatement("UPDATE `accounts` SET `2ndpassword` = ?, `using2ndpassword` = ? WHERE id = ?");
-			ps.setString(1, secondPassword);
-			ps.setByte(2, (byte) (usingSecondPassword ? 1 : 0));
-			ps.setInt(3, accId);
-			ps.executeUpdate();
-			ps.close();
-		} catch (SQLException e) {
-			logger.debug("error updating login state {}", e);
-		}
+	public final boolean updateSecondPassword() {
+		boolean result = false;
+		
+		final ParamMap params = new ParamMap();
+		params.put("2ndpassword", secondPassword);
+		params.put("using2ndpassword", (usingSecondPassword ? 1 : 0));
+		params.put("lastlogin", new Timestamp(System.currentTimeMillis()));
+		result = AccountDAO.setAccountInfo(accountId, params);
+		
+		return result;
 	}
 }

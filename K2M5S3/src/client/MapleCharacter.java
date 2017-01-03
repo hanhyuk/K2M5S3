@@ -6,7 +6,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Timestamp;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -34,6 +33,9 @@ import org.slf4j.LoggerFactory;
 
 import a.my.made.AccountStatusType;
 import a.my.made.LogUtils;
+import a.my.made.dao.AccountDAO;
+import a.my.made.dao.ParamMap;
+import a.my.made.dao.ResultMap;
 import client.items.Equip;
 import client.items.IEquip;
 import client.items.IItem;
@@ -370,24 +372,15 @@ public class MapleCharacter extends AnimatedHinaMapObjectExtend implements Inven
 		ret.stats.maxmp = 5;
 		ret.stats.mp = 5;
 
-		try {
-			Connection con = MYSQL.getConnection();
-			PreparedStatement ps;
-			ps = con.prepareStatement("SELECT name, nxCash, mPoints, vpoints, realcash FROM accounts WHERE id = ?");
-			ps.setInt(1, ret.accountid);
-			ResultSet rs = ps.executeQuery();
-			if (rs.next()) {
-				ret.client.setAccountName(rs.getString("name"));
-				ret.nxcash = rs.getInt("nxCash");
-				ret.maplepoints = rs.getInt("mPoints");
-				ret.vpoints = rs.getInt("vpoints");
-				ret.realcash = rs.getInt("realcash");
-			}
-			rs.close();
-			ps.close();
-		} catch (SQLException e) {
-			logger.debug("Error getting character default {}", e);
+		final List<ResultMap> accountInfo = AccountDAO.getAccountInfo(ret.accountid);
+		for( ResultMap rm : accountInfo ) {
+			ret.client.setAccountName(rm.getString("name"));
+			ret.nxcash = rm.getInt("nxCash");
+			ret.maplepoints = rm.getInt("mPoints");
+			ret.vpoints = rm.getInt("vpoints");
+			ret.realcash = rm.getInt("realcash");
 		}
+		
 		return ret;
 	}
 
@@ -803,19 +796,15 @@ public class MapleCharacter extends AnimatedHinaMapObjectExtend implements Inven
 				ret.quickslot = new MapleQuickSlot(ret.id);
 				ret.quickslot.loadFromDB();
 
-				ps = con.prepareStatement("SELECT * FROM accounts WHERE id = ?");
-				ps.setInt(1, ret.accountid);
-				rs = ps.executeQuery();
-				if (rs.next()) {
-					ret.getClient().setAccountName(rs.getString("name"));
-					ret.nxcash = rs.getInt("nxCash");
-					ret.vpoints = rs.getInt("vpoints");
-					ret.maplepoints = rs.getInt("mPoints");
-					ret.realcash = rs.getInt("realcash");
+				final List<ResultMap> accountInfo = AccountDAO.getAccountInfo(ret.accountid);
+				for( ResultMap rm : accountInfo ) {
+					ret.client.setAccountName(rm.getString("name"));
+					ret.nxcash = rm.getInt("nxCash");
+					ret.maplepoints = rm.getInt("mPoints");
+					ret.vpoints = rm.getInt("vpoints");
+					ret.realcash = rm.getInt("realcash");
 				}
-				rs.close();
-				ps.close();
-
+				
 				ps = con.prepareStatement("SELECT * FROM questinfo WHERE characterid = ?");
 				ps.setInt(1, charid);
 				rs = ps.executeQuery();
@@ -1581,19 +1570,19 @@ public class MapleCharacter extends AnimatedHinaMapObjectExtend implements Inven
 		}
 	}
 
-	public void CashSaveToDB() {
+	public void cashSaveToDB() {
+		
+		final ParamMap params = new ParamMap();
+		params.put("nxCash", nxcash);
+		params.put("mPoints", maplepoints);
+		params.put("vpoints", vpoints);
+		params.put("realcash", realcash);
+		AccountDAO.setAccountInfo(client.getAccID(), params);
+		
 		Connection con = MYSQL.getConnection();
 		PreparedStatement ps = null;
+		
 		try {
-			ps = con.prepareStatement(
-					"UPDATE accounts SET `nxCash` = ?, `mPoints` = ?, `vpoints` = ?, `realcash` = ? WHERE id = ?");
-			ps.setInt(1, nxcash);
-			ps.setInt(2, maplepoints);
-			ps.setInt(3, getVPoints());
-			ps.setInt(4, getRC());
-			ps.setInt(5, client.getAccID());
-			ps.execute();
-			ps.close();
 			if (cashInv != null) {
 				ps = con.prepareStatement("DELETE FROM inventoryitems WHERE accountid = ? AND type = ?");
 				ps.setInt(1, accountid);
@@ -1679,7 +1668,7 @@ public class MapleCharacter extends AnimatedHinaMapObjectExtend implements Inven
 			BuddiesSaveToDB();
 
 			/* 캐쉬 인벤토리 저장 */
-			CashSaveToDB();
+			cashSaveToDB();
 
 			/* 소원 목록 저장 */
 			WishSaveToDB();
@@ -4151,71 +4140,6 @@ public class MapleCharacter extends AnimatedHinaMapObjectExtend implements Inven
 		return skillMacros;
 	}
 
-	/**
-	 * @deprecated 해당 계정을 일정 기간동안 벤 시킨다.
-	 * 
-	 * @param reason
-	 * @param duration
-	 * @return true : 벤 성공
-	 */
-	public boolean tempban(String reason, Calendar duration) {
-		boolean result = false;
-		
-		Connection con = null;
-		PreparedStatement ps = null;
-		
-		try {
-			con = MYSQL.getConnection();
-			ps = con.prepareStatement("UPDATE accounts SET tempban = ?, banreason = ? WHERE id = ?");
-			
-			ps.setTimestamp(1, new Timestamp(duration.getTimeInMillis()));
-			ps.setString(2, reason);
-			ps.setInt(3, accountid);
-			if( ps.executeUpdate() > 0 ) {
-				result = true;
-			}
-		} catch (SQLException e) {
-			e.printStackTrace();
-		} finally {
-			try {
-				if( ps != null ) {
-					ps.close(); ps = null;
-				}
-			} catch (SQLException e) {
-				e.printStackTrace();
-			} 
-		}
-		return result;
-	}
-
-	public final boolean ban(String reason, boolean IPMac, boolean autoban) {
-		if (lastmonthfameids == null) {
-			throw new RuntimeException("Trying to ban a non-loaded character (testhack)");
-		}
-		try {
-			Connection con = MYSQL.getConnection();
-			PreparedStatement ps = con.prepareStatement("UPDATE accounts SET banned = ?, banreason = ? WHERE id = ?");
-			ps.setInt(1, autoban ? 2 : 1);
-			ps.setString(2, reason);
-			ps.setInt(3, accountid);
-			ps.execute();
-			ps.close();
-
-			if (IPMac) {
-				// client.banMacs();
-				ps = con.prepareStatement("INSERT INTO ipbans VALUES (DEFAULT, ?)");
-				String[] ipSplit = client.getSession().getRemoteAddress().toString().split(":");
-				ps.setString(1, ipSplit[0]);
-				ps.execute();
-				ps.close();
-			}
-		} catch (SQLException ex) {
-			logger.debug("Error while banning {}", ex);
-			return false;
-		}
-		return true;
-	}
-
 	public int gainReward(int cid, int item, int quan) {
 		try {
 			Connection con = MYSQL.getConnection();
@@ -4228,43 +4152,6 @@ public class MapleCharacter extends AnimatedHinaMapObjectExtend implements Inven
 		} catch (Exception e) {
 		}
 		return -1;
-	}
-
-	public static boolean ban(String id, String reason, boolean accountId) {
-		try {
-			Connection con = MYSQL.getConnection();
-			PreparedStatement ps;
-			if (id.matches("/[0-9]{1,3}\\..*")) {
-				ps = con.prepareStatement("INSERT INTO ipbans VALUES (DEFAULT, ?)");
-				ps.setString(1, id);
-				ps.execute();
-				ps.close();
-				return true;
-			}
-			if (accountId) {
-				ps = con.prepareStatement("SELECT id FROM accounts WHERE name = ?");
-			} else {
-				ps = con.prepareStatement("SELECT accountid FROM characters WHERE name = ?");
-			}
-			boolean ret = false;
-			ps.setString(1, id);
-			ResultSet rs = ps.executeQuery();
-			if (rs.next()) {
-				PreparedStatement psb = con
-						.prepareStatement("UPDATE accounts SET banned = 1, banreason = ? WHERE id = ?");
-				psb.setString(1, reason);
-				psb.setInt(2, rs.getInt(1));
-				psb.execute();
-				psb.close();
-				ret = true;
-			}
-			rs.close();
-			ps.close();
-			return ret;
-		} catch (SQLException ex) {
-			logger.debug("Error while banning {}", ex);
-		}
-		return false;
 	}
 
 	/**

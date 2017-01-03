@@ -21,6 +21,8 @@ public class BaseDAO {
 			while (rs.next()) {
 				ResultMap row = new ResultMap();
 				for (int i = 1; i <= columns; ++i) {
+					//TODO 테이블 컬럼 타입이 tinyint(1) 일 경우 true, false로 변환됨.
+					//가장 단순한 해결법은 타입을 int(1) 로 변경하면 된다.
 					row.put(md.getColumnName(i), rs.getObject(i));
 				}
 				result.add(row);

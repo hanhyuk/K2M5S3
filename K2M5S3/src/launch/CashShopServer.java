@@ -41,7 +41,7 @@ public class CashShopServer {
 			acceptor = new NioSocketAcceptor();
 			acceptor.getSessionConfig().setReadBufferSize(2048);
 			acceptor.getSessionConfig().setIdleTime(IdleStatus.BOTH_IDLE, 10);
-			acceptor.getFilterChain().addLast("codec", new ProtocolCodecFilter(new EncryptionFactory(CLIENT_KEY)));
+			acceptor.getFilterChain().addLast("codec", new ProtocolCodecFilter(new EncryptionFactory(ServerType.CASHSHOP, CLIENT_KEY)));
 			acceptor.setHandler(new MapleServerHandler(ServerType.CASHSHOP, CLIENT_KEY));
 			acceptor.bind(new InetSocketAddress(PORT));
 			/* 소켓 설정 종료 */

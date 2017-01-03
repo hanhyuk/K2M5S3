@@ -6,6 +6,7 @@ import org.apache.mina.core.session.IoSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import a.my.made.SessionFlag;
 import client.MapleClient;
 import constants.ServerConstants;
 import constants.subclasses.ServerType;
@@ -52,6 +53,10 @@ import tools.StringUtil;
 
 /**
  * 소켓통신 할때 read, write 하는 등의 동작을 이곳에 구현한다.
+ * 
+ * TODO 로그인, 채널, 캐시샵 등 각각의 서버에서 받는 패킷들을 구분할수가 있다.
+ * 하지만 현재 모든 서버에서 이 클래스를 공통으로 사용한다.
+ * 이걸 분리하는것에 대해 검토하자.
  */
 public class MapleServerHandler extends IoHandlerAdapter {
 	private static final Logger logger = LoggerFactory.getLogger(MapleServerHandler.class);
@@ -72,8 +77,7 @@ public class MapleServerHandler extends IoHandlerAdapter {
 	}
 	
 	@Override
-	public void sessionCreated(IoSession session) throws Exception {
-	}
+	public void sessionCreated(IoSession session) throws Exception {}
 	
 	@Override
 	public void sessionOpened(final IoSession session) throws Exception {
@@ -127,7 +131,17 @@ public class MapleServerHandler extends IoHandlerAdapter {
 					client.getIdleTask().cancel(true);
 					client.setIdleTask(null);
 				}
-				client.disconnect(true, type == ServerType.CASHSHOP ? true : false);
+				
+				//값이 "N" 일 경우에는 사용자 정보를 저장하지 않도록 한다.
+				//예를 들어 밴 처리 대상의 경우 현재 캐릭터 정보를 굳이 저장해 줄 필요는 없다.
+				//TODO 해당 기능이 잘 되는지 테스트 필요.
+				
+				//TODO 사용자가 클라 종료시 세션이 끊어지는데... 로그인, 채널 서버 둘다 이 클래스를 사용한다.
+				//그래서 접속이 끊어 질 경우 sessionClosed() 가 여러번 호출될수 있다. 채널서버와 연결이 종료 될때만 저장되도록 수정 필요.
+				if( !"N".equals(session.getAttribute(SessionFlag.KEY_CHAR_SAVE)) ) {
+					logger.debug("{} - 세션 종료시 캐릭터 정보 저장!", type);
+					client.disconnect(true, type == ServerType.CASHSHOP ? true : false);
+				}
 			} finally {
 				session.closeNow();
 				session.removeAttribute(clientKey);
@@ -167,8 +181,7 @@ public class MapleServerHandler extends IoHandlerAdapter {
 		logger.debug("{}", cause);
 	}
 
-	public static final void handlePacket(final RecvPacketOpcode header, final ReadingMaple rh, final MapleClient c,
-			final ServerType type) throws InterruptedException {
+	public static final void handlePacket(final RecvPacketOpcode header, final ReadingMaple rh, final MapleClient client, final ServerType type) throws InterruptedException {
 		switch (header) {
 		case SERVER_MESSAGE_RESPONSE:
 			//TODO 클라이언트에서 팝업창 띄울때 해당 패킷이 전달되는걸로 추측.
@@ -182,30 +195,33 @@ public class MapleServerHandler extends IoHandlerAdapter {
 			short pString = rh.readShort();
 			if (pLocale != ServerConstants.check && pVersion != ServerConstants.MAPLE_VERSION
 					&& pString != ServerConstants.subVersion) {
-				logger.debug("Client Checksum Failed: {}", c.getSessionIPAddress());
-				c.getSession().closeNow();
+				logger.debug("Client Checksum Failed: {}", client.getSessionIPAddress());
+				client.getSession().closeNow();
 			}
 			break;
 		case BUDDY_HELLO:
-			InterServerHandler.getBuddyHello(rh, c);
+			InterServerHandler.getBuddyHello(rh, client);
 			break;
 		case BUDDY_PING:
-			c.getSession().write(LoginPacket.BuddyPing());
+			client.getSession().write(LoginPacket.BuddyPing());
 			break;
 		case BUDDY_CHAT:
-			ChatHandler.BuddyChat(rh, c);
+			ChatHandler.BuddyChat(rh, client);
 			break;
 		case GUILD_CHAT:
-			ChatHandler.GuildChat(rh, c);
+			ChatHandler.GuildChat(rh, client);
 			break;
 		case CLIENT_CONNECTED_R:
-			CharLoginHandler.getXignCodeResponse(rh.readByte() == 0, c);
+			CharLoginHandler.getXignCodeResponse(rh.readByte() == 0, client);
 			break;
 		case SET_BURNING_CHAR_R:
-			CharLoginHandler.setBurningCharacter(rh, c);
+			CharLoginHandler.setBurningCharacter(rh, client);
 			break;
 		case CLIENT_QUIT:
-			InterServerHandler.getGameQuitRequest(rh, c);
+			//TODO CLIENT_QUIT 패킷을 언제 호출하는지 확인 필요.
+			//확인이 되기 전까지는 관련 로직을 수행하지 않도록 주석 처리.
+			logger.warn("CLIENT_QUIT 패킷 발견!\n 해당 패킷의 경우 계정 ID, 비밀번호를 클라이언트로 전송한다.\n");
+			//InterServerHandler.getGameQuitRequest(rh, c);
 			break;
 		case LOGIN_REQUEST:
 			logger.warn("LOGIN_REQUEST 패킷 발견!");
@@ -214,39 +230,39 @@ public class MapleServerHandler extends IoHandlerAdapter {
 		case REDISPLAY_CHANNEL:
 			//TODO RECV REDISPLAY_CHANNEL 패킷이 언제 호출되는지 확인 필요.
 			logger.warn("REDISPLAY_CHANNEL 패킷 발견!");
-			CharLoginHandler.getDisplayChannel(false, c);
+			CharLoginHandler.getDisplayChannel(false, client);
 			break;
 		case ENTER_CREATE_CHAR:
 			logger.warn("ENTER_CREATE_CHAR 패킷 발견!");
-			//CharLoginHandler.getIPRequest(rh, c);
+			CharLoginHandler.getIPRequest(rh, client);
 			break;
-		case SECONDPW_RESULT_R:
-			CharLoginHandler.getSPCheck(rh, c);
+		case SECONDPW_RESULT_R: //2차 비밀번호를 사용하는지 여부를 체크한다.
+			CharLoginHandler.getSPCheck(rh, client);
 			break;
 		case SESSION_CHECK_R:
-			CharLoginHandler.getSessionCheck(rh, c);
+			CharLoginHandler.getSessionCheck(rh, client);
 			break;
 		case NEW_CONNECTION:
 			logger.warn("NEW_CONNECTION 패킷 발견!");
 			// CharLoginHandler.newConnection(c);
 			break;
 		case PONG:
-			c.pongReceived();
+			client.pongReceived();
 			break;
 		case LOGIN_PASSWORD:
-			CharLoginHandler.login(rh, c);
+			CharLoginHandler.login(rh, client);
 			break;
 		case CHARLIST_REQUEST:
-			CharLoginHandler.CharlistRequest(rh, c);
+			CharLoginHandler.CharlistRequest(rh, client);
 			break;
 		case CHARACTER_CARD:
-			CharLoginHandler.updateCharCard(rh, c);
+			CharLoginHandler.updateCharCard(rh, client);
 			break;
 		case CHECK_CHAR_NAME:
-			CharLoginHandler.CheckCharName(rh.readMapleAsciiString(), c);
+			CharLoginHandler.CheckCharName(rh.readMapleAsciiString(), client);
 			break;
 		case CREATE_CHAR:
-			CharLoginHandler.CreateChar(rh, c);
+			CharLoginHandler.CreateChar(rh, client);
 			break;
 		case CLIENT_ERROR: // might not be correct
 			if (rh.available() >= 6L) {
@@ -258,613 +274,613 @@ public class MapleServerHandler extends IoHandlerAdapter {
 				pHeaderStr = StringUtil.getLeftPaddedStr(pHeaderStr, '0', 4);
 				String op = SendPacketOpcode.getOpcodeName(pHeader);
 				String from = "";
-				if (c.getPlayer() != null) {
-					from = new StringBuilder().append("Chr: ").append(c.getPlayer().getName()).append(" LVL(")
-							.append(c.getPlayer().getLevel()).append(") job: ").append(c.getPlayer().getJob())
-							.append(" MapID: ").append(c.getPlayer().getMapId()).toString();
+				if (client.getPlayer() != null) {
+					from = new StringBuilder().append("Chr: ").append(client.getPlayer().getName()).append(" LVL(")
+							.append(client.getPlayer().getLevel()).append(") job: ").append(client.getPlayer().getJob())
+							.append(" MapID: ").append(client.getPlayer().getMapId()).toString();
 				}
 
 				logger.debug("{}\n\nSendOP(-38):{} [{}] ({}){}\r\n\r\n", from, op, pHeaderStr, badPacketSize - 4, rh.toString(false));
 			}
 			break;
 		case DELETE_CHAR:
-			CharLoginHandler.DeleteChar(rh, c);
+			CharLoginHandler.DeleteChar(rh, client);
 			break;
 		case CHAR_SELECT:
-			logger.info("CHAR_SELECT 패킷 호출");
-			CharLoginHandler.Character_WithSecondPassword(rh, c);
+			CharLoginHandler.Character_WithSecondPassword(rh, client);
 			break;
 		case AUTH_LOGIN_WITH_SPW:
-			CharLoginHandler.checkSecondPassword(rh, c);
+			CharLoginHandler.checkSecondPassword(rh, client);
 			break;
 		case REG_SECOND_PASSWORD:
-			CharLoginHandler.registerSecondPassword(rh, c);
+			CharLoginHandler.registerSecondPassword(rh, client);
 			break;
 		case ONLY_REG_SECOND_PASSWORD:
-			CharLoginHandler.onlyRegisterSecondPassword(rh, c);
+			CharLoginHandler.onlyRegisterSecondPassword(rh, client);
 			break;
 		case CHANGE_CHANNEL:
-			InterServerHandler.ChangeChannel(rh, c, c.getPlayer());
+			InterServerHandler.ChangeChannel(rh, client, client.getPlayer());
 			break;
 		case PLAYER_LOGGEDIN:
 			rh.skip(4);
 			final int playerid = rh.readInt();
 			if (type == ServerType.CHANNEL) {
-				InterServerHandler.Loggedin(playerid, c);
+				InterServerHandler.Loggedin(playerid, client);
 			} else {
 				logger.info("PLAYER_LOGGEDIN 패킷 EnterCS() 호출");
-				CashShopOperation.EnterCS(playerid, c);
+				CashShopOperation.EnterCS(playerid, client);
 			}
 			break;
 		case ENTER_CASH_SHOP:
 			logger.info("ENTER_CASH_SHOP 패킷 호출");
-			InterServerHandler.EnterCS(c, c.getPlayer(), true);
+			InterServerHandler.EnterCS(client, client.getPlayer(), true);
 			break;
 		case ENTER_MTS:
-			InterServerHandler.EnterMTS(c);
+			InterServerHandler.EnterMTS(client);
 			break;
 		case MOVE_PLAYER:
-			PlayerHandler.MovePlayer(rh, c, c.getPlayer());
+			PlayerHandler.MovePlayer(rh, client, client.getPlayer());
 			break;
 		case MOVE_ANDROID:
-			PlayerHandler.MoveAndroid(rh, c, c.getPlayer());
+			PlayerHandler.MoveAndroid(rh, client, client.getPlayer());
 			break;
 		case CHAR_INFO_REQUEST:
 			rh.skip(4);
-			PlayerHandler.CharInfoRequest(rh.readInt(), c, c.getPlayer());
+			PlayerHandler.CharInfoRequest(rh.readInt(), client, client.getPlayer());
 			break;
 		case ROOM_CHANGE:
-			PlayerHandler.RoomChange(rh, c, c.getPlayer());
+			PlayerHandler.RoomChange(rh, client, client.getPlayer());
 			break;
 		case DF_COMBO:
-			PlayerHandler.absorbingDF(rh, c);
+			PlayerHandler.absorbingDF(rh, client);
 			break;
 		case WILL_OF_SOWRD_COMBO:
-			PlayerHandler.absorbingSword(rh, c.getPlayer());
+			PlayerHandler.absorbingSword(rh, client.getPlayer());
 			break;
 		case PSYCHIC_GREP_R:
-			KinesisSkill.PsychicGrep(rh, c);
+			KinesisSkill.PsychicGrep(rh, client);
 			break;
 		case PSYCHIC_ATTACK_R:
-			KinesisSkill.PsychicAttack(rh, c);
+			KinesisSkill.PsychicAttack(rh, client);
 			break;
 		case PSYCHIC_ULTIMATE_R:
-			KinesisSkill.PsychicUltimateDamager(rh, c);
+			KinesisSkill.PsychicUltimateDamager(rh, client);
 			break;
 		case PSYCHIC_DAMAGE_R:
-			KinesisSkill.PsychicDamage(rh.readInt(), c);
+			KinesisSkill.PsychicDamage(rh.readInt(), client);
 			break;
 		case CANCEL_PSYCHIC_GREP_R:
 			rh.skip(8);
-			KinesisSkill.CancelPsychicGrep(rh, c);
+			KinesisSkill.CancelPsychicGrep(rh, client);
 			break;
 		case PASSIVE_ENERGY:
 		case MAGNETIC_DAMAGE:
 		case CLOSE_RANGE_ATTACK:
-			PlayerHandler.closeRangeAttack(rh, c, c.getPlayer(), header != header.CLOSE_RANGE_ATTACK ? true : false);
+			PlayerHandler.closeRangeAttack(rh, client, client.getPlayer(), header != header.CLOSE_RANGE_ATTACK ? true : false);
 			break;
 		case RANGED_ATTACK:
-			PlayerHandler.rangedAttack(rh, c, c.getPlayer());
+			PlayerHandler.rangedAttack(rh, client, client.getPlayer());
 			break;
 		case MAGIC_ATTACK:
-			PlayerHandler.MagicDamage(rh, c, c.getPlayer(), false);
+			PlayerHandler.MagicDamage(rh, client, client.getPlayer(), false);
 			break;
 		case SPECIAL_SKILL:
-			PlayerHandler.SpecialSkill(rh, c, c.getPlayer());
+			PlayerHandler.SpecialSkill(rh, client, client.getPlayer());
 			break;
 		case FACE_EXPRESSION:
-			PlayerHandler.ChangeEmotion(rh.readInt(), c.getPlayer());
+			PlayerHandler.ChangeEmotion(rh.readInt(), client.getPlayer());
 			break;
 		case ANDROID_FACE_EXPRESSION:
-			PlayerHandler.ChangeEmotionAndroid(rh.readInt(), c.getPlayer());
+			PlayerHandler.ChangeEmotionAndroid(rh.readInt(), client.getPlayer());
 			break;
 		case TAKE_DAMAGE:
-			PlayerHandler.TakeDamage(rh, c, c.getPlayer());
+			PlayerHandler.TakeDamage(rh, client, client.getPlayer());
 			break;
 		case HEAL_OVER_TIME:
 		case HEAL_OVER_TIME_FROM_POT:
-			PlayerHandler.Heal(rh, c.getPlayer());
+			PlayerHandler.Heal(rh, client.getPlayer());
 			break;
 		case CANCEL_BUFF:
-			PlayerHandler.CancelBuffHandler(rh.readInt(), c.getPlayer(), rh);
+			PlayerHandler.CancelBuffHandler(rh.readInt(), client.getPlayer(), rh);
 			break;
 		case CANCEL_ITEM_EFFECT:
-			PlayerHandler.CancelItemEffect(rh.readInt(), c.getPlayer());
+			PlayerHandler.CancelItemEffect(rh.readInt(), client.getPlayer());
 			break;
 		case USE_CHAIR:
-			PlayerHandler.UseChair(rh.readInt(), c, c.getPlayer(), rh);
+			PlayerHandler.UseChair(rh.readInt(), client, client.getPlayer(), rh);
 			break;
 		case CANCEL_CHAIR:
-			PlayerHandler.CancelChair(rh.readShort(), c, c.getPlayer());
+			PlayerHandler.CancelChair(rh.readShort(), client, client.getPlayer());
 			break;
 		case USE_ITEMEFFECT:
-			PlayerHandler.UseItemEffect(rh.readInt(), c, c.getPlayer());
+			PlayerHandler.UseItemEffect(rh.readInt(), client, client.getPlayer());
 			break;
 		case MAKER_SKILL:
-			PlayerHandler.makerSkill(rh, c);
+			PlayerHandler.makerSkill(rh, client);
 			break;
 		case SKILL_EFFECT:
-			PlayerHandler.SkillEffect(rh, c.getPlayer());
+			PlayerHandler.SkillEffect(rh, client.getPlayer());
 			break;
 		case MESO_DROP:
 			rh.skip(4);
-			PlayerHandler.DropMeso(rh.readInt(), c.getPlayer());
+			PlayerHandler.DropMeso(rh.readInt(), client.getPlayer());
 			break;
 		case WHEEL_OF_FORTUNE:
-			PlayerHandler.WheelOfFortuneEffect(rh.readInt(), c.getPlayer());
+			PlayerHandler.WheelOfFortuneEffect(rh.readInt(), client.getPlayer());
 			break;
 		case CHANGE_KEYMAP:
-			PlayerHandler.ChangeKeymap(rh, c.getPlayer());
+			PlayerHandler.ChangeKeymap(rh, client.getPlayer());
 			break;
 		case QUICK_SLOT:
-			PlayerHandler.ChangeQuickSlot(rh, c.getPlayer());
+			PlayerHandler.ChangeQuickSlot(rh, client.getPlayer());
 			break;
 		case CHANGE_MAP:
 			if (type == ServerType.CHANNEL) {
-				PlayerHandler.ChangeMap(rh, c, c.getPlayer());
+				PlayerHandler.ChangeMap(rh, client, client.getPlayer());
 			} else {
-				CashShopOperation.LeaveCS(rh, c, c.getPlayer());
+				CashShopOperation.LeaveCS(rh, client, client.getPlayer());
 			}
 			break;
 		case CHANGE_MAP_SPECIAL:
 			rh.skip(1);
-			PlayerHandler.ChangeMapSpecial(rh.readMapleAsciiString(), c, c.getPlayer());
+			PlayerHandler.ChangeMapSpecial(rh.readMapleAsciiString(), client, client.getPlayer());
 			break;
 		case USE_INNER_PORTAL:
 			rh.skip(1);
-			PlayerHandler.InnerPortal(rh, c, c.getPlayer());
+			PlayerHandler.InnerPortal(rh, client, client.getPlayer());
 			break;
 		case TROCK_ADD_MAP:
-			PlayerHandler.TrockAddMap(rh, c, c.getPlayer());
+			PlayerHandler.TrockAddMap(rh, client, client.getPlayer());
 			break;
 		case ARAN_GAIN_COMBO:
-			PlayerHandler.AranGainCombo(c, c.getPlayer());
+			PlayerHandler.AranGainCombo(client, client.getPlayer());
 			break;
 		case ARAN_LOSE_COMBO:
-			PlayerHandler.AranLoseCombo(c, c.getPlayer());
+			PlayerHandler.AranLoseCombo(client, client.getPlayer());
 			break;
 		case BLESS_OF_DARKNES:
-			PlayerHandler.BlessOfDarkness(c.getPlayer());
+			PlayerHandler.BlessOfDarkness(client.getPlayer());
 			break;
 		case SKILL_MACRO:
-			PlayerHandler.ChangeSkillMacro(rh, c.getPlayer());
+			PlayerHandler.ChangeSkillMacro(rh, client.getPlayer());
 			break;
 		case SUB_SUMMON_ACTION:
-			PlayerHandler.subSummonAction(rh, c);
+			PlayerHandler.subSummonAction(rh, client);
 			break;
 		case GIVE_FAME:
-			PlayersHandler.GiveFame(rh, c, c.getPlayer());
+			PlayersHandler.GiveFame(rh, client, client.getPlayer());
 			break;
 		case TRANSFORM_PLAYER:
-			PlayersHandler.TransformPlayer(rh, c, c.getPlayer());
+			PlayersHandler.TransformPlayer(rh, client, client.getPlayer());
 			break;
 		case NOTE_ACTION:
-			PlayersHandler.Note(rh, c.getPlayer());
+			PlayersHandler.Note(rh, client.getPlayer());
 			break;
 		case USE_DOOR:
-			PlayersHandler.UseDoor(rh, c.getPlayer());
+			PlayersHandler.UseDoor(rh, client.getPlayer());
 			break;
 		case USE_MECH_DOOR:
-			PlayersHandler.UseMechDoor(rh, c.getPlayer());
+			PlayersHandler.UseMechDoor(rh, client.getPlayer());
 			break;
 		case DAMAGE_REACTOR:
-			PlayersHandler.HitReactor(rh, c);
+			PlayersHandler.HitReactor(rh, client);
 			break;
 		case CLOSE_CHALKBOARD:
-			c.getPlayer().setChalkboard(null);
+			client.getPlayer().setChalkboard(null);
 			break;
 		case ITEM_SORT:
-			InventoryHandler.ItemSort(rh, c);
+			InventoryHandler.ItemSort(rh, client);
 			break;
 		case DRESS_UP:
-			AngelicBusterHandler.DressUpRequest(c.getPlayer(), rh);
+			AngelicBusterHandler.DressUpRequest(client.getPlayer(), rh);
 			break;
 		case ITEM_MOVE:
-			InventoryHandler.ItemMove(rh, c);
+			InventoryHandler.ItemMove(rh, client);
 			break;
 		case ITEM_PICKUP:
-			InventoryHandler.Pickup_Player(rh, c, c.getPlayer());
+			InventoryHandler.Pickup_Player(rh, client, client.getPlayer());
 			break;
 		case ITEM_GATHER:
-			InventoryHandler.ItemGather(rh, c);
+			InventoryHandler.ItemGather(rh, client);
 			break;
 		case USE_CASH_ITEM:
-			InventoryHandler.UseCashItem(rh, c);
+			InventoryHandler.UseCashItem(rh, client);
 			break;
 		case RUNE_TOUCH:
-			PlayersHandler.TouchRune(rh, c.getPlayer());
+			PlayersHandler.TouchRune(rh, client.getPlayer());
 			break;
 		case RUNE_USE:
-			PlayersHandler.UseRune(rh, c.getPlayer());
+			PlayersHandler.UseRune(rh, client.getPlayer());
 			break;
 		case USE_EDITIONAL_SCROLL:
-			InventoryHandler.EditionalScroll(rh, c);
+			InventoryHandler.EditionalScroll(rh, client);
 			break;
 		case USE_PET_LOOT:
-			InventoryHandler.UsePetLoot(rh, c);
+			InventoryHandler.UsePetLoot(rh, client);
 			break;
 		case USE_ITEM:
-			InventoryHandler.UseItem(rh, c, c.getPlayer());
+			InventoryHandler.UseItem(rh, client, client.getPlayer());
 			break;
 		case USE_SCRIPTED_NPC_ITEM:
-			InventoryHandler.UseScriptedNPCItem(rh, c, c.getPlayer());
+			InventoryHandler.UseScriptedNPCItem(rh, client, client.getPlayer());
 			break;
 		case USE_RETURN_SCROLL:
-			InventoryHandler.UseReturnScroll(rh, c, c.getPlayer());
+			InventoryHandler.UseReturnScroll(rh, client, client.getPlayer());
 			break;
 		case USE_STAMP:
-			InventoryHandler.UseStamp(rh, c);
+			InventoryHandler.UseStamp(rh, client);
 			break;
 		case USE_SOUL_ENCHANTER:
-			InventoryHandler.UseSoulEnchanter(rh, c, c.getPlayer());
+			InventoryHandler.UseSoulEnchanter(rh, client, client.getPlayer());
 			break;
 		case USE_SOUL_SCROLL:
-			InventoryHandler.UseSoulScroll(rh, c, c.getPlayer());
+			InventoryHandler.UseSoulScroll(rh, client, client.getPlayer());
 			break;
 		case SHOW_SOULEFFECT_R:
-			c.getSession().write(SoulWeaponPacket.showSoulEffect(c.getPlayer(), rh.readByte()));
+			client.getSession().write(SoulWeaponPacket.showSoulEffect(client.getPlayer(), rh.readByte()));
 			break;
 		case USE_EDITIONAL_STAMP:
-			InventoryHandler.UseEditionalStamp(rh, c);
+			InventoryHandler.UseEditionalStamp(rh, client);
 			break;
 		case USE_MAGNIFY_GLASS:
 			rh.skip(4);
-			InventoryHandler.MagnifyingGlass(c, (byte) rh.readShort(), (byte) rh.readShort());
+			InventoryHandler.MagnifyingGlass(client, (byte) rh.readShort(), (byte) rh.readShort());
 			break;
 		case USE_UPGRADE_SCROLL:
 			rh.skip(4);
-			InventoryHandler.UseUpgradeScroll((byte) rh.readShort(), (byte) rh.readShort(), c, c.getPlayer());
+			InventoryHandler.UseUpgradeScroll((byte) rh.readShort(), (byte) rh.readShort(), client, client.getPlayer());
 			break;
 		case USE_SPECIAL_SCROLL:
 			rh.skip(4);
-			InventoryHandler.UseSpecialScroll(rh, c.getPlayer());
+			InventoryHandler.UseSpecialScroll(rh, client.getPlayer());
 			break;
 		case USE_POTENTIAL_SCROLL:
 			rh.skip(4);
-			InventoryHandler.UseUpgradeScroll((byte) rh.readShort(), (byte) rh.readShort(), c, c.getPlayer());
+			InventoryHandler.UseUpgradeScroll((byte) rh.readShort(), (byte) rh.readShort(), client, client.getPlayer());
 			break;
 		case USE_EQUIP_SCROLL:
 			rh.skip(4);
-			InventoryHandler.UseUpgradeScroll((byte) rh.readShort(), (byte) rh.readShort(), c, c.getPlayer());
+			InventoryHandler.UseUpgradeScroll((byte) rh.readShort(), (byte) rh.readShort(), client, client.getPlayer());
 			break;
 		case USE_REBIRTH_SCROLL:
 			rh.skip(4);
-			InventoryHandler.UseUpgradeScroll((byte) rh.readShort(), (byte) rh.readShort(), c, c.getPlayer());
+			InventoryHandler.UseUpgradeScroll((byte) rh.readShort(), (byte) rh.readShort(), client, client.getPlayer());
 			break;
 		case USE_MANYSET_CUBE:
 			rh.skip(4);
-			InventoryHandler.UseManySetCube(c, rh);
+			InventoryHandler.UseManySetCube(client, rh);
 			break;
 		case USE_SILVER_KARMA:
-			InventoryHandler.UseKarma(rh, c);
+			InventoryHandler.UseKarma(rh, client);
 			break;
 		case USE_SUMMON_BAG:
-			InventoryHandler.UseSummonBag(rh, c, c.getPlayer());
+			InventoryHandler.UseSummonBag(rh, client, client.getPlayer());
 			break;
 		case USE_SKILL_BOOK:
-			InventoryHandler.UseSkillBook(rh, c, c.getPlayer());
+			InventoryHandler.UseSkillBook(rh, client, client.getPlayer());
 			break;
 		case USE_CATCH_ITEM:
-			InventoryHandler.UseCatchItem(rh, c, c.getPlayer());
+			InventoryHandler.UseCatchItem(rh, client, client.getPlayer());
 			break;
 		case REWARD_ITEM:
-			InventoryHandler.UseRewardItem(rh, c, c.getPlayer());
+			InventoryHandler.UseRewardItem(rh, client, client.getPlayer());
 			break;
 		case HYPNOTIZE_DMG:
-			MobHandler.HypnotizeDmg(rh, c.getPlayer());
+			MobHandler.HypnotizeDmg(rh, client.getPlayer());
 			break;
 		case MOVE_LIFE:
-			MobHandler.MoveMonster(rh, c, c.getPlayer());
+			MobHandler.MoveMonster(rh, client, client.getPlayer());
 			break;
 		case AUTO_AGGRO:
-			MobHandler.AutoAggro(rh.readInt(), c.getPlayer());
+			MobHandler.AutoAggro(rh.readInt(), client.getPlayer());
 			break;
 		case FRIENDLY_DAMAGE:
-			MobHandler.FriendlyDamage(rh, c.getPlayer());
+			MobHandler.FriendlyDamage(rh, client.getPlayer());
 			break;
 		case EQUIP_UPGRADE_SYSTEM:
-			EnforceSystem.AddItemRecv(rh, c);
+			EnforceSystem.AddItemRecv(rh, client);
 			break;
 		case MONSTER_BOMB:
-			MobHandler.MonsterBomb(rh.readInt(), c.getPlayer());
+			MobHandler.MonsterBomb(rh.readInt(), client.getPlayer());
 			break;
 		case NPC_SHOP:
-			NPCHandler.NPCShop(rh, c, c.getPlayer());
+			NPCHandler.NPCShop(rh, client, client.getPlayer());
 			break;
 		case NPC_TALK:
-			NPCHandler.NPCTalk(rh, c, c.getPlayer());
+			NPCHandler.NPCTalk(rh, client, client.getPlayer());
 			break;
 		case NPC_TALK_MORE:
-			NPCHandler.NPCMoreTalk(rh, c);
+			NPCHandler.NPCMoreTalk(rh, client);
 			break;
 		case NPC_ACTION:
-			NPCHandler.NPCAnimation(rh, c);
+			NPCHandler.NPCAnimation(rh, client);
 			break;
 		case QUEST_ACTION:
-			NPCHandler.QuestAction(rh, c, c.getPlayer());
+			NPCHandler.QuestAction(rh, client, client.getPlayer());
 			break;
 		case STORAGE:
-			NPCHandler.Storage(rh, c, c.getPlayer());
+			NPCHandler.Storage(rh, client, client.getPlayer());
 			break;
 		case GENERAL_CHAT:
 			rh.skip(4);
-			ChatHandler.GeneralChat(rh.readMapleAsciiString(), rh.readByte(), c, c.getPlayer());
+			ChatHandler.GeneralChat(rh.readMapleAsciiString(), rh.readByte(), client, client.getPlayer());
 			break;
 		case PARTY_CHAT:
-			ChatHandler.Others(rh, c, c.getPlayer());
+			ChatHandler.Others(rh, client, client.getPlayer());
 			break;
 		case WHISPER:
-			ChatHandler.Whisper_Find(rh, c);
+			ChatHandler.Whisper_Find(rh, client);
 			break;
 		case MESSENGER:
-			ChatHandler.Messenger(rh, c);
+			ChatHandler.Messenger(rh, client);
 			break;
 		case AUTO_ASSIGN_AP:
 			rh.skip(4);
-			StatsHandling.AutoAssignAP(rh, c, c.getPlayer());
+			StatsHandling.AutoAssignAP(rh, client, client.getPlayer());
 			break;
 		case DISTRIBUTE_AP:
 			rh.skip(4);
-			StatsHandling.DistributeAP(rh, c, c.getPlayer());
+			StatsHandling.DistributeAP(rh, client, client.getPlayer());
 			break;
 		case DISTRIBUTE_HYPER_SP:
 			rh.skip(4);
-			StatsHandling.DistributeHyperSp(rh, rh.readInt(), c.getPlayer());
+			StatsHandling.DistributeHyperSp(rh, rh.readInt(), client.getPlayer());
 			break;
 		case DISTRIBUTE_SP:
 			rh.skip(4);
-			StatsHandling.DistributeSP(rh, rh.readInt(), c, c.getPlayer());
+			StatsHandling.DistributeSP(rh, rh.readInt(), client, client.getPlayer());
 			break;
 		case PLAYER_INTERACTION:
-			PlayerInteractionHandler.PlayerInteraction(rh, c, c.getPlayer());
+			PlayerInteractionHandler.PlayerInteraction(rh, client, client.getPlayer());
 			break;
 		case GUILD_OPERATION:
-			GuildHandler.GuildOpertion(rh, c);
+			GuildHandler.GuildOpertion(rh, client);
 			break;
 		case DENY_GUILD_REQUEST:
-			GuildHandler.DenyGuildRequest(rh, c);
+			GuildHandler.DenyGuildRequest(rh, client);
 			break;
 		case ALLIANCE_OPERATION:
-			AllianceHandler.AllianceOperatopn(rh, c, false);
+			AllianceHandler.AllianceOperatopn(rh, client, false);
 			break;
 		case DENY_ALLIANCE_REQUEST:
-			AllianceHandler.AllianceOperatopn(rh, c, true);
+			AllianceHandler.AllianceOperatopn(rh, client, true);
 			break;
 		case BBS_OPERATION:
-			BBSHandler.BBSOperatopn(rh, c);
+			BBSHandler.BBSOperatopn(rh, client);
 			break;
 		case PARTY_OPERATION:
-			PartyHandler.PartyOperatopn(rh, c);
+			PartyHandler.PartyOperatopn(rh, client);
 			break;
 		case DENY_PARTY_REQUEST:
-			PartyHandler.DenyPartyRequest(rh, c);
+			PartyHandler.DenyPartyRequest(rh, client);
 			break;
 		case BUDDYLIST_MODIFY:
-			BuddyListHandler.BuddyOperation(rh, c);
+			BuddyListHandler.BuddyOperation(rh, client);
 			break;
 		case BUDDYLIST_UPDATE_R:
-			BuddyListHandler.BuddyUpdate(rh, c);
+			BuddyListHandler.BuddyUpdate(rh, client);
 			break;
 		case BUY_CS_ITEM:
-			CashShopOperation.BuyCashItem(rh, c, c.getPlayer());
+			CashShopOperation.BuyCashItem(rh, client, client.getPlayer());
 			break;
 		case COUPON_CODE:
 			rh.skip(2); // 선물받을 대상. (MapleAsciiString)
-			CashShopOperation.CouponCode(rh.readMapleAsciiString(), c);
+			CashShopOperation.CouponCode(rh.readMapleAsciiString(), client);
 			break;
 		case CS_UPDATE:
-			CashShopOperation.CSUpdate(rh, c, c.getPlayer());
+			CashShopOperation.CSUpdate(rh, client, client.getPlayer());
 			break;
 		case DAMAGE_SUMMON:
 			rh.skip(4);
-			SummonHandler.DamageSummon(rh, c.getPlayer());
+			SummonHandler.DamageSummon(rh, client.getPlayer());
 			break;
 		case MOVE_SUMMON:
-			SummonHandler.MoveSummon(rh, c.getPlayer());
+			SummonHandler.MoveSummon(rh, client.getPlayer());
 			break;
 		case SUMMON_ATTACK:
-			SummonHandler.SummonAttack(rh, c, c.getPlayer());
+			SummonHandler.SummonAttack(rh, client, client.getPlayer());
 			break;
 		case SPAWN_PET:
-			PetHandler.SpawnPet(rh, c, c.getPlayer());
+			PetHandler.SpawnPet(rh, client, client.getPlayer());
 			break;
 		case REGISTER_PET_BUFF:
-			PetHandler.RegisterPetBuff(rh, c.getPlayer());
+			PetHandler.RegisterPetBuff(rh, client.getPlayer());
 			break;
 		case MOVE_PET:
-			PetHandler.MovePet(rh, c.getPlayer());
+			PetHandler.MovePet(rh, client.getPlayer());
 			break;
 		case PET_CHAT:
-			PetHandler.PetChat(rh, c.getPlayer());
+			PetHandler.PetChat(rh, client.getPlayer());
 			break;
 		case PET_COMMAND:
-			PetHandler.PetCommand(rh, c, c.getPlayer());
+			PetHandler.PetCommand(rh, client, client.getPlayer());
 			break;
 		case PET_FOOD:
-			PetHandler.PetFood(rh, c, c.getPlayer());
+			PetHandler.PetFood(rh, client, client.getPlayer());
 			break;
 		case PET_LOOT:
-			InventoryHandler.Pickup_Pet(rh, c, c.getPlayer());
+			InventoryHandler.Pickup_Pet(rh, client, client.getPlayer());
 			break;
 		case PET_AUTO_POT:
-			PetHandler.Pet_AutoPotion(rh, c, c.getPlayer());
+			PetHandler.Pet_AutoPotion(rh, client, client.getPlayer());
 			break;
 		case USE_HIRED_MERCHANT:
-			HiredMerchantHandler.UseHiredMerchant(rh, c);
+			HiredMerchantHandler.UseHiredMerchant(rh, client);
 			break;
 		case MERCH_ITEM_STORE:
-			HiredMerchantHandler.MerchantItemStore(rh, c);
+			HiredMerchantHandler.MerchantItemStore(rh, client);
 			break;
 		case MOVE_DRAGON:
-			SummonHandler.MoveDragon(rh, c.getPlayer());
+			SummonHandler.MoveDragon(rh, client.getPlayer());
 			break;
 		case USE_MAGNIFYING_GLASS:
-			InventoryHandler.MagnifyingGlass(c, (byte) rh.readShort(), (byte) rh.readShort());
+			InventoryHandler.MagnifyingGlass(client, (byte) rh.readShort(), (byte) rh.readShort());
 			break;
 		case GOLDEN_HAMMER:
-			InventoryHandler.UseGoldenHammer(rh, c);
+			InventoryHandler.UseGoldenHammer(rh, client);
 			break;
 		case HAMMER_EFFECT:
-			InventoryHandler.HammerEffect(rh, c);
+			InventoryHandler.HammerEffect(rh, client);
 			break;
 		case EQUIPPED_SKILL:
-			PhantomHandler.equippedSkill(rh, c);
+			PhantomHandler.equippedSkill(rh, client);
 			break;
 		case STEEL_SKILL_CHECK:
-			PhantomHandler.steelSkillCheck(rh, c);
+			PhantomHandler.steelSkillCheck(rh, client);
 			break;
 		case STEEL_SKILL:
-			PhantomHandler.steelSkill(rh, c);
+			PhantomHandler.steelSkill(rh, client);
 			break;
 		case SUB_SUMMON:
-			SummonHandler.subThingSummon(rh, c, c.getPlayer());
+			SummonHandler.subThingSummon(rh, client, client.getPlayer());
 			break;
 		case REMOVE_SUMMON:
-			SummonHandler.removeSummon(rh, c);
+			SummonHandler.removeSummon(rh, client);
 			break;
 		case HEAD_TITLE:
-			InventoryHandler.headTitle(rh, c);
+			InventoryHandler.headTitle(rh, client);
 			break;
 		case START_GATHER:
-			ProfessionHandler.startGathering(rh, c);
+			ProfessionHandler.startGathering(rh, client);
 			break;
 		case END_GATHER:
-			InventoryHandler.ItemGather(rh, c);
+			InventoryHandler.ItemGather(rh, client);
 			break;
 		case ITEMPOT_PUT:
-			ItempotHandler.putItempot(rh, c);
+			ItempotHandler.putItempot(rh, client);
 			break;
 		case ITEMPOT_REMOVE:
-			ItempotHandler.removeItempot(rh, c);
+			ItempotHandler.removeItempot(rh, client);
 			break;
 		case ITEMPOT_FEED:
-			ItempotHandler.feedItempot(rh, c);
+			ItempotHandler.feedItempot(rh, client);
 			break;
 		case ITEMPOT_CURE:
-			ItempotHandler.cureItempot(rh, c);
+			ItempotHandler.cureItempot(rh, client);
 			break;
 		case PROFESSIONINFO_REQUEST:
-			ProfessionHandler.getProfessionInfo(rh, c);
+			ProfessionHandler.getProfessionInfo(rh, client);
 			break;
 		case PROFESSION_MAKE_EFFECT:
-			ProfessionHandler.professionMakeEffect(rh, c);
+			ProfessionHandler.professionMakeEffect(rh, client);
 			break;
 		case PROFESSION_MAKE_SOMETHING:
-			ProfessionHandler.professionMakeTime(rh, c);
+			ProfessionHandler.professionMakeTime(rh, client);
 			break;
 		case PROFESSION_MAKE:
-			ProfessionHandler.professionMake(rh, c);
+			ProfessionHandler.professionMake(rh, client);
 			break;
 		case SPAWN_EXTRACTOR:
-			ProfessionHandler.spawnExtractor(rh, c);
+			ProfessionHandler.spawnExtractor(rh, client);
 			break;
 		case USE_RECIPE:
-			ProfessionHandler.useRecipe(rh, c);
+			ProfessionHandler.useRecipe(rh, client);
 			break;
 		case EXPEDITION_OPERATION:
-			PartyHandler.processExpeditionRequest(rh, c);
+			PartyHandler.processExpeditionRequest(rh, client);
 			break;
 		case AGI_BUFF:
-			PlayerHandler.Agi_Buff(rh, c);
+			PlayerHandler.Agi_Buff(rh, client);
 			break;
 		case USE_BAG:
-			ProfessionHandler.useBag(rh, c);
+			ProfessionHandler.useBag(rh, client);
 			break;
 		case MOVE_BAG:
-			ProfessionHandler.MoveBag(rh, c);
+			ProfessionHandler.MoveBag(rh, client);
 			break;
 		case SWITCH_BAG:
-			ProfessionHandler.SwitchBag(rh, c);
+			ProfessionHandler.SwitchBag(rh, client);
 			break;
 		case HYPER_RECV:
-			PlayerHandler.getHyperSkill(rh, c);
+			//TODO [패킷] 실제 패킷의 길이와 헤더값이 일치 하지 않는다. buffer : 16 < packet : 17
+			PlayerHandler.getHyperSkill(rh, client);
 			break;
 		case FOLLOW_REQUEST:
-			PlayersHandler.FollowRequest(rh, c);
+			PlayersHandler.FollowRequest(rh, client);
 			break;
 		case AUTO_FOLLOW_REPLY:
 		case FOLLOW_REPLY:
-			PlayersHandler.FollowReply(rh, c);
+			PlayersHandler.FollowReply(rh, client);
 			break;
 		case WARP_TO_STARPLANET:
-			PlayerHandler.warpToStarplanet(rh.readByte(), rh, c.getPlayer());
+			PlayerHandler.warpToStarplanet(rh.readByte(), rh, client.getPlayer());
 			break;
 		case MAPLE_GUIDE:
 		case MAPLE_CONTENT_MAP:
-			PlayerHandler.MapleGuide(rh, rh.readShort(), c.getPlayer());
+			PlayerHandler.MapleGuide(rh, rh.readShort(), client.getPlayer());
 			break;
 		case RETRACE_MECH:
-			PlayerHandler.CancelBuffHandler(rh.readInt(), c.getPlayer(), rh);
+			PlayerHandler.CancelBuffHandler(rh.readInt(), client.getPlayer(), rh);
 			break;
 		case SET_FREE_JOB:
-			PlayerHandler.SetFreeJob(rh, c.getPlayer());
+			PlayerHandler.SetFreeJob(rh, client.getPlayer());
 			break;
 		case MAPLE_CHAT:
-			PlayerHandler.MapleChat(rh, c.getPlayer());
+			PlayerHandler.MapleChat(rh, client.getPlayer());
 			break;
 		case ORBITAL_FLAME:
-			PlayerHandler.OrbitalFlame(rh, c);
+			PlayerHandler.OrbitalFlame(rh, client);
 			break;
 		case DMG_FLAME:
-			PlayerHandler.MagicDamage(rh, c, c.getPlayer(), true);
+			PlayerHandler.MagicDamage(rh, client, client.getPlayer(), true);
 			break;
 		case DUEY_HANDLER:
-			DueyHandler.DueyHandler(rh, c.getPlayer());
+			DueyHandler.DueyHandler(rh, client.getPlayer());
 			break;
 		case ARROW_FLATTER_ACTION:
-			PlayerHandler.ArrowFlatterAction(rh, c.getPlayer());
+			PlayerHandler.ArrowFlatterAction(rh, client.getPlayer());
 			break;
 		case INNER_CHANGE:
-			PlayerHandler.ChangeInner(rh, c);
+			PlayerHandler.ChangeInner(rh, client);
 			break;
 		case STAR_PLANET_RANK:
-			PlayerHandler.getStarPlanetRank(rh, c.getPlayer());
+			PlayerHandler.getStarPlanetRank(rh, client.getPlayer());
 			break;
 		case ZERO_WEAPONINFO:
-			ZeroHandler.ZeroWeaponInfo(rh, c);
+			ZeroHandler.ZeroWeaponInfo(rh, client);
 			break;
 		case ZERO_UPGRADE:
-			ZeroHandler.ZeroWeaponLevelUp(rh, c);
+			ZeroHandler.ZeroWeaponLevelUp(rh, client);
 			break;
 		case ZERO_SHOCKWAVE:
-			ZeroHandler.ZeroShockWave(rh, c);
+			ZeroHandler.ZeroShockWave(rh, client);
 			break;
 		case ZERO_CHAT:
-			ZeroHandler.ZeroChat(rh, c, "녀석, 사실 너를 꽤나 좋아하는 것 같아. 어떻게 아느냐고 ? 원래 우리는 하나였으니까 말하지 않아도 다 알지.");
+			ZeroHandler.ZeroChat(rh, client, "녀석, 사실 너를 꽤나 좋아하는 것 같아. 어떻게 아느냐고 ? 원래 우리는 하나였으니까 말하지 않아도 다 알지.");
 			break;
 		case ZERO_TAG:
-			ZeroHandler.ZeroTag(rh, c);
+			ZeroHandler.ZeroTag(rh, client);
 			break;
 		case ZERO_OPEN:
-			ZeroHandler.ZeroOpen(rh, c);
+			ZeroHandler.ZeroOpen(rh, client);
 			break;
 		case ZERO_CLOTHES:
-			ZeroHandler.ZeroClothes(rh.readInt(), rh.readByte(), c);
+			ZeroHandler.ZeroClothes(rh.readInt(), rh.readByte(), client);
 			break;
 		case ZERO_SCROLL:
-			ZeroHandler.ZeroScroll(rh, c);
+			ZeroHandler.ZeroScroll(rh, client);
 			break;
 		case ZERO_SCROLL_START:
-			ZeroHandler.ZeroScrollStart(rh, c.getPlayer(), c);
+			ZeroHandler.ZeroScrollStart(rh, client.getPlayer(), client);
 			break;
 		case GAME_END:
-			c.getPlayer().send(MainPacketCreator.GameEnd());
+			client.getPlayer().send(MainPacketCreator.GameEnd());
 			break;
 		case STARDUST:
-			PlayerHandler.Stardust(rh, c);
+			PlayerHandler.Stardust(rh, client);
 			break;
 		case HOLLY:
 			rh.skip(5);
-			PlayerHandler.Holly(rh, c.getPlayer());
+			PlayerHandler.Holly(rh, client.getPlayer());
 			break;
 		case AUCTION_R:
-			AuctionHandler.Handle(rh, c, rh.readByte());
+			AuctionHandler.Handle(rh, client, rh.readByte());
 			break;
 		case MIST_SKILL:
-			PlayerHandler.mistSkill(rh, c.getPlayer());
+			PlayerHandler.mistSkill(rh, client.getPlayer());
 			break;
 		case COMBAT_ANALYZE:
-			c.getSession().write(MainPacketCreator.getCombatAnalyze(rh.readByte()));
+			client.getSession().write(MainPacketCreator.getCombatAnalyze(rh.readByte()));
 			break;
 		default:
 			logger.warn("[UNHANDLED] Recv [{}] founcd", header.toString());

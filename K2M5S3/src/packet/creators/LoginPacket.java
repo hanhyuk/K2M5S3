@@ -336,6 +336,13 @@ public class LoginPacket {
 		return w.getPacket();
 	}
 
+	/**
+	 * 2차 비밀번호 사용 여부를 체크 후 전송한다.(S -> C)
+	 * @param enable
+	 * @param picwrong
+	 * @param success
+	 * @return
+	 */
 	public static Packet getSecondPasswordCheck(boolean enable, boolean picwrong, boolean success) {
 		WritingPacket w = new WritingPacket();
 		w.writeShort(SendPacketOpcode.SECONDPW_RESULT.getValue());

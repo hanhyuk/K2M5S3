@@ -1,16 +1,21 @@
 package handler.login;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
+import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import a.my.made.CommonType;
+import a.my.made.dao.AccountDAO;
+import a.my.made.dao.ParamMap;
+import a.my.made.dao.ResultMap;
 import client.MapleClient;
-import database.MYSQL;
 
+/**
+ * TODO 일단 클래스명부터 변경 할 필요가 있어 보인다. 그리고 이곳에 관련 기능들이 더 추가 될지 여부에 따라
+ * 이 클래스를 계속 유지 할지... 삭제 할지 검토하자.
+ *
+ */
 public class AutoRegister {
 	private static final Logger logger = LoggerFactory.getLogger(AutoRegister.class);
 
@@ -19,62 +24,27 @@ public class AutoRegister {
 	 */
 	public static CommonType checkAccount(String loginId) {
 		CommonType accountType = CommonType.ACCOUNT_CREATE_POSSIBLE;
-		Connection connect = MYSQL.getConnection();
-		PreparedStatement ps = null;
-		ResultSet rs = null;
-		try {
-			//동일한 계정명이 존재하는지 체크
-			ps = connect.prepareStatement("SELECT * FROM accounts WHERE name = ?");
-			ps.setString(1, loginId);
-			rs = ps.executeQuery();
-
-			if( rs.next() ) {
-				accountType = CommonType.ACCOUNT_EXISTS;
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-		} finally {
-			try {
-				if (ps != null) {
-					ps.close(); ps = null;
-				}
-				if (rs != null) {
-					rs.close(); rs = null;
-				}
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
+		
+		final List<ResultMap> accountInfo = AccountDAO.getAccountInfo(loginId);
+		if( accountInfo.size() > 0 ) {
+			accountType = CommonType.ACCOUNT_EXISTS;
 		}
+		
 		return accountType;
 	}
 
-	public static void registerAccount(MapleClient account, String name, String password) {
-		Connection connect = MYSQL.getConnection();
-		PreparedStatement query = null;
-		ResultSet result = null;
-		try {
-			query = connect.prepareStatement("INSERT INTO accounts (name, password, ip) VALUES (?, ?, ?)",
-					MYSQL.RETURN_GENERATED_KEYS);
-			query.setString(1, name);
-			query.setString(2, password);
-			query.setString(3, account.getSessionIPAddress());
-			query.executeUpdate();
-		} catch (Exception e) {
-			logger.debug("{}", e);
-		} finally {
-			try {
-				if (connect != null) {
-					connect = null;
-				}
-				if (query != null) {
-					query.close();
-				}
-				if (result != null) {
-					result.close();
-				}
-			} catch (Exception e) {
-				logger.debug("{}", e);
-			}
-		}
+	/**
+	 * 계정을 생성한다.
+	 * 
+	 * @param client
+	 * @param loginId
+	 * @param loginPassword
+	 */
+	public static void registerAccount(MapleClient client, String loginId, String loginPassword) {
+		final ParamMap params = new ParamMap();
+		params.put("name", loginId);
+		params.put("password", loginPassword);
+		params.put("ip", client.getSessionIPAddress());
+		AccountDAO.addAccountInfo(params);
 	}
 }

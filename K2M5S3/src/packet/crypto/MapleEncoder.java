@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import client.MapleClient;
+import constants.subclasses.ServerType;
 import packet.opcode.SendPacketOpcode;
 import packet.transfer.read.ByteStream;
 import packet.transfer.read.ReadingMaple;
@@ -22,8 +23,10 @@ public class MapleEncoder implements ProtocolEncoder {
 	
 	private final Lock fairLock = new ReentrantLock(true);
 	private String clientKey;
+	private ServerType type;
 	
-	public MapleEncoder(String clientKey) {
+	public MapleEncoder(final ServerType type, final String clientKey) {
+		this.type = type;
 		this.clientKey = clientKey;
 	}
 	

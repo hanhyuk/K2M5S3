@@ -1,5 +1,6 @@
 package a.my.made.dao;
 
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -20,6 +21,7 @@ public class AccountDAO extends BaseDAO {
 	
 	public static final int DEFAULT_ACCOUNT_ID = -1;
 	
+	//---- select----
 	public static List<ResultMap> getAccountInfo(final int accountId) {
 		return selectAccountTable(accountId, null, null);
 	}
@@ -41,14 +43,12 @@ public class AccountDAO extends BaseDAO {
 		
 		if( DEFAULT_ACCOUNT_ID != accountId ) {
 			query = query.replaceAll("__ARGS__", "id = ?");
+		} else if( StringUtils.isNotEmpty(loginId) && StringUtils.isNotEmpty(loginPassword) ) {
+			query = query.replaceAll("__ARGS__", "name = ? AND password = ?");
 		} else if( StringUtils.isNotEmpty(loginId) ) {
 			query = query.replaceAll("__ARGS__", "name = ?");
-			
-			if( StringUtils.isNotEmpty(loginPassword) ) {
-				query = query.replaceAll("__ARGS__", "name = ? AND password = ?");
-			}
 		}
-		logger.debug("query : {}", query);
+		
 		try {
 			ps = MYSQL.getConnection().prepareStatement(query);
 			
@@ -61,7 +61,6 @@ public class AccountDAO extends BaseDAO {
 					ps.setString(2, loginPassword);
 				}
 			}
-			logger.debug("query : {}", ps);
 			rs = ps.executeQuery();
 			result = convertResultSetToList(rs);
 		} catch(Exception e) {
@@ -77,6 +76,78 @@ public class AccountDAO extends BaseDAO {
 			logger.debug("{}", e);
 		}
 		
+		return result;
+	}
+	
+	
+	//---- update ----
+	public static boolean setAccountInfo(final int accountId, final ParamMap params) {
+		return updateAccountTable(accountId, params);
+	}
+	
+	private static boolean updateAccountTable(final int accountId, final ParamMap params) {
+		boolean result = false;
+		Connection con = MYSQL.getConnection();
+		PreparedStatement ps = null;
+		
+		try {
+			String where = "";
+			if( DEFAULT_ACCOUNT_ID != accountId ) {
+				where = "WHERE id = ?";
+			}
+			ps = con.prepareStatement(String.format("UPDATE accounts SET %s %s", params.getParamsQuery(), where));
+			
+			int index = params.setParamsQuery(ps);
+			if( index != -1 ) {
+				if( DEFAULT_ACCOUNT_ID != accountId ) {
+					ps.setInt(index++, accountId);
+				}
+				ps.executeUpdate();
+				result = true;
+			}
+		} catch (Exception e) {
+			logger.debug("{}", e);
+		} finally {
+			try {
+				if( ps != null ) {
+					ps.close(); ps = null;
+				}
+			} catch(SQLException e) {
+				logger.debug("{}", e);
+			}
+		}
+		return result;
+	}
+	
+	//---- insert ----
+	public static boolean addAccountInfo(final ParamMap params) {
+		return insertAccountTable(params);
+	}
+	
+	private static boolean insertAccountTable(final ParamMap params) {
+		boolean result = false;
+		Connection con = MYSQL.getConnection();
+		PreparedStatement ps = null;
+		
+		try {
+			ps = con.prepareStatement(String.format("INSERT INTO accounts (%s) VALUES (%s)", params.getParamsColsQuery()[0], params.getParamsColsQuery()[1]));
+			logger.debug("{}", ps);
+			int index = params.setParamsQuery(ps);
+			if( index != -1 ) {
+				ps.executeUpdate();
+				result = true;
+			}
+		} catch (Exception e) {
+			logger.debug("{}", e);
+		} finally {
+			try {
+				if( ps != null ) {
+					ps.close(); ps = null;
+				}
+			} catch(SQLException e) {
+				logger.debug("{}", e);
+			}
+		}
 		return result;
 	}
 }
