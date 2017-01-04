@@ -228,7 +228,7 @@ public class CashShopOperation {
 			int point = rh.readShort() + 1;
 			rh.skip(1); // 1.2.220+
 			int sn = rh.readInt();
-			final CashItemInfo item = CashItemFactory.getInstance().getItem(sn);
+			final CashItemInfo item = CashItemFactory.getInstance().getItemInfoFromSN(sn);
 			if (item == null) {
 				c.send(MainPacketCreator.serverNotice(1, "서버에 데이터가 존재하지 않습니다. 구매할 수 없는 아이템입니다."));
 			}
@@ -389,7 +389,7 @@ public class CashShopOperation {
 		} else if (action == 30 || action == 36) {
 			final int idate = rh.readInt();
 			final int toCharge = rh.readInt();
-			final CashItemInfo item = CashItemFactory.getInstance().getItem(rh.readInt());
+			final CashItemInfo item = CashItemFactory.getInstance().getItemInfoFromSN(rh.readInt());
 			final String recipient = rh.readMapleAsciiString();
 			final String msg = rh.readMapleAsciiString();
 			final int year = idate / 10000;
@@ -401,7 +401,7 @@ public class CashShopOperation {
 		} else if (action == 35) {
 			int point = rh.readByte() + 1;
 			int id = rh.readInt();
-			final CashItemInfo item = CashItemFactory.getInstance().getItem(id);
+			final CashItemInfo item = CashItemFactory.getInstance().getItemInfoFromSN(id);
 			if (id == 170000004) {
 				if (chr.getKeyValue("firstcashbuy") != null) {
 					c.getPlayer().message(1, "구매하실려는 패키지는 중복 구매가 불가능한 패키지 입니다.");
@@ -414,7 +414,7 @@ public class CashShopOperation {
 			try {
 				if (item != null && chr.getCSPoints(point) >= item.getPrice()) {
 					chr.modifyCSPoints(point, -item.getPrice(), false);
-					List<Pair<Integer, CashItemInfo>> packs = CashItemFactory.getInstance().getPackages(item.getId());
+					List<Pair<Integer, CashItemInfo>> packs = CashItemFactory.getInstance().getPackageItemInfoList(item.getId());
 					List<IItem> itemss = new ArrayList<IItem>();
 					for (Pair<Integer, CashItemInfo> p : packs) {
 						IItem tem;
@@ -462,7 +462,7 @@ public class CashShopOperation {
 				logger.debug("{}", e);
 			}
 		} else if (action == 37) {
-			final CashItemInfo item = CashItemFactory.getInstance().getItem(rh.readInt());
+			final CashItemInfo item = CashItemFactory.getInstance().getItemInfoFromSN(rh.readInt());
 			if (item != null && chr.getMeso() >= item.getPrice()) {
 				if (ItemInformation.getInstance().isQuestItem(item.getId())) {
 					if (chr.getInventory(GameConstants.getInventoryType(item.getId())).getNextFreeSlot() > -1) {

@@ -1,9 +1,5 @@
 package launch.world;
 
-import client.items.ItemFactory;
-import database.MYSQL;
-import handler.channel.AuctionHandler.AuctionInfo;
-import handler.channel.AuctionHandler.AuctionItemPackage;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -13,6 +9,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import client.items.ItemFactory;
+import database.MYSQL;
+import handler.channel.AuctionHandler.AuctionInfo;
+import handler.channel.AuctionHandler.AuctionItemPackage;
 
 public class WorldAuction {
 	public static List<AuctionItemPackage> items = new ArrayList<>();

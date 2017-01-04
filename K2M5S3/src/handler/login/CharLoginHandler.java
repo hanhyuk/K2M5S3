@@ -1,5 +1,6 @@
 package handler.login;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -20,16 +21,45 @@ import client.items.MapleInventoryType;
 import client.skills.SkillFactory;
 import constants.GameConstants;
 import constants.ServerConstants;
-import launch.helpers.MapleLoginHelper;
 import launch.helpers.MapleNewCharJobType;
 import launch.world.WorldConnected;
 import packet.creators.LoginPacket;
 import packet.creators.MainPacketCreator;
 import packet.transfer.read.ReadingMaple;
+import provider.MapleData;
+import provider.MapleDataProvider;
+import provider.MapleDataProviderFactory;
+import provider.MapleDataTool;
 import tools.Randomizer;
 
 public class CharLoginHandler {
 	private static final Logger logger = LoggerFactory.getLogger(CharLoginHandler.class);
+	
+	private static List<String> forbiddenNameList = new ArrayList<String>();
+	
+	/**
+	 * 사용 불가능한 캐릭터명 리스트를 wz 파일에서 로딩한다.
+	 */
+	public static void loadForbiddenNames() {
+		final MapleDataProvider provider = MapleDataProviderFactory.getDataProvider("Etc.wz");
+		final MapleData nameData = provider.getData("ForbiddenName.img");
+		
+		for( MapleData data : nameData.getChildren() ) {
+			forbiddenNameList.add(MapleDataTool.getString(data));
+		}
+	}
+
+	/**
+	 * true : 사용불가 캐릭명 false : 사용가능 캐릭명
+	 */
+	public static boolean isForbiddenName(final String in) {
+		for (final String name : forbiddenNameList) {
+			if (in.contains(name)) {
+				return true;
+			}
+		}
+		return false;
+	}
 	
 	/**
 	 * RECV LOGIN_PASSWORD 패킷 처리
@@ -246,8 +276,7 @@ public class CharLoginHandler {
 	}
 
 	public static void CheckCharName(String name, MapleClient c) {
-		c.getSession()
-				.write(LoginPacket.charNameResponse(name, !MapleCharacterUtil.canCreateChar(name) || MapleLoginHelper.getInstance().isForbiddenName(name)));
+		c.getSession().write(LoginPacket.charNameResponse(name, !MapleCharacterUtil.canCreateChar(name) || isForbiddenName(name)));
 	}
 
 	public static void CreateChar(ReadingMaple rh, MapleClient c) {
@@ -296,7 +325,7 @@ public class CharLoginHandler {
 		if (JobType == MapleNewCharJobType.데몬슬레이어.getValue()) {
 			shield = rh.readInt();
 		}
-		if (!MapleCharacterUtil.canCreateChar(name) || MapleLoginHelper.getInstance().isForbiddenName(name)) { // 생성
+		if (!MapleCharacterUtil.canCreateChar(name) || isForbiddenName(name)) { // 생성
 																												// 도중
 																												// 중복닉네임
 																												// 발견시
@@ -527,7 +556,7 @@ public class CharLoginHandler {
 			weapone.setExpiration(-1);
 			equip.addFromDB(js.copy());
 		}
-		if (MapleCharacterUtil.canCreateChar(name) && !MapleLoginHelper.getInstance().isForbiddenName(name)) {
+		if (MapleCharacterUtil.canCreateChar(name) && !isForbiddenName(name)) {
 			MapleCharacter.saveNewCharToDB(newchar);
 			MapleItempotMain.getInstance().newCharDB(newchar.getId());
 			c.getSession().write(LoginPacket.addNewCharacterEntry(newchar, true));

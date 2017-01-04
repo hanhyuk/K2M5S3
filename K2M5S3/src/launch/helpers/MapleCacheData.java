@@ -1,19 +1,20 @@
 package launch.helpers;
 
-import client.items.StructPotentialItem;
-import client.skills.ISkill;
-import client.skills.Skill;
-import client.skills.SkillFactory;
 import static client.skills.SkillFactory.SummonSkillInformation;
-import client.skills.SummonSkillEntry;
-import constants.GameConstants;
+
 import java.awt.Point;
-import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+
+import client.items.StructPotentialItem;
+import client.skills.ISkill;
+import client.skills.Skill;
+import client.skills.SkillFactory;
+import client.skills.SummonSkillEntry;
+import constants.GameConstants;
 import provider.MapleData;
 import provider.MapleDataDirectoryEntry;
 import provider.MapleDataFileEntry;
@@ -353,12 +354,12 @@ class LoadCashItemData extends Thread {
     
     public void cacheCashItemData() {
         int i = 0;
-	for (MapleData field : CashItemFactory.getInstance().data.getData("Commodity.img").getChildren()) {
+	for (MapleData field : CashItemFactory.getInstance().etcWz.getData("Commodity.img").getChildren()) {
             int itemId = MapleDataTool.getIntConvert("ItemId", field, 0);
 	    boolean onSale = itemId > 0;
             int period = 0;
             if (GameConstants.isPet(itemId)) { //Æê
-                period = MapleDataTool.getIntConvert("life", CashItemFactory.getInstance().petData.getData(itemId + ".img").getChildByPath("info"));
+                period = MapleDataTool.getIntConvert("life", CashItemFactory.getInstance().itemWzInPet.getData(itemId + ".img").getChildByPath("info"));
             } else {
                 period = MapleDataTool.getIntConvert("Period", field, 0);
             }

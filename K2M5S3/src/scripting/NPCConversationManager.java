@@ -42,9 +42,6 @@ import community.MapleSquadLegacy;
 import community.MapleUserTrade;
 import constants.GameConstants;
 import constants.ServerConstants;
-import constants.programs.HighRanking;
-import constants.programs.HighRanking.RankingData;
-import constants.subclasses.HighRankingType;
 import database.MYSQL;
 import handler.channel.AuctionHandler;
 import handler.channel.AuctionHandler.AuctionPacket;
@@ -52,7 +49,6 @@ import handler.channel.HiredMerchantHandler;
 import handler.channel.InterServerHandler;
 import handler.duey.DueyHandler;
 import launch.ChannelServer;
-import launch.LoginServer;
 import packet.creators.MainPacketCreator;
 import packet.creators.UIPacket;
 import provider.MapleData;
@@ -1074,43 +1070,6 @@ public class NPCConversationManager extends AbstractPlayerInteraction {
 				return 0;
 			}
 		}
-	}
-
-	public String getHighRanking(int type) {
-		if (HighRanking.getInstance().getData(type).getRankings().isEmpty()) {
-			return "현재 해당하는 랭킹이 없습니다.\r\n\r\n※ 랭킹은 1시간 주기로 업데이트 됩니다.\r\n\r\n";
-		}
-
-		String ret = "선택하신 랭킹은 아래와 같습니다.\r\n\r\n※ 랭킹은 1시간 주기로 업데이트 됩니다.\r\n\r\n";
-		int i = 1;
-		for (RankingData rd : HighRanking.getInstance().getData(type).getRankings()) {
-			if (type == HighRankingType.FirstAdvance.getType()) {
-				int time = rd.getValue1();
-				int min = time / 60;
-				int sec = time % 60;
-				int left = time % 1000;
-				ret += "#e" + i + ". #n#b" + rd.getName() + "#k 클리어시간 : " + min + "분 " + sec + "초 0." + left + "\r\n";
-			} else if (type == HighRankingType.SecondAdvance.getType()) {
-				int time = rd.getValue1();
-				int min = time / 60;
-				int sec = time % 60;
-				int left = time % 1000;
-				ret += "#e" + i + ". #n#b" + rd.getName() + "#k 클리어시간 : " + min + "분 " + sec + "초 0." + left + "\r\n";
-			} else if (type == HighRankingType.ThirdAdvance.getType()) {
-				int time = rd.getValue1();
-				int min = time / 60;
-				int sec = time % 60;
-				int left = time % 1000;
-				ret += "#e" + i + ". #n#b" + rd.getName() + "#k 클리어시간 : " + min + "분 " + sec + "초 남은라이프 : " + rd.getValue2() + " 실패 : " + rd.getValue3() + "\r\n";
-			} else if (type == HighRankingType.ForthAdvance.getType()) {
-				int time = rd.getValue1();
-				int min = time / 60;
-				int sec = time % 60;
-				int left = time % 1000;
-				ret += "#e" + i + ". #n#b" + rd.getName() + "#k 클리어시간 : " + min + "분 " + sec + "초 0." + left + "\r\n";
-			}
-		}
-		return ret;
 	}
 
 	public void setProfession(int index, int skill) {

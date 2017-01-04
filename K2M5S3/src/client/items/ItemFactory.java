@@ -72,7 +72,7 @@ public class ItemFactory {
         loadItems(hp, ItemFactory.InventoryType.AUCTION, null, null, null);
     }
 
-    public static void loadItems(final MapleCharacter hp, final ItemFactory.InventoryType invtype, final MapleStorage storage, final MerchItemPackage pack, final MapleCashInventory cash) {
+    public static void loadItems(final MapleCharacter player, final ItemFactory.InventoryType invtype, final MapleStorage storage, final MerchItemPackage pack, final MapleCashInventory cash) {
         try {
             byte invstype;
             invstype = getType(invtype);
@@ -80,7 +80,7 @@ public class ItemFactory {
             PreparedStatement ps;
             if (invtype == ItemFactory.InventoryType.INVENTORY) {
                 ps = con.prepareStatement("SELECT * FROM inventoryitems LEFT JOIN inventoryequipment USING (inventoryitemid) WHERE characterid = ? AND type = ? AND issale = 0");
-                ps.setInt(1, hp.getId());
+                ps.setInt(1, player.getId());
             } else if (invtype == ItemFactory.InventoryType.MERCHANT) {
                 ps = con.prepareStatement("SELECT * FROM inventoryitems LEFT JOIN inventoryequipment USING (inventoryitemid) WHERE packageId = ? AND type = ?");
                 ps.setInt(1, pack.getPackageid());
@@ -207,7 +207,7 @@ public class ItemFactory {
                     }
                 
                     if (invtype == ItemFactory.InventoryType.INVENTORY) {
-                        hp.getInventory(type).addFromDB(equip);
+                        player.getInventory(type).addFromDB(equip);
                     } else if (invtype == ItemFactory.InventoryType.STORAGE) {
                         storage.getItems().add(equip);
                     } else if (invtype == ItemFactory.InventoryType.MERCHANT) {
@@ -228,7 +228,7 @@ public class ItemFactory {
                     }
                     item.setUniqueId(rs.getInt("uniqueid"));
                     if (invtype == ItemFactory.InventoryType.INVENTORY) {
-                        hp.getInventory(type).addFromDB(item);
+                        player.getInventory(type).addFromDB(item);
                     } else if (invtype == ItemFactory.InventoryType.STORAGE) {
                         storage.getItems().add(item);
                     } else if (invtype == ItemFactory.InventoryType.MERCHANT) {

@@ -22,10 +22,6 @@ public class MapleMonsterProvider {
 	private final Map<Integer, List<MonsterDropEntry>> drops = new HashMap<Integer, List<MonsterDropEntry>>();
 	private final List<MonsterGlobalDropEntry> globaldrops = new ArrayList<MonsterGlobalDropEntry>();
 
-	protected MapleMonsterProvider() {
-		retrieveGlobal();
-	}
-
 	public static final MapleMonsterProvider getInstance() {
 		return instance;
 	}
@@ -34,7 +30,10 @@ public class MapleMonsterProvider {
 		return globaldrops;
 	}
 
-	public final void retrieveGlobal() {
+	/**
+	 * 글로벌 드랍 정보를 캐싱한다.
+	 */
+	public final void loadGlobalDropInfo() {
 		PreparedStatement ps = null;
 		ResultSet rs = null;
 
@@ -44,27 +43,39 @@ public class MapleMonsterProvider {
 			rs = ps.executeQuery();
 
 			while (rs.next()) {
-				globaldrops.add(new MonsterGlobalDropEntry(rs.getInt("itemid"), rs.getInt("chance"), rs.getInt("continent"), rs.getByte("dropType"), rs.getInt("minimum_quantity"),
-						rs.getInt("maximum_quantity"), rs.getInt("questid")));
+				globaldrops.add(new MonsterGlobalDropEntry(
+						rs.getInt("itemid"), 
+						rs.getInt("chance"), 
+						rs.getInt("continent"), 
+						rs.getByte("dropType"), 
+						rs.getInt("minimum_quantity"),
+						rs.getInt("maximum_quantity"), 
+						rs.getInt("questid")));
 			}
 			rs.close();
 			ps.close();
 		} catch (SQLException e) {
-			logger.debug("Error retrieving drop {}", e);
+			logger.debug("Error retrieving drop", e);
 		} finally {
 			try {
 				if (ps != null) {
-					ps.close();
+					ps.close(); ps = null;
 				}
 				if (rs != null) {
-					rs.close();
+					rs.close(); rs = null;
 				}
-			} catch (SQLException ignore) {
+			} catch (SQLException e) {
+				logger.debug("", e);
 			}
 		}
 	}
 
-	public final List<MonsterDropEntry> retrieveDrop(final int monsterId) {
+	/**
+	 * 해당 몬스터의 드랍 정보를 반환한다.
+	 * @param monsterId
+	 * @return
+	 */
+	public final List<MonsterDropEntry> getDropInfo(final int monsterId) {
 		if (drops.containsKey(monsterId)) {
 			return drops.get(monsterId);
 		}
@@ -81,16 +92,18 @@ public class MapleMonsterProvider {
 				ret.add(new MonsterDropEntry(rs.getInt("itemid"), rs.getInt("chance"), rs.getInt("minimum_quantity"), rs.getInt("maximum_quantity"), rs.getInt("questid")));
 			}
 		} catch (SQLException e) {
+			logger.debug("", e);
 			return ret;
 		} finally {
 			try {
 				if (ps != null) {
-					ps.close();
+					ps.close(); ps = null;
 				}
 				if (rs != null) {
-					rs.close();
+					rs.close(); rs = null;
 				}
-			} catch (SQLException ignore) {
+			} catch (SQLException e) {
+				logger.debug("", e);
 				return ret;
 			}
 		}
@@ -101,6 +114,6 @@ public class MapleMonsterProvider {
 	public final void clearDrops() {
 		drops.clear();
 		globaldrops.clear();
-		retrieveGlobal();
+		loadGlobalDropInfo();
 	}
 }

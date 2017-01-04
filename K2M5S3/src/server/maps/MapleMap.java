@@ -525,7 +525,7 @@ public class MapleMap {
 		double showdown = 100.0;
 		final MonsterStatusEffect mse = mob.getBuff(MonsterStatus.SHOWDOWN);
 		final MapleMonsterProvider mi = MapleMonsterProvider.getInstance();
-		final List<MonsterDropEntry> derp = mi.retrieveDrop(mob.getId());
+		final List<MonsterDropEntry> derp = mi.getDropInfo(mob.getId());
 		final MapleClient c = null;
 		if (derp == null) {
 			return;

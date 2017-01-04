@@ -15,13 +15,11 @@ import a.my.made.dao.AccountDAO;
 import a.my.made.dao.ParamMap;
 import constants.ServerConstants;
 import constants.programs.ControlUnit;
-import constants.programs.HighRanking;
 import constants.programs.RewardScroll;
 import constants.subclasses.QuickMove;
-import constants.subclasses.setScriptableNPC;
 import database.MYSQL;
+import handler.login.CharLoginHandler;
 import launch.helpers.MapleCacheData;
-import launch.helpers.MapleLoginHelper;
 import launch.world.WorldAuction;
 import packet.opcode.RecvPacketOpcode;
 import packet.opcode.SendPacketOpcode;
@@ -35,36 +33,40 @@ public final class Start {
 	public static void main(String args[]) throws IOException {
 		logger.info("[알림] 에뮬레이터 :: V1.2." + ServerConstants.MAPLE_VERSION + " 버전이 실행되었습니다.\n");
 
+		//서버 구동에 필요한 상수값 로딩
 		ServerConstants.init();
-		
+		//패킷 정보 로딩
 		SendPacketOpcode.loadOpcode();
 		RecvPacketOpcode.loadOpcode();
-		
-		MapleLoginHelper.getInstance().loadForbiddenNames();
-
+		//캐시템 정보 로딩
+		CashItemFactory.getInstance();
+		//보상 아이템 정보를 로딩.
+		RewardScroll.getInstance();
+		//TODO 경매장 정보 로딩. 분석 필요.
+		WorldAuction.load();
+		//사용할수 없는 캐릭명 로딩
+		CharLoginHandler.loadForbiddenNames();
+		//TODO 빠른 이동 정보 로딩. 어디서 사용되는지 확인 필요.
+		QuickMove.doMain();
+		//글로벌 드랍 정보 로딩
+		MapleMonsterProvider.getInstance().loadGlobalDropInfo();
+		//스케쥴러 등록
 		Timer.startAllTimer();
-
+		
 		
 		LoginServer.getInstance().start();
 		ChannelServer.start(ServerConstants.openChannelCount);
 		CashShopServer.getInstance().start();
 		BuddyChatServer.getInstance().start();
 
-		
 
-		/* 메모리 정리 및 캐싱쓰레드 시작 */
-		CashItemFactory.getInstance();
-		MapleCacheData mc = new MapleCacheData();
-		mc.startCacheData();
-		HighRanking.getInstance().startTasking();
-		WorldAuction.load();
-		QuickMove.doMain();
-		setScriptableNPC.doMain();
-		RewardScroll.getInstance();
-		MapleMonsterProvider.getInstance().retrieveGlobal();
-
+		//hh
+		MapleCacheData mc = new MapleCacheData(); mc.startCacheData();
 		clearDb();
+		
+		
 		ControlUnit.main(args);
+		
 		System.gc();
 
 		logger.info("[알림] 서버 오픈이 정상적으로 완료 되습니다.");
@@ -306,12 +308,6 @@ public final class Start {
             ps.close();
             rs.close();
             
-            
-            deletedrows+=con.prepareStatement("DELETE FROM `keyvalue` WHERE `key` = '1stJobTrialCompleteTime'").executeUpdate();
-            deletedrows+=con.prepareStatement("DELETE FROM `keyvalue` WHERE `key` = '2ndJobTrialCompleteTime'").executeUpdate();
-            deletedrows+=con.prepareStatement("DELETE FROM `keyvalue` WHERE `key` = '3rdJobTrialCompleteTime'").executeUpdate();
-            deletedrows+=con.prepareStatement("DELETE FROM `keyvalue` WHERE `key` = '4thJobTrialCompleteTime'").executeUpdate();
-                        
             ps = con.prepareStatement("SELECT * FROM pets");
             rs = ps.executeQuery();
             while (rs.next()) {

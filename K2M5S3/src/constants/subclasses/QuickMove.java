@@ -11,6 +11,7 @@ public class QuickMove {
 	public static void doMain() {
 
 		List<QuickMoveTownProperties> towns = new ArrayList<QuickMoveTownProperties>();
+		
 		towns.add(new QuickMoveTownProperties(100000000, true, true, true, true, true, true, true));
 		towns.add(new QuickMoveTownProperties(101000000, true, true, true, true, true, true, true));
 		towns.add(new QuickMoveTownProperties(910000000, true, true, true, true, true, true, true));

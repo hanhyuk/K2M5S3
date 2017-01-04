@@ -32,7 +32,7 @@ public class InventoryManipulator {
 	private static final Logger logger = LoggerFactory.getLogger(InventoryManipulator.class);
 
 	public static void addRing(MapleCharacter chr, int itemId, int ringId, int sn, String partner) {
-		CashItemInfo csi = CashItemFactory.getInstance().getItem(sn);
+		CashItemInfo csi = CashItemFactory.getInstance().getItemInfoFromSN(sn);
 		if (csi == null) {
 			return;
 		}
