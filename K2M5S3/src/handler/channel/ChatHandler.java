@@ -70,7 +70,7 @@ public class ChatHandler {
 				ControlUnit.Chat.setModel(ControlUnit.ChatList);
 				chr.getMap().broadcastMessage(MainPacketCreator.getChatText(chr.getId(), text, c.getPlayer().isGM(), unk), c.getPlayer().getPosition());
 			}
-			LoggerChatting.writeLog(LoggerChatting.chatLog, LoggerChatting.getChatLogType("일반 채팅 : ", chr, text));
+			LoggerChatting.writeLog(LoggerChatting.getChatLogType("일반 채팅 : ", chr, text));
 		}
 	}
 
@@ -93,7 +93,7 @@ public class ChatHandler {
 				ControlUnit.ChatList.addElement("[파티][Ch." + chr.getClient().getChannel() + "]" + chr.getName() + " : " + chattext);
 				ControlUnit.Chat.setModel(ControlUnit.ChatList);
 				WorldCommunity.partyChat(chr.getParty(), chattext, chr.getName());
-				LoggerChatting.writeLog(LoggerChatting.chatLog, LoggerChatting.getChatLogType("파티 : ", chr, chattext));
+				LoggerChatting.writeLog(LoggerChatting.getChatLogType("파티 : ", chr, chattext));
 				break;
 			case 3:
 				if (ServerConstants.chatlimit >= 500) {
@@ -105,7 +105,7 @@ public class ChatHandler {
 				ControlUnit.ChatList.addElement("[연합][Ch." + chr.getClient().getChannel() + "]" + chr.getName() + " : " + chattext);
 				ControlUnit.Chat.setModel(ControlUnit.ChatList);
 				WorldCommunity.allianceChat(chr.getGuildId(), chr.getName(), chr.getId(), chattext);
-				LoggerChatting.writeLog(LoggerChatting.chatLog, LoggerChatting.getChatLogType("연합 : ", chr, chattext));
+				LoggerChatting.writeLog(LoggerChatting.getChatLogType("연합 : ", chr, chattext));
 				break;
 			}
 		}
@@ -263,7 +263,7 @@ public class ChatHandler {
 					} else {
 						player.getClient().getSession().write(MainPacketCreator.getWhisper(c.getPlayer().getName(), c.getChannel(), text));
 						c.getSession().write(MainPacketCreator.getWhisperReply(recipient, (byte) 1));
-						LoggerChatting.writeLog(LoggerChatting.chatLog, LoggerChatting.getChatLogType("귓", c.getPlayer(), "[대상 : " + player.getName() + "] : " + text));
+						LoggerChatting.writeLog(LoggerChatting.getChatLogType("귓", c.getPlayer(), "[대상 : " + player.getName() + "] : " + text));
 					}
 				} else { // Not found
 					Collection<ChannelServer> cservs = ChannelServer.getAllInstances();
@@ -278,7 +278,7 @@ public class ChatHandler {
 							c.getSession().write(MainPacketCreator.getWhisperReply(recipient, (byte) 0));
 						} else {
 							player.getClient().getSession().write(MainPacketCreator.getWhisper(c.getPlayer().getName(), c.getChannel(), text));
-							LoggerChatting.writeLog(LoggerChatting.chatLog, LoggerChatting.getChatLogType("귓", c.getPlayer(), "[대상 : " + player.getName() + "] : " + text));
+							LoggerChatting.writeLog(LoggerChatting.getChatLogType("귓", c.getPlayer(), "[대상 : " + player.getName() + "] : " + text));
 							c.getSession().write(MainPacketCreator.getWhisperReply(recipient, (byte) 1));
 						}
 					} else {
@@ -321,7 +321,7 @@ public class ChatHandler {
 		ServerConstants.chatlimit++;
 		ControlUnit.ChatList.addElement("[친구][Ch." + chr.getClient().getChannel() + "]" + chr.getName() + " : " + text);
 		ControlUnit.Chat.setModel(ControlUnit.ChatList);
-		LoggerChatting.writeLog(LoggerChatting.chatLog, LoggerChatting.getChatLogType("친구 : ", chr, text));
+		LoggerChatting.writeLog(LoggerChatting.getChatLogType("친구 : ", chr, text));
 	}
 
 	public static void GuildChat(final ReadingMaple rh, final MapleClient c) {
@@ -351,7 +351,7 @@ public class ChatHandler {
 					ControlUnit.ChatList.addElement("[길드][Ch." + chr.getClient().getChannel() + "]" + chr.getName() + " : " + text);
 					ControlUnit.Chat.setModel(ControlUnit.ChatList);
 					BuddyChatServer.ChatClient.get(chrs.getClient().getAccID()).getSession().write(MainPacketCreator.GuildChat(chr, guildid, text));
-					LoggerChatting.writeLog(LoggerChatting.chatLog, LoggerChatting.getChatLogType("길드 : ", chr, text));
+					LoggerChatting.writeLog(LoggerChatting.getChatLogType("길드 : ", chr, text));
 				}
 			}
 		}

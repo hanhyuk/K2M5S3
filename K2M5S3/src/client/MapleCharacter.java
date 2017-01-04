@@ -2995,7 +2995,7 @@ public class MapleCharacter extends AnimatedHinaMapObjectExtend implements Inven
 		if (GameConstants.isPhantom(getJob())) {
 			client.send(MainPacketCreator.cardAmount(getCardStack()));
 		}
-		if (ServerConstants.UnlockMaxDamage) {
+		if (ServerConstants.IS_UNLOCK_MAX_DAMAGE) {
 			unlockMaxDamage();
 		}
 
@@ -3184,7 +3184,7 @@ public class MapleCharacter extends AnimatedHinaMapObjectExtend implements Inven
 		silentPartyUpdate();
 		guildUpdate();
 		checkForceShield();
-		if (ServerConstants.UnlockMaxDamage) {
+		if (ServerConstants.IS_UNLOCK_MAX_DAMAGE) {
 			unlockMaxDamage();
 		}
 	}
@@ -5078,7 +5078,11 @@ public class MapleCharacter extends AnimatedHinaMapObjectExtend implements Inven
 		diseases.clear();
 	}
 
+	/**
+	 * 최대 데미지를 21억으로 상향하기 위해 플레이어에게 륀느의 가호 버프를 건다.
+	 */
 	public void unlockMaxDamage() {
+		//100001268 륀느의 가호
 		if (getBuffedValue(BuffStats.MAX_DAMAGE, 100001268) == null) {
 			SkillFactory.getSkill(100001268).getEffect(SkillFactory.getSkill(100001268).getMaxLevel()).applyTo(this);
 		}
@@ -6572,7 +6576,7 @@ public class MapleCharacter extends AnimatedHinaMapObjectExtend implements Inven
 		chr.getMap().removePlayer(chr);
 		c.setPlayer(null);
 		c.updateLoginState(AccountStatusType.CHANGE_CHANNEL.getValue(), c.getSessionIPAddress());
-		c.getSession().write(MainPacketCreator.getChannelChange(c, ServerConstants.basePorts + (channel)));
+		c.getSession().write(MainPacketCreator.getChannelChange(c, ServerConstants.channelPort + (channel)));
 	}
 
 	public void setLastCC(long d) {
@@ -7002,80 +7006,6 @@ public class MapleCharacter extends AnimatedHinaMapObjectExtend implements Inven
 
 	public final void teachSkill(final int id, final byte level, final byte masterlevel) {
 		changeSkillLevel(SkillFactory.getSkill(id), level, masterlevel);
-	}
-
-	public String getDateKey(String key) {
-		Calendar ocal = Calendar.getInstance();
-		int year = ocal.get(ocal.YEAR);
-		int month = ocal.get(ocal.MONTH) + 1;
-		int day = ocal.get(ocal.DAY_OF_MONTH);
-		return getKeyValue1(year + "" + month + "" + day + "_" + key);
-	}
-
-	public void setDateKey(String key, String value) {
-		Calendar ocal = Calendar.getInstance();
-		int year = ocal.get(ocal.YEAR);
-		int month = ocal.get(ocal.MONTH) + 1;
-		int day = ocal.get(ocal.DAY_OF_MONTH);
-		setKeyValue(year + "" + month + "" + day + "_" + key, value, true);
-	}
-
-	public void setKeyValue(String key, String value, boolean a) {
-		if (getKeyValue1(key) == null) {
-			try {
-				Connection con = MYSQL.getConnection();
-				PreparedStatement ps = null;
-				String query = "INSERT into `acheck` (`cid`, `keya`, `value`, `day`) VALUES ('";
-				query = new StringBuilder().append(query).append(id).toString();
-				query = new StringBuilder().append(query).append("', '").toString();
-				query = new StringBuilder().append(query).append(key).toString();
-				query = new StringBuilder().append(query).append("', '").toString();
-				query = new StringBuilder().append(query).append(value).toString();
-				if (a) {
-					query = new StringBuilder().append(query).append("', '").toString();
-					query = new StringBuilder().append(query).append("1").toString();
-					query = new StringBuilder().append(query).append("')").toString();
-				} else {
-					query = new StringBuilder().append(query).append("', '").toString();
-					query = new StringBuilder().append(query).append("0").toString();
-					query = new StringBuilder().append(query).append("')").toString();
-				}
-				ps = con.prepareStatement(query);
-				ps.executeUpdate();
-				ps.close();
-			} catch (SQLException ex) {
-
-			}
-		} else {
-			try {
-				Connection con = MYSQL.getConnection();
-				PreparedStatement ps = con.prepareStatement("UPDATE acheck SET value = ? WHERE cid = ? AND keya = ?");
-				ps.setString(1, value);
-				ps.setInt(2, id);
-				ps.setString(3, key);
-				ps.executeUpdate();
-				ps.close();
-			} catch (SQLException ex) {
-
-			}
-		}
-	}
-
-	public String getKeyValue1(String key) {
-		try {
-			Connection con = MYSQL.getConnection();
-			PreparedStatement ps = con.prepareStatement("SELECT * FROM acheck WHERE cid = ? and keya = ?");
-			ps.setInt(1, id);
-			ps.setString(2, key);
-			ResultSet rs = ps.executeQuery();
-			while (rs.next()) {
-				return rs.getString("value");
-			}
-			rs.close();
-		} catch (SQLException ex) {
-			return null;
-		}
-		return null;
 	}
 
 	public final void handleOrbgain() {

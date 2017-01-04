@@ -56,8 +56,8 @@ public class LoginPacket {
 					+ "00 33 21 80 01 CD 76 2D 00 BC 8D BB 01 A0 AC 12 00");
 		}
 		ret ^= (mapleVersion & 0x7FFF);
-		ret ^= (ServerConstants.check << 15);
-		ret ^= ((ServerConstants.subVersion & 0xFF) << 16);
+		ret ^= (ServerConstants.CHECK << 15);
+		ret ^= ((ServerConstants.SUB_VERSION & 0xFF) << 16);
 		String version = String.valueOf(ret);
 		int packetsize = 0;
 		if (ingame) {
@@ -243,12 +243,14 @@ public class LoginPacket {
 		final WritingPacket w = new WritingPacket();
 		w.writeShort(SendPacketOpcode.SERVERLIST.getValue());
 		w.write(serverId);
-		w.writeMapleAsciiString(LoginServer.getInstance().getServerName());
-		w.write(LoginServer.getInstance().getFlag());
+		w.writeMapleAsciiString(ServerConstants.serverName);
+		//TODO 이 flag 값의 용도가 뭔지 알수 없다. 값을 바꾸거나 제거해서 실제 패킷 테스트를 해보자.
+		w.write(ServerConstants.DEFAULT_FLAG);
+		
 		String msg = "";
 		if (GameConstants.isServerReady()) {
 			/* 서버가 데이터가 완전히 로딩되었을 경우 */
-			msg = LoginServer.getInstance().getEventMessage();
+			msg = ServerConstants.eventMessage;
 		} else {
 			/* 서버가 데이터가 완전히 로딩되지 않았을 경우 */
 			msg = "서버가 준비되지 않았습니다.\r\n\r\n필요한 데이터를 모두 \r\n불러올 때 까지 잠시만 \r\n기다려 주시기 바랍니다.";
@@ -259,7 +261,7 @@ public class LoginPacket {
 			w.writeShort(0x64);
 		}
 
-		int lastChannel = ServerConstants.serverCount;
+		int lastChannel = ServerConstants.openChannelCount;
 		Set<Integer> channels = channelLoad.keySet();
 		for (int i = 30; i > 0; i--) {
 			if (channels.contains(i)) {
@@ -276,8 +278,7 @@ public class LoginPacket {
 			} else {
 				load = 50;
 			}
-			w.writeMapleAsciiString(
-					LoginServer.getInstance().getServerName() + "-" + (i == 1 ? i : (i == 2 ? ("20세이상") : (i))));
+			w.writeMapleAsciiString(ServerConstants.serverName + "-" + (i == 1 ? i : (i == 2 ? ("20세이상") : (i))));
 			w.writeInt(load == 0 ? 1 : load >= 50 ? 50 : load);
 			w.write(serverId);
 			w.writeShort(i);

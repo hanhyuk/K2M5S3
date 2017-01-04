@@ -167,42 +167,17 @@ public class SkillStatEffect {
 		}
 		ret.sourceid = sourceid;
 		ret.skill = skill;
-		if (ret.mhpR > 0) {
-			if (!ServerConstants.hp_skillid_dummy.contains(String.valueOf(ret.sourceid)))
-				ServerConstants.hp_skillid_dummy = ServerConstants.hp_skillid_dummy + ret.sourceid + ",";
-		}
 		ret.mhpX = ret.effects.getStats("mhpX");
-		if (ret.mhpX > 0) {
-			if (!ServerConstants.hp_skillid_dummy.contains(String.valueOf(ret.sourceid)))
-				ServerConstants.hp_skillid_dummy = ServerConstants.hp_skillid_dummy + ret.sourceid + ",";
-		}
 		ret.lv2mhp = ret.effects.getStats("lv2mhp");
-		if (ret.lv2mhp > 0) {
-			if (!ServerConstants.hp_skillid_dummy.contains(String.valueOf(ret.sourceid)))
-				ServerConstants.hp_skillid_dummy = ServerConstants.hp_skillid_dummy + ret.sourceid + ",";
-		}
 		ret.mmpR = ret.effects.getStats("mmpR");
-		if (ret.mmpR > 0) {
-			if (!ServerConstants.hp_skillid_dummy.contains(String.valueOf(ret.sourceid)))
-				ServerConstants.hp_skillid_dummy = ServerConstants.hp_skillid_dummy + ret.sourceid + ",";
-		}
 		ret.mmpX = ret.effects.getStats("mmpX");
-		if (ret.mmpX > 0) {
-			if (!ServerConstants.hp_skillid_dummy.contains(String.valueOf(ret.sourceid)))
-				ServerConstants.hp_skillid_dummy = ServerConstants.hp_skillid_dummy + ret.sourceid + ",";
-		}
 		ret.lv2mmp = ret.effects.getStats("lv2mmp");
-		if (ret.lv2mmp > 0) {
-			if (!ServerConstants.hp_skillid_dummy.contains(String.valueOf(ret.sourceid)))
-				ServerConstants.hp_skillid_dummy = ServerConstants.hp_skillid_dummy + ret.sourceid + ",";
-		}
+		
 		if ((!ret.skill && ret.effects.getStats("time") > -1) || (sourceid >= 2022125 && sourceid <= 2022129)) {
 			ret.overTime = true;
 		} else {
 			if (ret.effects.getStats("time") < 2100000000) {
-				ret.effects.setStats("time", ret.effects.getStats("time") * 1000); // milliseconds
-																					// 형태로
-																					// 수정
+				ret.effects.setStats("time", ret.effects.getStats("time") * 1000);
 			}
 			ret.overTime = overTime || ret.isMorph() || ret.isPirateMorph() || ret.isFinalAttack() || ret.isInflation();
 		}
@@ -3527,11 +3502,11 @@ public class SkillStatEffect {
 		case 100001268: { // 륀느의 가호
 			statups.clear();
 			if (GameConstants.isZero(applyto.getJob())) {
-				statups.add(
-						new Triple<BuffStats, Integer, Boolean>(BuffStats.MAPLE_WARRIOR, effects.getStats("x"), false));
+				statups.add(new Triple<BuffStats, Integer, Boolean>(BuffStats.MAPLE_WARRIOR, effects.getStats("x"), false));
 			}
-			statups.add(new Triple<BuffStats, Integer, Boolean>(BuffStats.MAX_DAMAGE, 2100000000, true)); // 데미지
-																											// 제한
+			//맥스 데미지 해제
+			statups.add(new Triple<BuffStats, Integer, Boolean>(BuffStats.MAX_DAMAGE, 2100000000, true));
+																											
 			effects.setStats("time", Integer.MAX_VALUE);
 			break;
 		}

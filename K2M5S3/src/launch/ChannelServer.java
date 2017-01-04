@@ -41,7 +41,6 @@ import constants.subclasses.ServerType;
 import database.MYSQL;
 import handler.MapleServerHandler;
 import launch.helpers.ChracterTransfer;
-import launch.helpers.ShutdownServer;
 import launch.holder.MapleBuffValueHolder;
 import launch.holder.MapleCoolDownValueHolder;
 import launch.holder.MapleDiseaseValueHolder;
@@ -54,15 +53,39 @@ import scripting.EventScriptManager;
 import server.maps.MapleWorldMapProvider;
 import server.maps.PotSystem;
 import server.shops.HiredMerchant;
-import tools.Timer;
 
 public class ChannelServer {
 	private static final Logger logger = LoggerFactory.getLogger(ChannelServer.class);
 
-	private int expRate, mesoRate, dropRate, flag;
-	private short port = (short) ServerConstants.basePorts;
-	private int channel, running_MerchantID = 0;
-	private String serverMessage, ip, name, recommendedMessage, eventMessage;
+	/**
+	 * 경험치배율
+	 */
+	private int expRate;
+	/**
+	 * 메소배율
+	 */
+	private int mesoRate;
+	/**
+	 * 드롭배율
+	 */
+	private int dropRate;
+	/**
+	 * 채널서버 지정 포트(기준포트번호 + count = 지정 포트)
+	 * 
+	 * 예를들어 기준포트 8585 이면 
+	 * 8585 + 0 = 8585(1채널)
+	 * 8585 + 1 = 8586(2채널) ... 이런식이다.
+	 */
+	private short port;
+	/**
+	 * 채널서버 구분 ID
+	 */
+	private int channelId;
+	
+	private int running_MerchantID = 0;
+	
+	private String serverMessage, serverName, eventMessage;
+	
 	private boolean shutdown = false, finishedShutdown = false, MegaphoneMuteState = false;
 	private MaplePlayerHolder players;
 	private Properties props = new Properties();
@@ -80,55 +103,63 @@ public class ChannelServer {
 	private boolean isOp = false;
 	private final String CLIENT_KEY = "CHANNEL_SESSION_KEY";
 
-	public ChannelServer serverStart(int channelid) {
-		this.channel = channelid;
+	public ChannelServer serverStart(int channelId) {
+		this.channelId = channelId;
 		expRate = ServerConstants.defaultExpRate;
 		mesoRate = ServerConstants.defaultMesoRate;
 		dropRate = ServerConstants.defaultDropRate;
 		serverMessage = ServerConstants.serverMessage;
-		eventManager = new EventScriptManager(this, ServerConstants.events.split(" "));
-		name = ServerConstants.serverName;
-		recommendedMessage = ServerConstants.recommendMessage;
+		serverName = ServerConstants.serverName;
 		eventMessage = ServerConstants.eventMessage;
-		flag = ServerConstants.defaultFlag;
+		port = (short) (ServerConstants.channelPort + channelId);
 
-		port = (short) (ServerConstants.basePorts + getChannel());
-
-		IoBuffer.setUseDirectBuffer(false);
-		IoBuffer.setAllocator(new CachedBufferAllocator());
-
+		//TODO 이벤트 스크립트를 등록하는데 관련해서 분석이 필요할듯.
+		eventManager = new EventScriptManager(this, ServerConstants.events.split(","));
+		
+		//TODO 대충 어떤건지는 알겠는데... 일단 분석은 필요함.
 		players = new MaplePlayerHolder();
-		mapFactory.setChannel(this.channel);
-
+		mapFactory.setChannel(this.channelId);
+		
 		try {
+			IoBuffer.setUseDirectBuffer(false);
+			IoBuffer.setAllocator(new CachedBufferAllocator());
+			
 			/* 소켓 설정 시작 */
 			acceptor = new NioSocketAcceptor();
 			acceptor.getSessionConfig().setReadBufferSize(2048);
 			acceptor.getSessionConfig().setIdleTime(IdleStatus.BOTH_IDLE, 10);
 			acceptor.getFilterChain().addLast("codec", new ProtocolCodecFilter(new EncryptionFactory(ServerType.CHANNEL, CLIENT_KEY)));
-			acceptor.setHandler(new MapleServerHandler(ServerType.CHANNEL, channel, CLIENT_KEY));
+			acceptor.setHandler(new MapleServerHandler(ServerType.CHANNEL, channelId, CLIENT_KEY));
 			acceptor.bind(new InetSocketAddress(port));
 			/* 소켓 설정 종료 */
-			logger.info("[알림] 채널 {} 서버가 {} 포트를 성공적으로 개방했습니다.", (getChannel() == 0 ? 1 : getChannel() == 1 ? "20세이상" : getChannel()), port);
+			logger.info("{} 채널 서버({} 포트)를 성공적으로 개방했습니다.", (channelId == 0 ? 1 : channelId == 1 ? "20세이상" : channelId), port);
 			eventManager.init();
 		} catch (IOException e) {
-			logger.warn("[오류] 채널서버가 {} 포트를 개방하는데 실패했습니다. {}", port, e);
+			logger.error("채널서버가 {} 포트를 개방하는데 실패했습니다. {}", port, e);
 		}
-		Runtime.getRuntime().addShutdownHook(new Thread(new ShutDownListener()));
+		
+		//TODO 서버가 정상적으로 종료 또는 강제 종료와 같은 비정상 종료 처리 할 경우
+		//아래 로직이 수행된다. 일단 서버 셧다운 처리와 관련된 로직이 정리되지 않았으므로
+		//사용하지 않도록 주석 처리하고, 이후 정리가 되면 다시 활성화 시킬 예정이다.
+		//Runtime.getRuntime().addShutdownHook(new Thread(new ShutDownListener()));
 		return this;
 	}
 
 	public final void shutdown() {
 		shutdown = true;
-		logger.info("[알림] {} 채널 서버가 종료를 시작합니다.", channel);
+		logger.info("[알림] {} 채널 서버가 종료를 시작합니다.", channelId);
 		closeAllMerchant();
 		PotSystem.SaveToDB();
 		players.disconnectAll();
 		finishedShutdown = true;
 	}
 
-	public final void unbind() {
+	public void unbind() {
 		acceptor.unbind(new InetSocketAddress(port));
+	}
+	
+	public int getManagedSessionCount() {
+		return acceptor.getManagedSessionCount();
 	}
 
 	public final boolean hasFinishedShutdown() {
@@ -191,7 +222,7 @@ public class ChannelServer {
 	}
 
 	public final int getChannel() {
-		return channel;
+		return channelId;
 	}
 
 	public final void setChannel(final int channel) {
@@ -200,16 +231,12 @@ public class ChannelServer {
 		}
 
 		instances.put(channel, this);
-		this.channel = channel;
+		this.channelId = channel;
 		mapFactory.setChannel(channel);
 	}
 
 	public static final Collection<ChannelServer> getAllInstances() {
 		return Collections.unmodifiableCollection(instances.values());
-	}
-
-	public final String getIP() {
-		return ip;
 	}
 
 	public final String getProperty(final String name) {
@@ -230,7 +257,7 @@ public class ChannelServer {
 
 	public final void reloadEvents() {
 		eventManager.cancel();
-		eventManager = new EventScriptManager(this, ServerConstants.events.split(" "));
+		eventManager = new EventScriptManager(this, ServerConstants.events.split(","));
 		eventManager.init();
 
 	}
@@ -278,13 +305,13 @@ public class ChannelServer {
 		gsStore.put(gid, mgs);
 	}
 
-	public static final void startServer() {
+	public static final void start(final int openChannelCount) {
 		try {
-			for (int i = 0; i < ServerConstants.serverCount; i++) {
+			for (int i = 0; i < openChannelCount; i++) {
 				instances.put(i, new ChannelServer().serverStart(i));
 			}
 		} catch (Exception e) {
-			logger.warn("[오류] 채널 서버 오픈이 실패했습니다. {}", e);
+			logger.error("[오류] 채널 서버 오픈이 실패했습니다. {}", e);
 		}
 	}
 
@@ -504,10 +531,6 @@ public class ChannelServer {
 
 	public void toggleMegaphoneMuteState() {
 		smegaMuted = !smegaMuted;
-	}
-
-	public void shutdownLogin() {
-		LoginServer.getInstance().shutdown();
 	}
 
 	public void updateBuddies(int characterId, int channel, int[] buddies, boolean offline) {
@@ -850,28 +873,8 @@ public class ChannelServer {
 		return WideObjectHolder.getInstance().getPlayerBuffStorage().getDiseaseFromStorage(playerId);
 	}
 
-	public static void shutdown(int time) {
-		logger.info("[종료] 로그인서버를 닫는중입니다.");
-		LoginServer.getInstance().shutdown();
-		for (ChannelServer cserv : ChannelServer.getAllInstances()) {
-			Timer.WorldTimer.getInstance().schedule(new ShutdownServer(cserv.getChannel()), time);
-		}
-	}
-
-	public int getChannelCount() {
-		return ServerConstants.serverCount;
-	}
-
 	public String getServerName() {
-		return name;
-	}
-
-	public String getRecommendedMessage() {
-		return recommendedMessage;
-	}
-
-	public int getFlag() {
-		return flag;
+		return serverName;
 	}
 
 	public String getEventMessage() {

@@ -13,6 +13,18 @@ import packet.transfer.write.Packet;
 import tools.Timer.WorldTimer;
 
 public class MaplePlayerHolder {
+	
+	private final int REPEAT_TIME = 1000 * 60 * 15; //15분
+	private final Lock mutex = new ReentrantLock();
+	private final Lock relatedToPendingMutex = new ReentrantLock();
+	private final Map<String, MapleCharacter> nameToCharMap = new HashMap<String, MapleCharacter>();
+	private final Map<Integer, MapleCharacter> idToCharMap = new HashMap<Integer, MapleCharacter>();
+	private final Map<Integer, Object> effectsMap = new HashMap<Integer, Object>();
+	private final Map<Integer, ChracterTransfer> pendingCharacterMap = new HashMap<Integer, ChracterTransfer>();
+
+	public MaplePlayerHolder() {
+		WorldTimer.getInstance().register(new PersistingTask(), REPEAT_TIME);
+	}
 
 	/**
 	 * 사용자가 채널을 변경하거나 캐시샵 입장/퇴장 할때...
@@ -41,18 +53,6 @@ public class MaplePlayerHolder {
 		}
 	}
 	
-	private final int REPEAT_TIME = 1000 * 60 * 15; //15분
-	private final Lock mutex = new ReentrantLock();
-	private final Lock relatedToPendingMutex = new ReentrantLock();
-	private final Map<String, MapleCharacter> nameToCharMap = new HashMap<String, MapleCharacter>();
-	private final Map<Integer, MapleCharacter> idToCharMap = new HashMap<Integer, MapleCharacter>();
-	private final Map<Integer, Object> effectsMap = new HashMap<Integer, Object>();
-	private final Map<Integer, ChracterTransfer> pendingCharacterMap = new HashMap<Integer, ChracterTransfer>();
-
-	public MaplePlayerHolder() {
-		WorldTimer.getInstance().register(new PersistingTask(), REPEAT_TIME);
-	}
-
 	/**
 	 * 현재 접속중인 GM 유저들에게 메세지를 보낸다.
 	 */

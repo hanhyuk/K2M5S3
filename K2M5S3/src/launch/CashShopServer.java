@@ -22,7 +22,7 @@ import packet.crypto.EncryptionFactory;
 public class CashShopServer {
 	private static final Logger logger = LoggerFactory.getLogger(CashShopServer.class);
 
-	private final int PORT = ServerConstants.CashShopPort;
+	private final int PORT = ServerConstants.cashShopPort;
 	private IoAcceptor acceptor;
 	private MapleCashShopPlayerHolder players;
 	private static final CashShopServer instance = new CashShopServer();
@@ -32,7 +32,7 @@ public class CashShopServer {
 		return instance;
 	}
 
-	public final void run_startup_configurations() {
+	public void start() {
 		IoBuffer.setUseDirectBuffer(false);
 		IoBuffer.setAllocator(new CachedBufferAllocator());
 		players = new MapleCashShopPlayerHolder();
@@ -49,7 +49,10 @@ public class CashShopServer {
 		} catch (IOException e) {
 			logger.info("[알림] 캐시샵서버가 {} 포트를 개방하는데 실패했습니다. {}", PORT, e);
 		}
-		Runtime.getRuntime().addShutdownHook(new Thread(new ShutDownListener()));
+		//TODO 서버가 정상적으로 종료 또는 강제 종료와 같은 비정상 종료 처리 할 경우
+		//아래 로직이 수행된다. 일단 서버 셧다운 처리와 관련된 로직이 정리되지 않았으므로
+		//사용하지 않도록 주석 처리하고, 이후 정리가 되면 다시 활성화 시킬 예정이다.
+		//Runtime.getRuntime().addShutdownHook(new Thread(new ShutDownListener()));
 	}
 
 	public final MapleCashShopPlayerHolder getPlayerStorage() {
@@ -61,6 +64,10 @@ public class CashShopServer {
 		acceptor.unbind(new InetSocketAddress(PORT));
 	}
 
+	public int getManagedSessionCount() {
+		return acceptor.getManagedSessionCount();
+	}
+	
 	private final class ShutDownListener implements Runnable {
 
 		@Override

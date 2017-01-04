@@ -47,7 +47,7 @@ public class EnforceSystem {
                 success = true;
             }
             if (c.getPlayer().scrollcount() % 3 == 0 && c.getPlayer().scrollcount() != 12) {
-                if (ServerConstants.feverTime) {
+                if (ServerConstants.IS_FEVER_TIME) {
                     if (Randomizer.isSuccess(persentFever[((sposition + 1) % 3)])) {
                         success = true;
                     }
@@ -58,7 +58,7 @@ public class EnforceSystem {
                 }
             }
             if (c.getPlayer().scrollcount() % 4 == 0 || c.getPlayer().scrollcount() == 12) {
-                if (ServerConstants.feverTime) {
+                if (ServerConstants.IS_FEVER_TIME) {
                     if (Randomizer.isSuccess(persent1Fever[((sposition + 1) % 4)])) {
                         success = true;
                     }
@@ -89,9 +89,9 @@ public class EnforceSystem {
             } else {
                 item = (Equip) c.getPlayer().getInventory(MapleInventoryType.EQUIPPED).getItem(position);
             }
-            c.send(AddItemOnSystem(c, c.getPlayer().scrollcount(), item, a, ServerConstants.feverTime ? 1 : 0));
+            c.send(AddItemOnSystem(c, c.getPlayer().scrollcount(), item, a, ServerConstants.IS_FEVER_TIME ? 1 : 0));
         } else if (a == 0x35) {//StarForceChance
-            if (ServerConstants.feverTime || c.getPlayer().getGMLevel() > 0) {
+            if (ServerConstants.IS_FEVER_TIME || c.getPlayer().getGMLevel() > 0) {
                 if (c.getPlayer().ForcingItem() > 0) {
                     item = (Equip) c.getPlayer().getInventory(MapleInventoryType.EQUIP).getItem((short)(c.getPlayer().ForcingItem()));
                 } else {
@@ -735,7 +735,7 @@ public class EnforceSystem {
                 chr.StarPers(1, 59, 40);
                 break;
         }
-        if (ServerConstants.feverTime || chr.getGMLevel() > 0) {
+        if (ServerConstants.IS_FEVER_TIME || chr.getGMLevel() > 0) {
             chr.StarPers(100, 0, 0);
         }
     }
@@ -1008,7 +1008,7 @@ public class EnforceSystem {
                 }
                 break;
         }
-        if (ServerConstants.feverTime || chr.getGMLevel() > 0) {
+        if (ServerConstants.IS_FEVER_TIME || chr.getGMLevel() > 0) {
             success = 100;
             FailAndDown = 0;
             FailAndDestroy = 0;

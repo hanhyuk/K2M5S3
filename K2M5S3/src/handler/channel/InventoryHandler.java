@@ -2247,9 +2247,6 @@ public class InventoryHandler {
                     }
                     boolean ear = rh.readByte() > 0;
                     c.getChannelServer().broadcastSmegaPacket(MainPacketCreator.tripleSmega(messages, ear, c.getChannel()));
-                    //     LoggerChatting.writeLog(LoggerChatting.chatLog, LoggerChatting.getChatLogType("세줄확성기", c.getPlayer(), messages.get(0)));
-                    //      LoggerChatting.writeLog(LoggerChatting.chatLog, LoggerChatting.getChatLogType("세줄확성기", c.getPlayer(), messages.get(1)));
-                    //      LoggerChatting.writeLog(LoggerChatting.chatLog, LoggerChatting.getChatLogType("세줄확성기", c.getPlayer(), messages.get(2)));
                     used = true;
                 } else {
                     c.getPlayer().dropMessage(5, "현재 확성기를 사용할 수 없습니다.");

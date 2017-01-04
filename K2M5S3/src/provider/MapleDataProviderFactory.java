@@ -14,10 +14,8 @@ public class MapleDataProviderFactory {
 	}
 	
 	public static File fileInWZPath(String filename) {
-		return new File(getRootWzPath(), MIDDLE_DIR_NAME + filename);
+		return new File(ServerConstants.getRootPath(), MIDDLE_DIR_NAME + filename);
 	}
-	
-	
 	
 	private static MapleDataProvider getDataProvider(Object in) {
 		return getWZ(in, false);
@@ -29,13 +27,5 @@ public class MapleDataProviderFactory {
 			return new XMLWZFile(fileIn);
 		}
 		throw new IllegalArgumentException("Can't create data provider for input " + in);
-	}
-	
-	private static String getRootWzPath() {
-		if( ServerConstants.isLocal ) {
-			return ServerConstants.LOCAL_ROOT_PATH; 
-		} else {
-			return ServerConstants.ROOT_PATH;
-		}
 	}
 }

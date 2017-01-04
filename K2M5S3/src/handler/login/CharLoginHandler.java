@@ -39,11 +39,9 @@ public class CharLoginHandler {
 		if (!GameConstants.isServerReady()) {
 			c.send(MainPacketCreator.serverNotice(1, "서버데이터를 불러오는 중입니다. 잠시만 기다려주세요."));
 			c.send(LoginPacket.getLoginFailed(20));
-			c.addLoginTryCount();
 		} else if (ServerConstants.serverCheck && !c.isGm()) {
 			c.send(MainPacketCreator.serverNotice(1, ServerConstants.serverCheckMessage));
 			c.send(LoginPacket.getLoginFailed(20));
-			c.addLoginTryCount();
 		} else {
 			rh.skip(22);
 
@@ -55,7 +53,6 @@ public class CharLoginHandler {
 				AutoRegister.registerAccount(c, login, pwd);
 				c.send(MainPacketCreator.serverNotice(1, "계정이 생성 되었습니다.\r\n다시 로그인 하세요."));
 				c.send(LoginPacket.getLoginFailed(20));
-				c.addLoginTryCount();
 			} else if( CommonType.ACCOUNT_EXISTS == checkType ) {
 				CommonType commonType = c.checkLoginAvailability(login, pwd);
 
@@ -65,28 +62,18 @@ public class CharLoginHandler {
 					if( isChanged ) {
 						c.send(LoginPacket.getAuthSuccessRequest(c));
 						CharLoginHandler.getDisplayChannel(true, c);
-						c.clearLoginTryCount();
 					} else {
 						logger.debug("updateLoginState() - 사용자의 계정(" + login + ") 접속 상태값 변경 실패. 원인 파악 필요.");
 						c.send(LoginPacket.getLoginFailed(6));
-						c.addLoginTryCount();
 					}
 				} else if (CommonType.ACCOUNT_BAN == commonType) {
 					c.send(LoginPacket.getLoginFailed(3));
-					c.addLoginTryCount();
 				} else if (CommonType.LOGIN_ING == commonType) {
 					c.send(LoginPacket.getLoginFailed(7));
-					c.addLoginTryCount();
 				} else if (CommonType.LOGIN_IMPOSSIBLE == commonType) {
 					logger.warn("계정 정보를 확인 할 수 없습니다. 이런 경우가 자주 발생한다면 시스템적으로 문제가 있는지 점검이 필요함.");
 					c.send(LoginPacket.getLoginFailed(8));
 				}
-			}
-
-			//연속해서 로그인에 실패 할 경우 접속 종료 처리
-			if (c.getLoginTryCount() >= ServerConstants.loginTryMaxCount) { 
-				//TODO 특이사항의 경우 로그 처리 필요.
-				c.getSession().closeNow();
 			}
 		}
 	}
@@ -195,7 +182,7 @@ public class CharLoginHandler {
 		//TODO 1,2차 로그인 이후 캐릭터 생성을 완료 할때 호출되는데
 		//1,2차 로그인 상태인지 확인하는 처리가 필요하다.
 		
-		client.getSession().write(MainPacketCreator.getServerIP(client, ServerConstants.basePorts + client.getChannel(), ServerConstants.BuddyChatPort, rh.readInt()));
+		client.getSession().write(MainPacketCreator.getServerIP(client, ServerConstants.channelPort + client.getChannel(), ServerConstants.buddyChatPort, rh.readInt()));
 	}
 
 	/**
@@ -592,7 +579,7 @@ public class CharLoginHandler {
 		}
 		if (c.CheckSecondPassword(password)) {
 			c.updateLoginState(AccountStatusType.SECOND_LOGIN.getValue(), c.getSessionIPAddress());
-			c.getSession().write(MainPacketCreator.getServerIP(c, ServerConstants.ChannelPort + c.getChannel(), ServerConstants.BuddyChatPort, charId));
+			c.getSession().write(MainPacketCreator.getServerIP(c, ServerConstants.channelPort + c.getChannel(), ServerConstants.buddyChatPort, charId));
 		} else {
 			c.getSession().write(LoginPacket.secondPwError((byte) 0x14));
 		}

@@ -1943,8 +1943,6 @@ public class MapleMap {
 
 		if (mapid == ServerConstants.startMap) {
 			chr.send(MainPacketCreator.musicChange("BgmEvent2/risingStar2"));
-			mapEffect = new MapleMapEffect(ServerConstants.serverWelcome, 5121035);
-			chr.send(mapEffect.makeStartData());
 		}
 
 		if (mapid == 109050001) { // 이벤트맵 나가는 곳

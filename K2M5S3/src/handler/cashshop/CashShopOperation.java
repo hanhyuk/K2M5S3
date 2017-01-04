@@ -47,7 +47,7 @@ public class CashShopOperation {
 		cs.getPlayerStorage().deregisterPlayer(hp);
 		ha.updateLoginState(AccountStatusType.OUT_CASHSHOP.getValue(), ha.getSessionIPAddress());
 		ChannelServer.getInstance(ha.getChannel()).ChannelChange_Data(new ChracterTransfer(hp), hp.getId(), ha.getChannel());
-		ha.getSession().write(MainPacketCreator.getChannelChange(ha, ServerConstants.basePorts + (ha.getChannel())));
+		ha.getSession().write(MainPacketCreator.getChannelChange(ha, ServerConstants.channelPort + (ha.getChannel())));
 		hp.saveToDB(false, true);
 		try {
 			if (hp.getCashInventory() != null) {

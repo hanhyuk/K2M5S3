@@ -17,9 +17,6 @@ import tools.Pair;
  * 차단 된 아이피는 서버를 리붓하기 전에는 접속 할 수 없다.
  * 
  * @deprecated 현재 사용하지 않음
- * FIXME 접속기를 통해서 접속할 경우 아이피를 체크하는건 현재 아무 소용이 없다.
- * 그래서 접속기쪽 소스를 분석해서 뭔가 대책을 세워야 한다.
- * 
  */
 public class IpCheckFilter extends IoFilterAdapter {
 	private static final Logger logger = LoggerFactory.getLogger(IpCheckFilter.class);

@@ -1224,20 +1224,6 @@ public class NPCConversationManager extends AbstractPlayerInteraction {
 		t.schedule(r, period);
 	}
 
-	public void setTempMessage(String text, int time) {
-		final String origin = LoginServer.getInstance().getEventMessage();
-		long period = time * 1000L;
-		LoginServer.getInstance().setEventMessage(text);
-		EtcTimer t = EtcTimer.getInstance();
-		Runnable r = new Runnable() {
-			@Override
-			public void run() {
-				LoginServer.getInstance().setEventMessage(origin);
-			}
-		};
-		t.schedule(r, period);
-	}
-
 	public void changeMap(int mapid) {
 		ChannelServer cserv = c.getChannelServer();
 		MapleMap target = null;

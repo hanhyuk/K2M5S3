@@ -152,15 +152,16 @@ public class MapleServerHandler extends IoHandlerAdapter {
 	@Override
 	public void messageReceived(final IoSession session, final Object message) throws Exception {
 		final ReadingMaple rh = new ReadingMaple(new ByteStream((byte[]) message));
-		final short header_num = rh.readShort();
-		RecvPacketOpcode recv = RecvPacketOpcode.getRecvOpcodes().get(header_num);
-		if (recv != null) {
-			final MapleClient c = (MapleClient) session.getAttribute(clientKey);
+		final short headerValue = rh.readShort();
+		final RecvPacketOpcode opcode = RecvPacketOpcode.getOpcode(headerValue);
+		
+		if (opcode != null) {
+			final MapleClient client = (MapleClient) session.getAttribute(clientKey);
 			try {
-				handlePacket(recv, rh, c, type);
+				handlePacket(opcode, rh, client, type);
 			} catch (Exception e) {
-				logger.debug("{}", e);
-				c.getSession().write(MainPacketCreator.resetActions());
+				client.getSession().write(MainPacketCreator.resetActions());
+				logger.error("recv handle error {}", e);
 			}
 		}
 	}
@@ -182,6 +183,7 @@ public class MapleServerHandler extends IoHandlerAdapter {
 	}
 
 	public static final void handlePacket(final RecvPacketOpcode header, final ReadingMaple rh, final MapleClient client, final ServerType type) throws InterruptedException {
+		
 		switch (header) {
 		case SERVER_MESSAGE_RESPONSE:
 			//TODO 클라이언트에서 팝업창 띄울때 해당 패킷이 전달되는걸로 추측.
@@ -193,10 +195,9 @@ public class MapleServerHandler extends IoHandlerAdapter {
 			byte pLocale = rh.readByte();
 			short pVersion = rh.readShort();
 			short pString = rh.readShort();
-			if (pLocale != ServerConstants.check && pVersion != ServerConstants.MAPLE_VERSION
-					&& pString != ServerConstants.subVersion) {
+			if (pLocale != ServerConstants.CHECK && pVersion != ServerConstants.MAPLE_VERSION && pString != ServerConstants.SUB_VERSION) {
 				logger.debug("Client Checksum Failed: {}", client.getSessionIPAddress());
-				client.getSession().closeNow();
+				SessionFlag.forceDisconnect(client.getSession());
 			}
 			break;
 		case BUDDY_HELLO:

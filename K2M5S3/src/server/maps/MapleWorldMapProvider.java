@@ -29,8 +29,8 @@ import tools.StringUtil;
 public class MapleWorldMapProvider {
 	private static final Logger logger = LoggerFactory.getLogger(MapleWorldMapProvider.class);
 
-	private static final MapleDataProvider source = MapleDataProviderFactory.getDataProvider("Map.wz");
-	private static final MapleData nameData = MapleDataProviderFactory.getDataProvider("String.wz").getData("Map.img");
+	private static final MapleDataProvider mapWz = MapleDataProviderFactory.getDataProvider("Map.wz");
+	private static final MapleData mapImg = MapleDataProviderFactory.getDataProvider("String.wz").getData("Map.img");
 	private final Map<Integer, MapleMap> maps = new HashMap<Integer, MapleMap>();
 	private int channel;
 
@@ -38,7 +38,9 @@ public class MapleWorldMapProvider {
 		return getMap(mapid, true, true, true);
 	}
 
-	// backwards-compatible
+	/**
+	 * @deprecated 현재 사용되는 곳이 없음. 추후 사용 가능성 있음.
+	 */
 	public final MapleMap getMap(final int mapid, final boolean respawns, final boolean npcs) {
 		return getMap(mapid, respawns, npcs, true);
 	}
@@ -55,7 +57,7 @@ public class MapleWorldMapProvider {
 					return map;
 				}
 				// Gen체크 시작
-				MapleData fieldgenData = source.getData(getFieldGenerator());
+				MapleData fieldgenData = mapWz.getData(getFieldGenerator());
 				List<MapleData> fieldgenmaps = fieldgenData.getChildren();
 				int templatemapid = mapid;
 				for (int i = 0; i < fieldgenmaps.size(); i++) {
@@ -71,11 +73,11 @@ public class MapleWorldMapProvider {
 					}
 				}
 				// Gen체크 끝
-				MapleData mapData = source.getData(getMapName(templatemapid));
+				MapleData mapData = mapWz.getData(getMapName(templatemapid));
 
 				MapleData link = mapData.getChildByPath("info/link");
 				if (link != null) {
-					mapData = source.getData(getMapName(MapleDataTool.getIntConvert("info/link", mapData)));
+					mapData = mapWz.getData(getMapName(MapleDataTool.getIntConvert("info/link", mapData)));
 				}
 				float monsterRate = 0;
 				if (respawns) {
@@ -313,8 +315,8 @@ public class MapleWorldMapProvider {
 					logger.debug("[오류] 보스맵 쿨타임을 적용시키는데 실패했습니다. {}", e);
 				}
 				try {
-					map.setMapName(MapleDataTool.getString("mapName", nameData.getChildByPath(getMapStringName(omapid)), ""));
-					map.setStreetName(MapleDataTool.getString("streetName", nameData.getChildByPath(getMapStringName(omapid)), ""));
+					map.setMapName(MapleDataTool.getString("mapName", mapImg.getChildByPath(getMapStringName(omapid)), ""));
+					map.setStreetName(MapleDataTool.getString("streetName", mapImg.getChildByPath(getMapStringName(omapid)), ""));
 				} catch (Exception e) {
 					map.setMapName("");
 					map.setStreetName("");
@@ -342,10 +344,10 @@ public class MapleWorldMapProvider {
 	}
 
 	public MapleMap CreateInstanceMap(int mapid, boolean respawns, boolean npcs, boolean reactors) {
-		MapleData mapData = source.getData(getMapName(mapid));
+		MapleData mapData = mapWz.getData(getMapName(mapid));
 		MapleData link = mapData.getChildByPath("info/link");
 		if (link != null) {
-			mapData = source.getData(getMapName(MapleDataTool.getIntConvert("info/link", mapData)));
+			mapData = mapWz.getData(getMapName(MapleDataTool.getIntConvert("info/link", mapData)));
 		}
 
 		float monsterRate = 0;
@@ -444,8 +446,8 @@ public class MapleWorldMapProvider {
 			}
 		}
 		try {
-			map.setMapName(MapleDataTool.getString("mapName", nameData.getChildByPath(getMapStringName(mapid)), ""));
-			map.setStreetName(MapleDataTool.getString("streetName", nameData.getChildByPath(getMapStringName(mapid)), ""));
+			map.setMapName(MapleDataTool.getString("mapName", mapImg.getChildByPath(getMapStringName(mapid)), ""));
+			map.setStreetName(MapleDataTool.getString("streetName", mapImg.getChildByPath(getMapStringName(mapid)), ""));
 		} catch (Exception e) {
 			map.setMapName("");
 			map.setStreetName("");

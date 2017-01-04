@@ -674,29 +674,6 @@ public class MapleCharacterStat {
 			if (buff != null) {
 				localmaxmp += buff.intValue();
 			}
-			for (String strid : ServerConstants.hp_skillid_real) {
-				if (strid != null) {
-					int skillid = Integer.parseInt(strid);
-					if (chra.getSkillLevel(skillid) > 0 && SkillFactory.getSkill(skillid).getEffect(chra.getSkillLevel(skillid)).getLv2Mhp() > 0) {
-						localmaxhp += (SkillFactory.getSkill(skillid).getEffect(chra.getSkillLevel(skillid)).getLv2Mhp() + 5) * chra.getLevel();
-					}
-					if (chra.getSkillLevel(skillid) > 0 && SkillFactory.getSkill(skillid).getEffect(chra.getSkillLevel(skillid)).getMhpX() > 0) {
-						localmaxhp += SkillFactory.getSkill(skillid).getEffect(chra.getSkillLevel(skillid)).getMhpX();
-					}
-					if (chra.getSkillLevel(skillid) > 0 && SkillFactory.getSkill(skillid).getEffect(chra.getSkillLevel(skillid)).getMhpR() > 0) {
-						localmaxhp += (int) (localmaxhp * (SkillFactory.getSkill(skillid).getEffect(chra.getSkillLevel(skillid)).getMhpR() * 0.01D));
-					}
-					if (chra.getSkillLevel(skillid) > 0 && SkillFactory.getSkill(skillid).getEffect(chra.getSkillLevel(skillid)).getLv2Mmp() > 0) {
-						localmaxmp += (SkillFactory.getSkill(skillid).getEffect(chra.getSkillLevel(skillid)).getLv2Mmp() + 5) * chra.getLevel();
-					}
-					if (chra.getSkillLevel(skillid) > 0 && SkillFactory.getSkill(skillid).getEffect(chra.getSkillLevel(skillid)).getMmpX() > 0) {
-						localmaxmp += SkillFactory.getSkill(skillid).getEffect(chra.getSkillLevel(skillid)).getMmpX();
-					}
-					if (chra.getSkillLevel(skillid) > 0 && SkillFactory.getSkill(skillid).getEffect(chra.getSkillLevel(skillid)).getMmpR() > 0) {
-						localmaxmp += (int) (localmaxmp * (SkillFactory.getSkill(skillid).getEffect(chra.getSkillLevel(skillid)).getMmpR() * 0.01D));
-					}
-				}
-			}
 			buff = chra.getBuffedValue(BuffStats.CONVERSION);
 			if (buff != null) {
 				localmaxhp += (int) (Math.round((buff.intValue() / 100.0D) + localmaxhp));

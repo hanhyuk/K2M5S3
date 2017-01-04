@@ -50,7 +50,7 @@ public class WorldConnected {
 	public static Map<Integer, Integer> getConnected(int serverId) {
 		Map<Integer, Integer> ret = new HashMap<Integer, Integer>();
 		int total = 0;
-		for (int i = 0; i < ServerConstants.serverCount; i++) {
+		for (int i = 0; i < ServerConstants.openChannelCount; i++) {
 			int curConnected = ChannelServer.getInstance(i).getPlayerStorage().getConnectedClients();
 			ret.put(i, curConnected);
 			total += curConnected;
@@ -179,7 +179,7 @@ public class WorldConnected {
 	public static Map<Integer, Integer> getConnected() {
 		Map<Integer, Integer> ret = new HashMap<Integer, Integer>();
 		int total = 0;
-		for (int i = 0; i < ServerConstants.serverCount; i++) {
+		for (int i = 0; i < ServerConstants.openChannelCount; i++) {
 			int curConnected = ChannelServer.getInstance(i).getPlayerStorage().getConnectedClients();
 			ret.put(i, curConnected);
 			total += curConnected;

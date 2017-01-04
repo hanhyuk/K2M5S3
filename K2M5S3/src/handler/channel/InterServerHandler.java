@@ -40,6 +40,7 @@ import packet.transfer.write.Packet;
 import scripting.NPCScriptManager;
 import server.maps.FieldLimitType;
 import server.maps.MapleMap;
+import server.maps.MapleMapEffect;
 import server.shops.IMapleCharacterShop;
 
 public class InterServerHandler {
@@ -62,7 +63,7 @@ public class InterServerHandler {
 		}
 		final ChannelServer ch = ChannelServer.getInstance(c.getChannel());
 
-		String ip = ServerConstants.Host;
+		String ip = ServerConstants.host;
 
 		if (ip == null) { // Cash Shop not init yet
 			c.getSession().write(MainPacketCreator.serverNotice(5, "캐시샵을 현재 사용할 수 없습니다."));
@@ -92,7 +93,7 @@ public class InterServerHandler {
 		ch.removePlayer(chr);
 		c.updateLoginState(AccountStatusType.CHANGE_CHANNEL.getValue(), c.getSessionIPAddress());
 
-		c.getSession().write(MainPacketCreator.getChannelChange(c, ServerConstants.CashShopPort)); // default
+		c.getSession().write(MainPacketCreator.getChannelChange(c, ServerConstants.cashShopPort)); // default
 																									// cashshop
 																									// port
 		chr.saveToDB(false, false);
@@ -245,7 +246,7 @@ public class InterServerHandler {
 		}
 
 		/* 최대데미지 해제 */
-		if (ServerConstants.UnlockMaxDamage) {
+		if (ServerConstants.IS_UNLOCK_MAX_DAMAGE) {
 			player.unlockMaxDamage();
 		}
 
@@ -264,14 +265,14 @@ public class InterServerHandler {
 		}
 
 		/* 피버 타임 */
-		if (ServerConstants.feverTime) {
+		if (ServerConstants.IS_FEVER_TIME) {
 			c.getSession().write(MainPacketCreator.feverTime());
 		}
 
 		c.getPlayer().send(UIPacket.detailShowInfo("우리는 한가족 ! " + ServerConstants.serverName + "에 오신걸 환영합니다.", 3));
 		c.getSession().write(MainPacketCreator.serverMessage(ServerConstants.serverMessage));
 		if (player.getMapId() == ServerConstants.startMap) {
-			c.getSession().write(ZeroSkill.NPCTalk(ServerConstants.beginner));
+			c.getSession().write(ZeroSkill.NPCTalk(ServerConstants.startMapMessage));
 		} else {
 			c.getSession().write(ZeroSkill.NPCTalk(ServerConstants.serverNotice));
 			c.getSession().write(MainPacketCreator.sendHint(ServerConstants.serverHint, 300, 15));
@@ -359,7 +360,7 @@ public class InterServerHandler {
 		ChannelServer.ChannelChange_Data(new ChracterTransfer(chr), chr.getId(), channel);
 		ch.removePlayer(chr);
 		c.updateLoginState(AccountStatusType.CHANGE_CHANNEL.getValue(), c.getSessionIPAddress());
-		c.getSession().write(MainPacketCreator.getChannelChange(c, ServerConstants.basePorts + (channel)));
+		c.getSession().write(MainPacketCreator.getChannelChange(c, ServerConstants.channelPort + (channel)));
 		chr.saveToDB(false, false);
 		chr.getMap().removePlayer(chr);
 		c.setPlayer(null);

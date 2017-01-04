@@ -238,7 +238,31 @@ public abstract class Timer {
 		}
 	}
 
+	/**
+	 * 스케쥴러(Timer) 관리를 위한 스레드풀 초기화
+	 */
+	public static void startAllTimer() {
+		tools.Timer.WorldTimer.getInstance().start();
+		tools.Timer.EtcTimer.getInstance().start();
+		tools.Timer.MapTimer.getInstance().start();
+		tools.Timer.CloneTimer.getInstance().start();
+		tools.Timer.EventTimer.getInstance().start();
+		tools.Timer.BuffTimer.getInstance().start();
+		tools.Timer.PingTimer.getInstance().start();
+		tools.Timer.ShowTimer.getInstance().start();
+	}
 	
-
-	
+	/**
+	 * 스케쥴러(Timer) 관리를 위한 스레드풀 종료
+	 */
+	public static void stopAllTimer() {
+		tools.Timer.WorldTimer.getInstance().stop();
+		tools.Timer.EtcTimer.getInstance().stop();
+		tools.Timer.MapTimer.getInstance().stop();
+		tools.Timer.CloneTimer.getInstance().stop();
+		tools.Timer.EventTimer.getInstance().stop();
+		tools.Timer.BuffTimer.getInstance().stop();
+		tools.Timer.PingTimer.getInstance().stop();
+		tools.Timer.ShowTimer.getInstance().stop();
+	}
 }

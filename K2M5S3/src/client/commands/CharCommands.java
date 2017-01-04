@@ -323,22 +323,6 @@ public class CharCommands implements Command {
             } else {
                 c.getPlayer().dropMessage(5, "대상 플레이어를 발견하지 못했습니다.");
             }
-        } else if (splitted[0].equals("!피버타임")) {
-            if (ServerConstants.feverTime) {
-                ServerConstants.feverTime = false;
-                c.getPlayer().dropMessage(5, "[GM알림] 피버타임이 해제되었습니다.");
-            } else {
-                ServerConstants.feverTime = true;
-                c.getPlayer().dropMessage(5, "[GM알림] 피버타임이 설정되었습니다.");
-            }
-        } else if (splitted[0].equals("!서버점검")) {
-            if (ServerConstants.serverCheck) {
-                ServerConstants.serverCheck = false;
-                c.getPlayer().dropMessage(5, "[GM알림] 서버점검이 해제되었습니다.");
-            } else {
-                ServerConstants.serverCheck = true;
-                c.getPlayer().dropMessage(5, "[GM알림] 서버점검이 설정되었습니다.");
-            }
         }
     }
 
@@ -371,9 +355,7 @@ public class CharCommands implements Command {
                     new CommandDefinition("스킬마스터", "<직업코드>", "직업코드의 스킬을 모두 최대레벨로 올립니다.", 5),
                     new CommandDefinition("스킬초기화","", "직업코드의 스킬을 모두 최소레벨로 내립니다.", 5),
                     new CommandDefinition("후원포인트지급", "<금액>", "후원포인트를 지급합니다.",6),
-                    new CommandDefinition("피버타임", "", "피버타임을 설정합니다.", 5),
                     new CommandDefinition("패킷출력", "", "패킷출력을 설정합니다.", 5),
-                    new CommandDefinition("서버점검", "", "서버점검을 설정합니다.", 5),
         };
     }
 }

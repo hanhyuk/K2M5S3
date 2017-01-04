@@ -23,7 +23,7 @@ public class RewardScroll {
 
 	protected RewardScroll() {
 		try {
-			FileReader fl = new FileReader(ServerConstants.getRootPath() + "Settings/RewardScroll.properties");
+			FileReader fl = new FileReader(ServerConstants.getRootPath() + ServerConstants.CONFIG_REWARD_SCROLL_PROP_PATH);
 			BufferedReader br = new BufferedReader(fl);
 			String[] readSplit = new String[2];
 			String readLine = null;

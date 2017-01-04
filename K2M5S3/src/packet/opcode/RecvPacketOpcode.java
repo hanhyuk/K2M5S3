@@ -1,8 +1,6 @@
 package packet.opcode;
 
 import java.io.File;
-import java.util.HashMap;
-import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,7 +9,7 @@ import constants.ServerConstants;
 import tools.IniFileProcess;
 
 public enum RecvPacketOpcode {
-	//추가(2016.12.29)
+	//hyuk. 추가(2016.12.29)
 	SERVER_MESSAGE_RESPONSE,
 	
     //퐁, 클라이언트.
@@ -246,25 +244,36 @@ public enum RecvPacketOpcode {
 	private static final Logger logger = LoggerFactory.getLogger(RecvPacketOpcode.class);
 	
     private short value;
-    private final static Map<Short, RecvPacketOpcode> RecvOpcodes = new HashMap<>();
     
-    
-    public static void initalized() {
-        if (!RecvOpcodes.isEmpty()) {
-            RecvOpcodes.clear();
+    public static String getOpcodeName(short value) {
+    	String result = "UNKNOWN";
+    	
+        for (RecvPacketOpcode opcode : values()) {
+            if (opcode.getValue() == value) {
+                result = opcode.name();
+                break;
+            }
         }
-        for (RecvPacketOpcode recv : RecvPacketOpcode.values()) {
-           RecvOpcodes.put(recv.getValue(), recv);
-        }
+        
+        return result;
     }
     
-    public static Map<Short, RecvPacketOpcode> getRecvOpcodes() {
-        return RecvOpcodes;
+    public static RecvPacketOpcode getOpcode(short value) {
+    	RecvPacketOpcode result = null;
+    	
+        for (RecvPacketOpcode opcode : values()) {
+            if (opcode.getValue() == value) {
+                result = opcode;
+                break;
+            }
+        }
+        
+        return result;
     }
     
     public static void loadOpcode() {
         try {
-            IniFileProcess storage = new IniFileProcess(new File(ServerConstants.getRootPath() + "Settings/Packet/RecvPacket.ini"));
+            IniFileProcess storage = new IniFileProcess(new File(ServerConstants.getRootPath() + ServerConstants.CONFIG_RECV_PACKET_INI_PATH));
             for (RecvPacketOpcode packet : RecvPacketOpcode.values()) {
                 short value = -2;
                 try {
@@ -274,30 +283,14 @@ public enum RecvPacketOpcode {
                 } catch (NumberFormatException error) {
                 	logger.debug("누락된 RecvPacket Name : {}", packet.name());
                 }
-                packet.setValue(value);
+                packet.value = value;
             }
-        } catch (Exception error) {
-            error.printStackTrace();
-        } finally { 
-            initalized();
+        } catch (Exception e) {
+        	logger.error("can't recv opcode", e);
         }
-    }
-
-    public void setValue(short value) {
-        this.value = value;
     }
 
     public short getValue() {
         return value;
-    }
-    
-    public static String getOpcodeName(int value) {
-
-        for (RecvPacketOpcode opcode : values()) {
-            if (opcode.getValue() == value) {
-                return opcode.name();
-            }
-        }
-        return "UNKNOWN";
     }
 }

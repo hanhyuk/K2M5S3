@@ -40,7 +40,7 @@ import database.MYSQL;
 import database.MYSQLException;
 import launch.CashShopServer;
 import launch.ChannelServer;
-import launch.LoginServer;
+import launch.holder.WideObjectHolder;
 import launch.world.WorldBroadcasting;
 import launch.world.WorldCommunity;
 import packet.creators.MainPacketCreator;
@@ -95,10 +95,6 @@ public class MapleClient {
 	 */
 	private byte gender = -1;
 	private int charslots = DEFAULT_CHARSLOT;
-	/**
-	 * 로그인 시도를 불필요하게 많이 한 경우를 체크하기 위한 카운팅 변수
-	 */
-	public transient short loginTryCount = 0;
 	public boolean pinged = false, isCS = false;
 	private transient List<Integer> allowedChar = new LinkedList<Integer>();
 	private transient Set<String> macs = new HashSet<String>();
@@ -134,13 +130,6 @@ public class MapleClient {
 		setChrSlot(id);
 	}
 
-	/**
-	 * 로그인 시도 횟수 증가
-	 */
-	public void addLoginTryCount() {
-		loginTryCount++;
-	}
-
 	public boolean canClickNPC() {
 		return lastNpcClick + 500 < System.currentTimeMillis();
 	}
@@ -162,8 +151,8 @@ public class MapleClient {
 		CommonType result = CommonType.LOGIN_IMPOSSIBLE;
 
 		final List<ResultMap> accountInfo = AccountDAO.getAccountInfo(loginId, loginPassword);
-		
-		for( ResultMap rm : accountInfo ) {
+
+		for (ResultMap rm : accountInfo) {
 			if (rm.getInt("banned") > 0) {
 				// TODO "banned" 관련 파일 검색한 다음 쓸모 없는 것들 다 삭제하고,
 				// banned 컬럼을 사용하지 않도록 전체 소스를 수정하자.
@@ -174,7 +163,7 @@ public class MapleClient {
 			} else {
 				accountName = rm.getString("name");
 				accountId = rm.getInt("id");
-				gender = (byte)rm.getInt("gender");
+				gender = (byte) rm.getInt("gender");
 				gm = rm.getInt("gm") >= UserType.PUBLIC_GM.getValue();
 
 				secondPassword = rm.getString("2ndpassword");
@@ -184,7 +173,7 @@ public class MapleClient {
 				result = CommonType.LOGIN_POSSIBLE;
 			}
 		}
-		
+
 		return result;
 	}
 
@@ -197,17 +186,19 @@ public class MapleClient {
 		return allow;
 	}
 
-	/**
-	 * 로그인 시도 횟수 초기화
-	 */
-	public void clearLoginTryCount() {
-		loginTryCount = 0;
-	}
-
 	public void createdChar(final int id) {
 		allowedChar.add(id);
 	}
 
+	public void deleteGuildCharacter(MapleGuildCharacter mgc) {
+		WideObjectHolder.getInstance().setGuildMemberOnline(mgc, false, -1);
+		if (mgc.getGuildRank() > 1) { // not leader
+			WideObjectHolder.getInstance().leaveGuild(mgc);
+		} else {
+			WideObjectHolder.getInstance().disbandGuild(mgc.getGuildId());
+		}
+	}
+	
 	public final boolean deleteCharacter(final int cid) {
 		try {
 			final Connection con = MYSQL.getConnection();
@@ -222,9 +213,8 @@ public class MapleClient {
 				return false;
 			}
 			if (rs.getInt("guildid") > 0) { // is in a guild when deleted
-				final MapleGuildCharacter mgc = new MapleGuildCharacter(cid, (short) 0, rs.getString("name"), (byte) -1, 0, rs.getInt("guildrank"), rs.getInt("guildid"), false,
-						rs.getInt("alliancerank"));
-				LoginServer.getInstance().deleteGuildCharacter(mgc);
+				final MapleGuildCharacter mgc = new MapleGuildCharacter(cid, (short) 0, rs.getString("name"), (byte) -1, 0, rs.getInt("guildrank"), rs.getInt("guildid"), false, rs.getInt("alliancerank"));
+				deleteGuildCharacter(mgc);
 			}
 			rs.close();
 			ps.close();
@@ -325,6 +315,12 @@ public class MapleClient {
 		return false;
 	}
 
+	/**
+	 * 서버에 접속중인 연결(세션)을 종료 시킨다.
+	 * 
+	 * 1. 캐시샵서버 2. 채널서버 3. 포털이 없을때 4. 세션이 종료 될때
+	 * 
+	 */
 	public final void disconnect(final boolean removeInChannelServer, final boolean fromCS) {
 		if (player != null && isLoggedIn()) {
 			removalTask();
@@ -332,7 +328,7 @@ public class MapleClient {
 			ControlUnit.동접제거(player.getName());
 			ControlUnit.접속자수.setText(String.valueOf((int) (Integer.parseInt(ControlUnit.접속자수.getText()) - 1)));
 			if (!fromCS) {
-				final ChannelServer ch = ChannelServer.getInstance(channel);
+				final ChannelServer channelServer = ChannelServer.getInstance(channel);
 				try {
 					if (player.getMessenger() != null) {
 						WorldCommunity.leaveMessenger(player.getMessenger().getId(), new MapleMultiChatCharacter(player));
@@ -366,8 +362,8 @@ public class MapleClient {
 					}
 					logger.debug("{} / {} ", LogUtils.getLogMessage(this, "ERROR"), e);
 				} finally {
-					if (removeInChannelServer && ch != null) {
-						ch.removePlayer(player);
+					if (removeInChannelServer && channelServer != null) {
+						channelServer.removePlayer(player);
 					}
 					player = null;
 				}
@@ -496,11 +492,11 @@ public class MapleClient {
 
 	public int getChrSlot() {
 		final List<ResultMap> accountInfo = AccountDAO.getAccountInfo(this.accountId);
-		
-		for( ResultMap rm : accountInfo ) {
+
+		for (ResultMap rm : accountInfo) {
 			chrslot = rm.getInt("chrslot");
 		}
-		
+
 		return chrslot;
 	}
 
@@ -514,12 +510,12 @@ public class MapleClient {
 
 	public final int getLastConnection() {
 		int result = 1999123100;
-		
+
 		final List<ResultMap> accountInfo = AccountDAO.getAccountInfo(getAccID());
-		for( ResultMap rm : accountInfo ) {
-			result = Integer.parseInt(rm.getString("lastconnect")); 
+		for (ResultMap rm : accountInfo) {
+			result = Integer.parseInt(rm.getString("lastconnect"));
 		}
-		
+
 		return result;
 	}
 
@@ -535,20 +531,13 @@ public class MapleClient {
 	 */
 	public final int getLoginState() {
 		int state = -1;
-		
+
 		final List<ResultMap> accountInfo = AccountDAO.getAccountInfo(getAccID());
-		for( ResultMap rm : accountInfo ) {
+		for (ResultMap rm : accountInfo) {
 			state = rm.getInt("loggedin");
 		}
-		
-		return state;
-	}
 
-	/**
-	 * 로그인 시도 횟수 반환
-	 */
-	public short getLoginTryCount() {
-		return loginTryCount;
+		return state;
 	}
 
 	public final Set<String> getMacs() {
@@ -557,6 +546,7 @@ public class MapleClient {
 
 	/**
 	 * 사용자의 계정 비밀번호를 반환한다.
+	 * 
 	 * @param loginId
 	 * @return
 	 */
@@ -564,10 +554,10 @@ public class MapleClient {
 		String result = null;
 
 		final List<ResultMap> accountInfo = AccountDAO.getAccountInfo(loginId);
-		for( ResultMap rm : accountInfo ) {
+		for (ResultMap rm : accountInfo) {
 			result = rm.getString("password");
 		}
-		
+
 		return result;
 	}
 
@@ -656,7 +646,7 @@ public class MapleClient {
 
 	public void setAuthData() {
 		final List<ResultMap> accountInfo = AccountDAO.getAccountInfo(getAccID());
-		for( ResultMap rm : accountInfo ) {
+		for (ResultMap rm : accountInfo) {
 			secondPassword = rm.getString("2ndpassword");
 			usingSecondPassword = rm.getInt("using2ndpassword") == 1;
 		}
@@ -851,57 +841,62 @@ public class MapleClient {
 
 	public final boolean ban(String reason) {
 		boolean result = false;
-		
+
 		final ParamMap params = new ParamMap();
 		params.put("banned", 1);
 		params.put("banreason", reason);
 		result = AccountDAO.setAccountInfo(this.accountId, params);
-		
+
 		return result;
 	}
-	
+
 	/**
 	 * 캐릭터명으로 계정을 찾아서 언밴 처리.
+	 * 
 	 * @param charname
 	 * @return true(성공) false(실패)
 	 */
 	public boolean unBan(final String charname) {
 		boolean result = false;
-		
+
 		Connection con = null;
 		PreparedStatement ps = null;
 		ResultSet rs = null;
-		
+
 		try {
 			con = MYSQL.getConnection();
 			ps = con.prepareStatement("SELECT accountid FROM characters WHERE name = ?");
 			ps.setString(1, charname);
 			rs = ps.executeQuery();
-			
+
 			int accountId = 0;
-			if( rs.next() ) {
+			if (rs.next()) {
 				accountId = rs.getInt("accountid");
 			}
-			ps.close(); ps = null; 
-			rs.close(); rs = null;
+			ps.close();
+			ps = null;
+			rs.close();
+			rs = null;
 
-			if( accountId != 0 ) {
+			if (accountId != 0) {
 				final ParamMap params = new ParamMap();
 				params.put("banned", 0);
 				params.put("banreason", "");
 				result = AccountDAO.setAccountInfo(accountId, params);
 			}
-		} catch(Exception e) {
+		} catch (Exception e) {
 			logger.debug("{}", e);
 		} finally {
 			try {
-				if( ps != null ) {
-					ps.close(); ps = null;
+				if (ps != null) {
+					ps.close();
+					ps = null;
 				}
-				if( rs != null ) {
-					rs.close(); rs = null;
+				if (rs != null) {
+					rs.close();
+					rs = null;
 				}
-			} catch(SQLException e) {
+			} catch (SQLException e) {
 				logger.debug("{}", e);
 			}
 		}
@@ -915,8 +910,7 @@ public class MapleClient {
 		} catch (Exception e) {
 			try {
 				// 테이블 없음
-				PreparedStatement ps = MYSQL.getConnection()
-						.prepareStatement("create database char_card(accid int not null, worldid int not null default 0, charid int not null default 0, position int no null)");
+				PreparedStatement ps = MYSQL.getConnection().prepareStatement("create database char_card(accid int not null, worldid int not null default 0, charid int not null default 0, position int no null)");
 				ps.executeQuery();
 			} catch (SQLException ex) {
 				// SKIP
@@ -934,40 +928,43 @@ public class MapleClient {
 	/**
 	 * 사용자의 계정 접속 상태값을 변경한다.
 	 * 
-	 * @param state 변경할 상태값
+	 * @param state
+	 *            변경할 상태값
 	 * @param sessionIp
 	 * @return true(성공)
 	 */
 	public final boolean updateLoginState(final int state, final String sessionIp) {
 		boolean result = false;
-		
+
 		final ParamMap params = new ParamMap();
 		params.put("loggedin", state);
-		params.put("SessionIP", StringUtils.isEmpty(sessionIp) ? "":sessionIp);
+		params.put("SessionIP", StringUtils.isEmpty(sessionIp) ? "" : sessionIp);
 		params.put("lastlogin", new Timestamp(System.currentTimeMillis()));
 		result = AccountDAO.setAccountInfo(accountId, params);
-		
+
 		// FIXME 아래 로직이 필요한 건지 검토필요.
-//		if (state == AccountStatusType.NOT_LOGIN.getValue()) {
-//			loggedIn = false;
-//			serverTransition = false;
-//		} else {
-//			serverTransition = (state == AccountStatusType.SERVER_TRANSITION.getValue() || state == AccountStatusType.CHANGE_CHANNEL.getValue());
-//			loggedIn = !serverTransition;
-//		}
+		// if (state == AccountStatusType.NOT_LOGIN.getValue()) {
+		// loggedIn = false;
+		// serverTransition = false;
+		// } else {
+		// serverTransition = (state ==
+		// AccountStatusType.SERVER_TRANSITION.getValue() || state ==
+		// AccountStatusType.CHANGE_CHANNEL.getValue());
+		// loggedIn = !serverTransition;
+		// }
 
 		return result;
 	}
 
 	public final boolean updateSecondPassword() {
 		boolean result = false;
-		
+
 		final ParamMap params = new ParamMap();
 		params.put("2ndpassword", secondPassword);
 		params.put("using2ndpassword", (usingSecondPassword ? 1 : 0));
 		params.put("lastlogin", new Timestamp(System.currentTimeMillis()));
 		result = AccountDAO.setAccountInfo(accountId, params);
-		
+
 		return result;
 	}
 }

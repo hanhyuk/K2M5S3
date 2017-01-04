@@ -295,21 +295,23 @@ public enum SendPacketOpcode {
    
 	private static final Logger logger = LoggerFactory.getLogger(SendPacketOpcode.class);
 	
-    private short value = -2;
+    private short value;
    
     public static String getOpcodeName(int value) {
-
+    	String result = "UNKNOWN";
+    	
         for (SendPacketOpcode opcode : values()) {
             if (opcode.getValue() == value) {
-                return opcode.name();
+                result = opcode.name();
             }
         }
-        return "UNKNOWN";
+        
+        return result;
     }
     
     public static void loadOpcode() {
         try {
-            IniFileProcess storage = new IniFileProcess(new File(ServerConstants.getRootPath() + "Settings/Packet/SendPacket.ini"));
+            IniFileProcess storage = new IniFileProcess(new File(ServerConstants.getRootPath() + ServerConstants.CONFIG_SEND_PACKET_INI_PATH));
             for (SendPacketOpcode packet : SendPacketOpcode.values()) {
                 short value = -2;
                 try {
@@ -317,17 +319,13 @@ public enum SendPacketOpcode {
                 } catch (NumberFormatException error) {
                     logger.debug("´©¶ôµÈ SendPacket Name : {}", packet.name());
                 }
-                packet.setValue(value);
+                packet.value = value;
             }
-        } catch (Exception error) {
-            error.printStackTrace();
+        } catch (Exception e) {
+        	logger.error("can't send opcode", e);
         }
     }
     
-    public void setValue(short value) {
-        this.value = value;
-    }
-
     public short getValue() {
         return value;
     }

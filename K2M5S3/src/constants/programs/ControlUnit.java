@@ -1235,7 +1235,7 @@ public class ControlUnit extends javax.swing.JFrame {
 	}// GEN-LAST:event_jButton13ActionPerformed
 
 	private void jButton14ActionPerformed(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_jButton14ActionPerformed
-		for (int i = 0; i < ServerConstants.serverCount; i++) {
+		for (int i = 0; i < ServerConstants.openChannelCount; i++) {
 			ChannelServer.getInstance(i).setExpRate(Integer.parseInt(this.exp.getText()));
 			ChannelServer.getInstance(i).setMesoRate((byte) Integer.parseInt(this.meso.getText()));
 			ChannelServer.getInstance(i).setDropRate(Integer.parseInt(this.drop.getText()));
@@ -1419,8 +1419,7 @@ public class ControlUnit extends javax.swing.JFrame {
 	}
 
 	/**
-	 * @param args
-	 *            the command line arguments
+	 * @param args the command line arguments
 	 */
 	public static void main(String args[]) {
 		java.awt.EventQueue.invokeLater(new Runnable() {

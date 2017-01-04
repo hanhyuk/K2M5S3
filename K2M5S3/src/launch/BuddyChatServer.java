@@ -24,7 +24,7 @@ public class BuddyChatServer {
 	private static final Logger logger = LoggerFactory.getLogger(BuddyChatServer.class);
 
 	private IoAcceptor acceptor;
-	private static int PORT = ServerConstants.BuddyChatPort;
+	private static int PORT = ServerConstants.buddyChatPort;
 	private static BuddyChatServer Instance = new BuddyChatServer();
 	private final String CLIENT_KEY = "BUDDY_SESSION_KEY";
 
@@ -34,7 +34,7 @@ public class BuddyChatServer {
 		return Instance;
 	}
 
-	public final void run_startup_configurations() {
+	public void start() {
 		IoBuffer.setUseDirectBuffer(false);
 		IoBuffer.setAllocator(new CachedBufferAllocator());
 		try {
@@ -52,7 +52,11 @@ public class BuddyChatServer {
 		}
 	}
 
-	public final void shutdown() {
+	public void shutdown() {
 		acceptor.unbind(new InetSocketAddress(PORT));
+	}
+	
+	public int getManagedSessionCount() {
+		return acceptor.getManagedSessionCount();
 	}
 }
