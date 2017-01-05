@@ -26,7 +26,6 @@ import client.items.MapleWeaponType;
 import client.items.StructPotentialItem;
 import client.skills.SkillStatEffect;
 import constants.GameConstants;
-import constants.ServerConstants;
 import database.MYSQL;
 import launch.world.WorldBroadcasting;
 import packet.creators.UIPacket;
@@ -125,40 +124,61 @@ public class ItemInformation {
 	 */
 	public void cachePotentialOption() {
 		final MapleData potsData = itemData.getData("ItemOption.img");
+		
 		for (MapleData data : potsData) {
-			int potentialID = Integer.parseInt(data.getName());
-			int type = MapleDataTool.getIntConvert("info/optionType", data, 0);
+			
+			int potentialId = Integer.parseInt(data.getName()); //<imgdir name="000901">
+			int type = MapleDataTool.getIntConvert("info/optionType", data, 0); //<int name="optionType" value="51"/>
+			
+			//이 레벨은 잠재능력 옵션의 등급을 나눈 값이다.
+			//실제 아이템에 잠재능력을 부여하는 과정을 보면 level의 값을 랜덤으로 계산해서 뽑아내고
+			//다시 level 값의 범위에 해당하는 잠재능력 옵션을 랜덤하게 뽑아서 
+			//최종적으로 잠재능력 옵션이 아이템에 부여된다.
 			int level = 0;
+			
+			//Map<잠재능력등급, 
 			Map<Integer, List<Integer>> option = new HashMap<Integer, List<Integer>>();
 			List<Integer> id = new ArrayList<Integer>(100);
-			switch (potentialID) {
-			case 31001:
-			case 31002:
-			case 31003:
-			case 31004:
-			case 60002:
-				continue;
+			
+			//여기서 지정된 값들은 잠재능력 설정할때 제외된다.
+			switch (potentialId) {
+				case 31001: //쓸만한 헤이스트
+				case 31002:	//쓸만한 미스틱 도어
+				case 31003: //쓸만한 샤프 아이즈
+				case 31004: //쓸만한 하이퍼 바디
+				case 41005: //쓸만한 컴뱃 오더스
+				case 41006: //쓸만한 어드밴스드 블레스
+				case 41007: //쓸만한 윈드 부스터
+				case 60002: //올스탯20% 인듯?
+					continue;
 			}
-			if (potentialID > 0 && potentialID < 906) { // 1단계 옵션
+
+			//TODO 아래 조건들에 해당하는 정보를 xml에서 뽑아 낼수 있도록 유틸성 클래스 만들자.
+			if (potentialId > 0 && potentialId < 906) { // 1단계 옵션
 				level = 1;
-			} else if ((potentialID > 10000 && potentialID < 10292) || (potentialID > 20000 && potentialID < 20015) || (potentialID > 30000 && potentialID < 30015)
-					|| (potentialID > 40000 && potentialID < 40015)) { // 2단계 옵션
+			} else if ((potentialId > 10000 && potentialId < 10292) 
+					|| (potentialId > 20000 && potentialId < 20015) 
+					|| (potentialId > 30000 && potentialId < 30015) 
+					|| (potentialId > 40000 && potentialId < 40015)) { // 2단계
 				level = 2;
-			} else if (potentialID > 20040 && potentialID < 20407) { // 3단계 옵션
+			} else if (potentialId > 20040 && potentialId < 20407) { // 3단계 옵션
 				level = 3;
-			} else if (potentialID > 30040 && potentialID < 31005) { // 4단계 옵션
+			} else if (potentialId > 30040 && potentialId < 31005) { // 4단계 옵션
 				level = 4;
-			} else if (potentialID > 40040 && potentialID < 60004) { // 5단계 옵션
+			} else if (potentialId > 40040 && potentialId < 60004) { // 5단계 옵션
 				level = 5;
 			}
+			//hh 여기부터 분석
 			if (potentialOpCache.containsKey(level)) {
+				
 				if (potentialOpCache.get(level).getPotentialOption().get(type) != null) {
 					id = potentialOpCache.get(level).getPotentialOption().get(type);
 				}
-				id.add(potentialID);
+				
+				id.add(potentialId);
 				potentialOpCache.get(level).getPotentialOption().put(type, id);
 			} else {
-				id.add(potentialID);
+				id.add(potentialId);
 				option.put(type, id);
 				potentialOpCache.put(level, new PotentialOption(option));
 			}
@@ -1565,8 +1585,7 @@ public class ItemInformation {
 																						// 별붙는
 																						// 부분
 								if (nEquip.getEnhance() >= 8) {
-									WorldBroadcasting.broadcastMessage(UIPacket.enforceMSG(
-											chr.getName() + "님의 " + ItemInformation.getInstance().getName(nEquip.getItemId()) + " 이(가) " + nEquip.getEnhance() + "성 강화에 성공 하였습니다.", 48, 5000));
+									WorldBroadcasting.broadcastMessage(UIPacket.enforceMSG(chr.getName() + "님의 " + ItemInformation.getInstance().getName(nEquip.getItemId()) + " 이(가) " + nEquip.getEnhance() + "성 강화에 성공 하였습니다.", 48, 5000));
 								}
 							}
 						}
@@ -1735,9 +1754,8 @@ public class ItemInformation {
 				}
 			}
 			}
-			if (!GameConstants.isCleanSlate(scrollId.getItemId()) && !GameConstants.isSpecialScroll(scrollId.getItemId()) && !GameConstants.isEquipScroll(scrollId.getItemId())
-					&& !GameConstants.isPotentialScroll(scrollId.getItemId()) && !GameConstants.isRebirhFireScroll(scrollId.getItemId()) && !GameConstants.isEpicScroll(scrollId.getItemId())
-					&& scrollId.getItemId() != 2049360 && scrollId.getItemId() != 2049361) {
+			if (!GameConstants.isCleanSlate(scrollId.getItemId()) && !GameConstants.isSpecialScroll(scrollId.getItemId()) && !GameConstants.isEquipScroll(scrollId.getItemId()) && !GameConstants.isPotentialScroll(scrollId.getItemId()) && !GameConstants.isRebirhFireScroll(scrollId.getItemId()) && !GameConstants.isEpicScroll(scrollId.getItemId()) && scrollId.getItemId() != 2049360
+					&& scrollId.getItemId() != 2049361) {
 				if (ItemFlag.SAFETY.check(nEquip.getFlag()) && failed) {
 					chr.dropMessage(5, "주문서의 효과로 업그레이드 가능 횟수가 차감되지 않았습니다.");
 				} else {
@@ -2071,8 +2089,7 @@ public class ItemInformation {
 		final MapleData data = getItemData(itemId);
 
 		boolean trade = false;
-		if (MapleDataTool.getIntConvert("info/tradeBlock", data, 0) == 1 || MapleDataTool.getIntConvert("info/quest", data, 0) == 1
-				|| MapleDataTool.getIntConvert("info/accountSharable", data, 0) == 1) {
+		if (MapleDataTool.getIntConvert("info/tradeBlock", data, 0) == 1 || MapleDataTool.getIntConvert("info/quest", data, 0) == 1 || MapleDataTool.getIntConvert("info/accountSharable", data, 0) == 1) {
 			trade = true;
 		}
 		dropRestrictionCache.put(itemId, trade);
@@ -2082,8 +2099,7 @@ public class ItemInformation {
 	public final boolean isTradeBlock(final int itemId) {
 		final MapleData data = getItemData(itemId);
 		boolean tradeblock = false;
-		if (MapleDataTool.getIntConvert("info/tradeBlock", data, 0) == 1 || MapleDataTool.getIntConvert("info/quest", data, 0) == 1
-				|| MapleDataTool.getIntConvert("info/accountSharable", data, 0) == 1) {
+		if (MapleDataTool.getIntConvert("info/tradeBlock", data, 0) == 1 || MapleDataTool.getIntConvert("info/quest", data, 0) == 1 || MapleDataTool.getIntConvert("info/accountSharable", data, 0) == 1) {
 			tradeblock = true;
 		}
 		return tradeblock;
@@ -2271,8 +2287,7 @@ public class ItemInformation {
 	public final int getTotalStat(final Equip equip) { // i get COOL when my
 														// defense is higher on
 														// gms...
-		return equip.getStr() + equip.getDex() + equip.getInt() + equip.getLuk() + equip.getMatk() + equip.getWatk() + equip.getAcc() + equip.getAvoid() + equip.getJump() + equip.getHands()
-				+ equip.getSpeed() + equip.getHp() + equip.getMp() + equip.getWdef() + equip.getMdef();
+		return equip.getStr() + equip.getDex() + equip.getInt() + equip.getLuk() + equip.getMatk() + equip.getWatk() + equip.getAcc() + equip.getAvoid() + equip.getJump() + equip.getHands() + equip.getSpeed() + equip.getHp() + equip.getMp() + equip.getWdef() + equip.getMdef();
 	}
 
 	public final void levelUpItem(Equip e) {
@@ -2558,10 +2573,8 @@ public class ItemInformation {
 
 	public MapleWeaponType getWeaponType(int itemId) {
 		int cat = (itemId / 10000) % 100;
-		MapleWeaponType[] type = { MapleWeaponType.SWORD1H, MapleWeaponType.AXE1H, MapleWeaponType.BLUNT1H, MapleWeaponType.DAGGER, MapleWeaponType.NOT_A_WEAPON, MapleWeaponType.NOT_A_WEAPON,
-				MapleWeaponType.NOT_A_WEAPON, MapleWeaponType.WAND, MapleWeaponType.STAFF, MapleWeaponType.NOT_A_WEAPON, MapleWeaponType.SWORD2H, MapleWeaponType.AXE2H, MapleWeaponType.BLUNT2H,
-				MapleWeaponType.SPEAR, MapleWeaponType.POLE_ARM, MapleWeaponType.BOW, MapleWeaponType.CROSSBOW, MapleWeaponType.CLAW, MapleWeaponType.KNUCKLE, MapleWeaponType.GUN,
-				MapleWeaponType.DESPERADO };
+		MapleWeaponType[] type = { MapleWeaponType.SWORD1H, MapleWeaponType.AXE1H, MapleWeaponType.BLUNT1H, MapleWeaponType.DAGGER, MapleWeaponType.NOT_A_WEAPON, MapleWeaponType.NOT_A_WEAPON, MapleWeaponType.NOT_A_WEAPON, MapleWeaponType.WAND, MapleWeaponType.STAFF, MapleWeaponType.NOT_A_WEAPON, MapleWeaponType.SWORD2H, MapleWeaponType.AXE2H, MapleWeaponType.BLUNT2H, MapleWeaponType.SPEAR,
+				MapleWeaponType.POLE_ARM, MapleWeaponType.BOW, MapleWeaponType.CROSSBOW, MapleWeaponType.CLAW, MapleWeaponType.KNUCKLE, MapleWeaponType.GUN, MapleWeaponType.DESPERADO };
 		if (cat < 30 || cat > 49) {
 			return MapleWeaponType.NOT_A_WEAPON;
 		}

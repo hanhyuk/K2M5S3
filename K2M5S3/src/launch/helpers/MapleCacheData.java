@@ -40,7 +40,7 @@ public class MapleCacheData {
 	private static final Logger logger = LoggerFactory.getLogger(Start.class);
 	
 	public void startCacheData() {
-//		LoadItemDataThread i1 = new LoadItemDataThread();
+		LoadItemDataThread i1 = new LoadItemDataThread();
 //		LoadPotenOptionDataThread i2 = new LoadPotenOptionDataThread();
 //		LoadEquOptionDataThread i3 = new LoadEquOptionDataThread();
 //		LoadCashItemData cd = new LoadCashItemData();
@@ -184,8 +184,7 @@ class LoadPotenOptionDataThread extends Thread {
 			int level = 0;
 			Map<Integer, List<Integer>> option = new HashMap<Integer, List<Integer>>();
 			List<Integer> id = new ArrayList<Integer>(100);
-			if (potentialID > 0 && potentialID < 906 || potentialID > 2000 && potentialID < 2906) { // 1窜拌
-																									// 可记
+			if (potentialID > 0 && potentialID < 906 || potentialID > 2000 && potentialID < 2906) { // 1窜拌可记
 				level = 1;
 			} else if ((potentialID > 10000 && potentialID < 10292) || (potentialID > 20000 && potentialID < 20015) || (potentialID > 30000 && potentialID < 30015) || (potentialID > 40000 && potentialID < 40015) || (potentialID > 12000 && potentialID < 12802) || (potentialID > 22000 && potentialID < 22015) || (potentialID > 32000 && potentialID < 32015)
 					|| (potentialID > 42000 && potentialID < 42015)) { // 2窜拌 可记
