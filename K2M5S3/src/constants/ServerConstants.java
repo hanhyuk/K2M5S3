@@ -122,19 +122,19 @@ public class ServerConstants {
     /**
      * DB 연결 포트 
      */
-    public static int dbPort;
+    public static int dbPort = 3306;
     /**
      * DB 연결 IP
      */
-    public static String dbHost;
+    public static String dbHost = "127.0.0.1";
     /**
      * DB 연결 ID
      */
-    public static String dbUser;
+    public static String dbUser = "root";
     /**
      * DB 연결 비밀번호
      */
-    public static String dbPassword;
+    public static String dbPassword = "root";
     /**
      * @deprecated 추천 메세지. 
      * TODO 실제 클라에서 언제 보여지는 건지 확인이 안됨. 

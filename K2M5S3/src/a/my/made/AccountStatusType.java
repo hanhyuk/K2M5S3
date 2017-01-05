@@ -8,7 +8,7 @@ package a.my.made;
 public enum AccountStatusType {
 
 	/**
-	 * 로그인 하지 않은 상태
+	 * 로그인 하지 않은 상태(로그아웃)
 	 */
 	NOT_LOGIN(0),
 	/**
