@@ -246,16 +246,7 @@ public class LoginPacket {
 		w.writeMapleAsciiString(ServerConstants.serverName);
 		//TODO 이 flag 값의 용도가 뭔지 알수 없다. 값을 바꾸거나 제거해서 실제 패킷 테스트를 해보자.
 		w.write(ServerConstants.DEFAULT_FLAG);
-		
-		String msg = "";
-		if (GameConstants.isServerReady()) {
-			/* 서버가 데이터가 완전히 로딩되었을 경우 */
-			msg = ServerConstants.eventMessage;
-		} else {
-			/* 서버가 데이터가 완전히 로딩되지 않았을 경우 */
-			msg = "서버가 준비되지 않았습니다.\r\n\r\n필요한 데이터를 모두 \r\n불러올 때 까지 잠시만 \r\n기다려 주시기 바랍니다.";
-		}
-		w.writeMapleAsciiString(msg);
+		w.writeMapleAsciiString(ServerConstants.eventMessage);
 
 		for (int i = 0; i < 2; i++) {
 			w.writeShort(0x64);

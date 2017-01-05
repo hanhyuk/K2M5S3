@@ -1,23 +1,17 @@
 package launch;
 
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.util.ArrayList;
-import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import a.my.made.dao.CommonDAO;
+import client.skills.SkillFactory;
 import constants.ServerConstants;
 import constants.programs.ControlUnit;
 import constants.programs.RewardScroll;
 import constants.subclasses.QuickMove;
-import database.MYSQL;
 import handler.login.CharLoginHandler;
-import launch.helpers.MapleCacheData;
 import launch.world.WorldAuction;
 import packet.opcode.RecvPacketOpcode;
 import packet.opcode.SendPacketOpcode;
@@ -33,9 +27,16 @@ public final class Start {
 
 		//서버 구동에 필요한 상수값 로딩
 		ServerConstants.init();
+		
+		//불필요한 DB 정보 삭제
+		CommonDAO.deleteUnnecessaryDbInfoAtStartUp();
+		//모든 사용자 로그아웃
+		CommonDAO.updateAllUserLogout();
+		
 		//패킷 정보 로딩
 		SendPacketOpcode.loadOpcode();
 		RecvPacketOpcode.loadOpcode();
+		
 		//캐시템 정보 로딩
 		CashItemFactory.getInstance();
 		//보상 아이템 정보를 로딩.
@@ -48,24 +49,23 @@ public final class Start {
 		QuickMove.doMain();
 		//글로벌 드랍 정보 로딩
 		MapleMonsterProvider.getInstance().loadGlobalDropInfo();
+		
 		//스케쥴러 등록
 		Timer.startAllTimer();
 		
-		
+		//로그인, 채널, 캐시샵, 버디챗 서버 활성화
 		LoginServer.getInstance().start();
 		ChannelServer.start(ServerConstants.openChannelCount);
 		CashShopServer.getInstance().start();
 		BuddyChatServer.getInstance().start();
 
-
 		//hh
-		MapleCacheData mc = new MapleCacheData(); mc.startCacheData();
+		//MapleCacheData mc = new MapleCacheData(); mc.startCacheData();
 		
-		CommonDAO.deleteUnnecessaryDbInfoAtStartUp();
-		logger.info("불필요한 DB 정보들을 삭제하였습니다.");
+		SkillFactory.cacheSkillData();
 		
-		CommonDAO.updateAllUserLogout();
-		logger.info("모든 사용자를 로그아웃 처리 하였습니다.");
+		
+		
 		
 		
 		ControlUnit.main(args);

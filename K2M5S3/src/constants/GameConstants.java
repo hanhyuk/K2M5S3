@@ -13,7 +13,6 @@ import client.skills.ISkill;
 import client.skills.SkillFactory;
 import client.stats.BuffStats;
 import client.stats.DiseaseStats;
-import launch.helpers.MapleCacheData;
 import server.items.ItemInformation;
 import server.maps.MapleMapObjectType;
 import tools.Pair;
@@ -1751,10 +1750,6 @@ public class GameConstants {
 
     public static boolean isAngel(int sourceid) {
         return isBeginnerJob(sourceid / 10000) && (sourceid % 10000 == 1085 || sourceid % 10000 == 1087 || sourceid % 10000 == 1090 || sourceid % 10000 == 1179);
-    }
-
-    public static boolean isServerReady() {
-        return MapleCacheData.cached;
     }
 
     public static boolean isReverseItem(int itemId) {

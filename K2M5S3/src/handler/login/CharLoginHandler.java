@@ -19,7 +19,6 @@ import client.items.Item;
 import client.items.MapleInventory;
 import client.items.MapleInventoryType;
 import client.skills.SkillFactory;
-import constants.GameConstants;
 import constants.ServerConstants;
 import launch.helpers.MapleNewCharJobType;
 import launch.world.WorldConnected;
@@ -65,11 +64,7 @@ public class CharLoginHandler {
 	 * RECV LOGIN_PASSWORD 패킷 처리
 	 */
 	public static void login(ReadingMaple rh, MapleClient c) {
-		// FIXME 서버가 오픈 될 준비가 되었는지 체크하는 로직인데, 마음에 안듬. 좀더 개선할수 있는지 확인 필요.
-		if (!GameConstants.isServerReady()) {
-			c.send(MainPacketCreator.serverNotice(1, "서버데이터를 불러오는 중입니다. 잠시만 기다려주세요."));
-			c.send(LoginPacket.getLoginFailed(20));
-		} else if (ServerConstants.serverCheck && !c.isGm()) {
+		if (ServerConstants.serverCheck && !c.isGm()) {
 			c.send(MainPacketCreator.serverNotice(1, ServerConstants.serverCheckMessage));
 			c.send(LoginPacket.getLoginFailed(20));
 		} else {
@@ -109,11 +104,6 @@ public class CharLoginHandler {
 	}
 
 	public static void CharlistRequest(ReadingMaple rh, MapleClient c) {
-		if (!GameConstants.isServerReady()) {
-			c.send(MainPacketCreator.serverNotice(1,
-					"[" + ServerConstants.serverName + "] 현재 서버가 준비되지 않았습니다.\r\n\r\n필요한 데이터를 불러오는 중이므로 아직 서버에 접속하실 수 없습니다.\r\n\r\n잠시 후 재접속 해주시기 바랍니다."));
-			return;
-		}
 		final boolean isFirstLogin = rh.readByte() == 0;
 		if (!isFirstLogin) { // 1.2.239+ 게임 종료 대응.
 			rh.skip(1);
