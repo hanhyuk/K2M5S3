@@ -16,6 +16,7 @@ import launch.world.WorldAuction;
 import packet.opcode.RecvPacketOpcode;
 import packet.opcode.SendPacketOpcode;
 import server.items.CashItemFactory;
+import server.items.ItemInformation;
 import server.life.MapleMonsterProvider;
 import tools.Timer;
 
@@ -38,17 +39,19 @@ public final class Start {
 		RecvPacketOpcode.loadOpcode();
 		
 		//캐시템 정보 로딩
-		CashItemFactory.getInstance();
+		CashItemFactory.getInstance().cashingCashItemInfo();
 		//보상 아이템 정보를 로딩.
-		RewardScroll.getInstance();
+		RewardScroll.getInstance().cashingRewardScrollInfo();
+		
 		//TODO 경매장 정보 로딩. 분석 필요.
-		WorldAuction.load();
+		WorldAuction.getInstance().cachingAuctionInfo();
+		
 		//사용할수 없는 캐릭명 로딩
-		CharLoginHandler.loadForbiddenNames();
+		CharLoginHandler.cachingForbiddenNames();
 		//TODO 빠른 이동 정보 로딩. 어디서 사용되는지 확인 필요.
-		QuickMove.doMain();
+		QuickMove.cachingQuickMoveInfo();
 		//글로벌 드랍 정보 로딩
-		MapleMonsterProvider.getInstance().loadGlobalDropInfo();
+		MapleMonsterProvider.getInstance().cachingGlobalDropInfo();
 		
 		//스케쥴러 등록
 		Timer.startAllTimer();
@@ -62,7 +65,8 @@ public final class Start {
 		//hh
 		//MapleCacheData mc = new MapleCacheData(); mc.startCacheData();
 		
-		SkillFactory.cacheSkillData();
+		SkillFactory.cachingSkillInfo();
+		ItemInformation.getInstance().cachingItemInfo();
 		
 		
 		

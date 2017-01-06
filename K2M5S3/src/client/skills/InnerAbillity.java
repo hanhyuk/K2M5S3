@@ -5,12 +5,10 @@ import handler.channel.PlayerHandler;
 import tools.Randomizer;
 
 public class InnerAbillity {
-	private static InnerAbillity instance = null;
+	private static InnerAbillity instance = new InnerAbillity();
 
+	private InnerAbillity() {}
 	public static InnerAbillity getInstance() {
-		if (instance == null) {
-			instance = new InnerAbillity();
-		}
 		return instance;
 	}
 

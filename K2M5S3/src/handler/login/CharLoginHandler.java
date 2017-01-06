@@ -39,7 +39,7 @@ public class CharLoginHandler {
 	/**
 	 * 사용 불가능한 캐릭터명 리스트를 wz 파일에서 로딩한다.
 	 */
-	public static void loadForbiddenNames() {
+	public static void cachingForbiddenNames() {
 		final MapleDataProvider provider = MapleDataProviderFactory.getDataProvider("Etc.wz");
 		final MapleData nameData = provider.getData("ForbiddenName.img");
 		

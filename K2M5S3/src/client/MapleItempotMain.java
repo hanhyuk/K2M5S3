@@ -23,8 +23,10 @@ import tools.Timer.MapTimer;
 public class MapleItempotMain {
 	private static final Logger logger = LoggerFactory.getLogger(MapleItempotMain.class);
 	
-	protected Map<Integer, MapleSaveItemPot> impHolder = new HashMap<Integer, MapleSaveItemPot>();
 	private static MapleItempotMain instance = null;
+	
+	private Map<Integer, MapleSaveItemPot> impHolder = new HashMap<Integer, MapleSaveItemPot>();
+	
 	private ScheduledFuture<?> runner = null;
 	private long RunInterval = 5 * 60 * 1000;
 	private long diseaseTime = 10 * 60 * 1000;
@@ -36,6 +38,14 @@ public class MapleItempotMain {
 			doMain();
 		}
 	}
+	
+	public static MapleItempotMain getInstance() {
+		if (instance == null) {
+			instance = new MapleItempotMain();
+		}
+		return instance;
+	}
+	
 
 	public boolean hasImp(int cid) {
 		if (impHolder.containsKey(cid)) {
@@ -79,13 +89,6 @@ public class MapleItempotMain {
 		} catch (Exception e) {
 			logger.debug("[오류] 아이템팟 데이터 로딩에 실패하였습니다. {}", e);
 		}
-	}
-
-	public static MapleItempotMain getInstance() {
-		if (instance == null) {
-			instance = new MapleItempotMain();
-		}
-		return instance;
 	}
 
 	public void putImp(int cid, MapleItempot imp) {

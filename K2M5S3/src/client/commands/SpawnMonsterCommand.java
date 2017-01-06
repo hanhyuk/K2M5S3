@@ -1,8 +1,5 @@
 package client.commands;
 
-import static client.commands.CommandProcessor.getNamedDoubleArg;
-import static client.commands.CommandProcessor.getNamedIntArg;
-import static client.commands.CommandProcessor.getOptionalIntArg;
 import client.MapleClient;
 import server.life.MapleLifeProvider;
 import server.life.MapleMonster;
@@ -13,12 +10,12 @@ public class SpawnMonsterCommand implements Command {
     @Override
     public void execute(MapleClient c, String[] splitted) throws Exception, IllegalCommandSyntaxException {
 	final int mid = Integer.parseInt(splitted[1]);
-	final int num = Math.min(getOptionalIntArg(splitted, 2, 1), 300);
+	final int num = Math.min(CommandProcessor.getInstance().getOptionalIntArg(splitted, 2, 1), 300);
 
-	Integer hp = getNamedIntArg(splitted, 1, "hp");
-	Integer exp = getNamedIntArg(splitted, 1, "exp");
-	Double php = getNamedDoubleArg(splitted, 1, "php");
-	Double pexp = getNamedDoubleArg(splitted, 1, "pexp");
+	Integer hp = CommandProcessor.getInstance().getNamedIntArg(splitted, 1, "hp");
+	Integer exp = CommandProcessor.getInstance().getNamedIntArg(splitted, 1, "exp");
+	Double php = CommandProcessor.getInstance().getNamedDoubleArg(splitted, 1, "php");
+	Double pexp = CommandProcessor.getInstance().getNamedDoubleArg(splitted, 1, "pexp");
 
 	final MapleMonster onemob = MapleLifeProvider.getMonster(mid);
 

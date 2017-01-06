@@ -12,7 +12,7 @@ import provider.MapleDataTool;
 import tools.Pair;
 
 public class CashItemFactory {
-	private static CashItemFactory instance = new CashItemFactory();
+	private static final CashItemFactory instance = new CashItemFactory();
 	/**
 	 * 캐시 아이템 정보가 들어 있다.(Commodity.img.xml)
 	 */
@@ -27,7 +27,7 @@ public class CashItemFactory {
 	/**
 	 * ItemId 값이 0 이상이면 해당 정보 itemStats에 캐싱한다.
 	 */
-	public CashItemFactory() {
+	public void cashingCashItemInfo() {
 		for (MapleData field : etcWz.getData("Commodity.img").getChildren()) {
 			int itemId = MapleDataTool.getIntConvert("ItemId", field, 0);
 

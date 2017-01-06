@@ -98,15 +98,11 @@ public class ItemInformation {
 	protected Map<Integer, Integer> mipCache = new HashMap<Integer, Integer>();
 	private short slotMax;
 
-	protected ItemInformation() {
-		cache();
-	}
-
 	public static ItemInformation getInstance() {
 		return instance;
 	}
 
-	private void cache() {
+	public void cachingItemInfo() {
 		cachePotentialItems();
 		cachePotentialOption();
 		cacheSetItems();

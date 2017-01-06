@@ -8,7 +8,7 @@ import java.util.Map;
 public class QuickMove {
 	private static Map<Integer, List<QuickMoveEntry>> quickmoves = new HashMap<Integer, List<QuickMoveEntry>>();
 
-	public static void doMain() {
+	public static void cachingQuickMoveInfo() {
 
 		List<QuickMoveTownProperties> towns = new ArrayList<QuickMoveTownProperties>();
 		

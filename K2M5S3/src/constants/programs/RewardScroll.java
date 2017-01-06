@@ -21,7 +21,7 @@ public class RewardScroll {
 		return instance;
 	}
 
-	public RewardScroll() {
+	public void cashingRewardScrollInfo() {
 		try {
 			FileReader fl = new FileReader(ServerConstants.getRootPath() + ServerConstants.CONFIG_REWARD_SCROLL_PROP_PATH);
 			BufferedReader br = new BufferedReader(fl);

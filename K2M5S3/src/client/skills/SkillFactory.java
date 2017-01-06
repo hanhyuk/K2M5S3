@@ -24,7 +24,7 @@ public class SkillFactory {
 	public static final Map<Integer, SummonSkillEntry> SummonSkillInformation = new HashMap<>();
 	public static ReentrantLock lock = new ReentrantLock();
 	
-	public static void cacheSkillData() {
+	public static void cachingSkillInfo() {
 		final MapleData stringWzInSkillImg = MapleDataProviderFactory.getDataProvider("String.wz").getData("Skill.img");
 		final MapleDataProvider skillWz = MapleDataProviderFactory.getDataProvider("Skill.wz");
 		final MapleDataDirectoryEntry skillWzRoot = skillWz.getRoot();

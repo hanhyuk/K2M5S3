@@ -1,8 +1,6 @@
 package client.commands;
 
 
-import static client.commands.CommandProcessor.getOptionalIntArg;
-
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -16,7 +14,6 @@ import client.skills.ISkill;
 import client.skills.SkillFactory;
 import client.stats.PlayerStat;
 import constants.GameConstants;
-import constants.ServerConstants;
 import launch.ChannelServer;
 import launch.world.WorldBroadcasting;
 import packet.creators.MainPacketCreator;
@@ -90,14 +87,14 @@ public class CharCommands implements Command {
 		
 	} else if (splitted[0].equals("!스킬")) {
 	    ISkill skill = SkillFactory.getSkill(Integer.parseInt(splitted[1]));
-	    byte level = (byte) getOptionalIntArg(splitted, 2, 1);
-	    byte masterlevel = (byte) getOptionalIntArg(splitted, 3, 1);
+	    byte level = (byte) CommandProcessor.getInstance().getOptionalIntArg(splitted, 2, 1);
+	    byte masterlevel = (byte) CommandProcessor.getInstance().getOptionalIntArg(splitted, 3, 1);
 	    if (level > skill.getMaxLevel()) {
 		level = skill.getMaxLevel();
 	    }
 	    c.getPlayer().changeSkillLevel(skill, level, masterlevel);
 	} else if (splitted[0].equals("!스킬포인트")) {
-	    c.getPlayer().setRemainingSp(getOptionalIntArg(splitted, 1, 1));
+	    c.getPlayer().setRemainingSp(CommandProcessor.getInstance().getOptionalIntArg(splitted, 1, 1));
 	    c.getPlayer().updateSingleStat(PlayerStat.AVAILABLESP, c.getPlayer().getRemainingSp());
         } else if (splitted[0].equals("!스탯포인트")) {
             c.getPlayer().setRemainingAp(Integer.parseInt(splitted[1]));
@@ -116,7 +113,7 @@ public class CharCommands implements Command {
 	    c.getPlayer().gainMeso((long) (9999999999L - c.getPlayer().getMeso()), true);
 	} else if (splitted[0].equals("!아이템")) {
             final int itemId = Integer.parseInt(splitted[1]);
-            final short quantity = (short) getOptionalIntArg(splitted, 2, 1);
+            final short quantity = (short) CommandProcessor.getInstance().getOptionalIntArg(splitted, 2, 1);
 
             if (c.getPlayer().getGMLevel() < 6) {
                 for (int i : GameConstants.itemBlock) {
@@ -143,7 +140,7 @@ public class CharCommands implements Command {
             }
 	} else if (splitted[0].equals("!드롭")) {
 	    final int itemId = Integer.parseInt(splitted[1]);
-	    final short quantity = (short) (short) getOptionalIntArg(splitted, 2, 1);
+	    final short quantity = (short) (short) CommandProcessor.getInstance().getOptionalIntArg(splitted, 2, 1);
             if (itemId == 2100106 | itemId == 2100107){
                 c.getPlayer().dropMessage(5, "Item is blocked.");
                 return;

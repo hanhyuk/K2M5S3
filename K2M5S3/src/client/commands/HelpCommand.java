@@ -11,7 +11,7 @@ public class HelpCommand implements Command {
     @Override
     public void execute(MapleClient c, String[] splittedLine) throws Exception, IllegalCommandSyntaxException {
         try {
-            CommandProcessor.getInstance().dropHelp(c.getPlayer(), CommandProcessor.getOptionalIntArg(splittedLine, 1, 1));
+            CommandProcessor.getInstance().dropHelp(c.getPlayer(), CommandProcessor.getInstance().getOptionalIntArg(splittedLine, 1, 1));
         } catch (Exception e) {
             logger.debug("{}", e);
         }

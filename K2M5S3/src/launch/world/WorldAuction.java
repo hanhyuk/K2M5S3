@@ -16,10 +16,32 @@ import handler.channel.AuctionHandler.AuctionInfo;
 import handler.channel.AuctionHandler.AuctionItemPackage;
 
 public class WorldAuction {
-	public static List<AuctionItemPackage> items = new ArrayList<>();
-	public static Map<Integer, List<AuctionInfo>> auctions = new HashMap<>();
+	private static final WorldAuction instance = new WorldAuction();
+	
+	public List<AuctionItemPackage> items = new ArrayList<>();
+	public Map<Integer, List<AuctionInfo>> auctions = new HashMap<>();
 
-	public static void addAuction(final int cid, final long bid, final int iid, final byte status) {
+	private WorldAuction() {}
+	public static WorldAuction getInstance() {
+		return instance;
+	}
+	
+	public void cachingAuctionInfo() {
+		try {
+			ItemFactory.loadItems(null, ItemFactory.InventoryType.AUCTION, null, null, null);
+			try (PreparedStatement ps = MYSQL.getConnection().prepareStatement("SELECT * FROM `auctions`")) {
+				try (ResultSet rs = ps.executeQuery()) {
+					while (rs.next()) {
+						addAuction(rs.getInt("characterid"), rs.getLong("bid"), rs.getInt("inventoryid"), rs.getByte("status"));
+					}
+				}
+			}
+		} catch (SQLException ex) {
+			ex.printStackTrace();
+		}
+	}
+	
+	public void addAuction(final int cid, final long bid, final int iid, final byte status) {
 		if (auctions.get(iid) == null) {
 			auctions.put(iid, new ArrayList<AuctionInfo>());
 		}
@@ -41,7 +63,7 @@ public class WorldAuction {
 		}
 	}
 
-	public static long getBidById(final int cid, final int iid) {
+	public long getBidById(final int cid, final int iid) {
 		long bid = 0;
 		for (AuctionInfo ai : auctions.get(iid)) {
 			if (ai.getCharacterId() == cid && ai.getBid() >= bid) {
@@ -51,7 +73,7 @@ public class WorldAuction {
 		return bid;
 	}
 
-	public static List<AuctionItemPackage> getItems() {
+	public List<AuctionItemPackage> getItems() {
 		List<AuctionItemPackage> items_ = new ArrayList<>();
 		for (AuctionItemPackage aitem : items) {
 			if (aitem.getBuyer() == 999999 || aitem.getBuyer() == 0) {
@@ -61,7 +83,7 @@ public class WorldAuction {
 		return items_;
 	}
 
-	public static List<AuctionItemPackage> getCompleteItems(final int charid) {
+	public List<AuctionItemPackage> getCompleteItems(final int charid) {
 		List<AuctionItemPackage> items_ = new ArrayList<>();
 		for (AuctionItemPackage aitem : items) {
 			if (aitem.getOwnerId() == charid || aitem.getBuyer() == charid || getBidById(charid, (int) aitem.getItem().getInventoryId()) > 0) {
@@ -71,27 +93,12 @@ public class WorldAuction {
 		return items_;
 	}
 
-	public static final void addItem(final AuctionItemPackage aitem) {
+	public void addItem(final AuctionItemPackage aitem) {
 		aitem.getItem().setInventoryId(items.size() + 1);
 		items.add(aitem);
 	}
 
-	public static final void load() {
-		try {
-			ItemFactory.loadItems(null, ItemFactory.InventoryType.AUCTION, null, null, null);
-			try (PreparedStatement ps = MYSQL.getConnection().prepareStatement("SELECT * FROM `auctions`")) {
-				try (ResultSet rs = ps.executeQuery()) {
-					while (rs.next()) {
-						addAuction(rs.getInt("characterid"), rs.getLong("bid"), rs.getInt("inventoryid"), rs.getByte("status"));
-					}
-				}
-			}
-		} catch (SQLException ex) {
-			ex.printStackTrace();
-		}
-	}
-
-	public static final AuctionItemPackage findByIid(final int id) {
+	public AuctionItemPackage findByIid(final int id) {
 		for (AuctionItemPackage item : items) {
 			if (item.getItem().getInventoryId() == id) {
 				return item;
@@ -100,7 +107,7 @@ public class WorldAuction {
 		return null;
 	}
 
-	public static final void save() {
+	public void save() {
 		try {
 			final Connection con = MYSQL.getConnection();
 			ItemFactory.saveItemsFromAuction(items);

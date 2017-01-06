@@ -33,7 +33,7 @@ public class MapleMonsterProvider {
 	/**
 	 * 글로벌 드랍 정보를 캐싱한다.
 	 */
-	public final void loadGlobalDropInfo() {
+	public final void cachingGlobalDropInfo() {
 		PreparedStatement ps = null;
 		ResultSet rs = null;
 
@@ -114,6 +114,6 @@ public class MapleMonsterProvider {
 	public final void clearDrops() {
 		drops.clear();
 		globaldrops.clear();
-		loadGlobalDropInfo();
+		cachingGlobalDropInfo();
 	}
 }

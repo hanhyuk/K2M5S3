@@ -302,7 +302,7 @@ public class ItemFactory {
                 }
             }
             if (invtype == ItemFactory.InventoryType.AUCTION) {
-                for (AuctionItemPackage aitem : WorldAuction.items) {
+                for (AuctionItemPackage aitem : WorldAuction.getInstance().items) {
                     items.add(new Pair(aitem.getItem(), GameConstants.getInventoryType(aitem.getItem().getItemId())));
                 }
             }

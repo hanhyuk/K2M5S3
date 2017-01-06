@@ -19,17 +19,13 @@ import tools.StringUtil;
 public class CommandProcessor {
 	private static final Logger logger = LoggerFactory.getLogger(CommandProcessor.class);
 
+	private static CommandProcessor instance = new CommandProcessor();
+	
 	private final List<Pair<String, String>> gmlog = new LinkedList<Pair<String, String>>();
 	private final Map<String, DefinitionCommandPair> commands = new LinkedHashMap<String, DefinitionCommandPair>();
-	private static CommandProcessor instance = new CommandProcessor();
 	private final Lock rl = new ReentrantLock();
 
-	public static CommandProcessor getInstance() {
-		return instance;
-	}
-
 	private CommandProcessor() {
-		instance = this;
 		registerCommand(new HelpCommand()); 
 		registerCommand(new BanningCommands());
 		registerCommand(new CharCommands());
@@ -52,14 +48,17 @@ public class CommandProcessor {
 		registerCommand(new ProfilingCommands());
 		registerCommand(new SpawnObjectCommands());
 	}
-
+	public static CommandProcessor getInstance() {
+		return instance;
+	}
+	
 	private void registerCommand(Command command) {
 		for (CommandDefinition def : command.getDefinition()) {
 			commands.put(def.getCommand(), new DefinitionCommandPair(command, def));
 		}
 	}
 
-	public static String joinAfterString(String splitted[], String str) {
+	public String joinAfterString(String splitted[], String str) {
 		for (int i = 1; i < splitted.length; i++) {
 			if (splitted[i].equalsIgnoreCase(str) && i + 1 < splitted.length) {
 				return StringUtil.joinStringFrom(splitted, i + 1);
@@ -68,7 +67,7 @@ public class CommandProcessor {
 		return null;
 	}
 
-	public static int getOptionalIntArg(String splitted[], int position, int def) {
+	public int getOptionalIntArg(String splitted[], int position, int def) {
 		if (splitted.length > position) {
 			try {
 				return Integer.parseInt(splitted[position]);
@@ -79,7 +78,7 @@ public class CommandProcessor {
 		return def;
 	}
 
-	public static String getNamedArg(String splitted[], int startpos, String name) {
+	public String getNamedArg(String splitted[], int startpos, String name) {
 		for (int i = startpos; i < splitted.length; i++) {
 			if (splitted[i].equalsIgnoreCase(name) && i + 1 < splitted.length) {
 				return splitted[i + 1];
@@ -88,7 +87,7 @@ public class CommandProcessor {
 		return null;
 	}
 
-	public static Integer getNamedIntArg(String splitted[], int startpos, String name) {
+	public Integer getNamedIntArg(String splitted[], int startpos, String name) {
 		String arg = getNamedArg(splitted, startpos, name);
 		if (arg != null) {
 			try {
@@ -100,7 +99,7 @@ public class CommandProcessor {
 		return null;
 	}
 
-	public static int getNamedIntArg(String splitted[], int startpos, String name, int def) {
+	public int getNamedIntArg(String splitted[], int startpos, String name, int def) {
 		Integer ret = getNamedIntArg(splitted, startpos, name);
 		if (ret == null) {
 			return def;
@@ -108,7 +107,7 @@ public class CommandProcessor {
 		return ret.intValue();
 	}
 
-	public static Double getNamedDoubleArg(String splitted[], int startpos, String name) {
+	public Double getNamedDoubleArg(String splitted[], int startpos, String name) {
 		String arg = getNamedArg(splitted, startpos, name);
 		if (arg != null) {
 			try {

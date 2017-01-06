@@ -1674,7 +1674,7 @@ public class MapleCharacter extends AnimatedHinaMapObjectExtend implements Inven
 			WishSaveToDB();
 
 			/* 경매장 저장 */
-			WorldAuction.save();
+			WorldAuction.getInstance().save();
 
 			/* 아이템 저장 */
 			ItemFactory.saveItemsFromPlayer(this);
