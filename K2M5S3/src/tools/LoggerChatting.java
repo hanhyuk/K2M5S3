@@ -12,8 +12,8 @@ import org.slf4j.LoggerFactory;
 import client.MapleCharacter;
 import constants.ServerConstants;
 
-/**
- * TODO ÇöÀç Ã¤ÆÃ ±â·ÏÀ» ÆÄÀÏ·Î ½×´Âµ¥... ÀÌ ºÎºĞÀ» logback ¶óÀÌºê·¯¸®¸¦ ÅëÇØ ÀÏÀÚº° ÆÄÀÏ·Î ¶³±¸µµ·Ï ¼öÁ¤ ÇÊ¿ä.
+/** Â 
+ * TODOì›¹ ìˆ˜ì • í…ŒìŠ¤íŠ¸   í˜„ì¬ ì±„íŒ… ê¸°ë¡ì„ íŒŒì¼ë¡œ ìŒ“ëŠ”ë°... ì´ ë¶€ë¶„ì„ logback ë¼ì´ë¸ŒëŸ¬ë¦¬ë¥¼ í†µí•´ ì¼ìë³„ íŒŒì¼ë¡œ ë–¨êµ¬ë„ë¡ ìˆ˜ì • í•„ìš”.
  */
 public class LoggerChatting {
 	private static final Logger logger = LoggerFactory.getLogger(LoggerChatting.class);
@@ -33,6 +33,6 @@ public class LoggerChatting {
 	}
 
 	public static String getChatLogType(String type, MapleCharacter chr, String chattext) {
-		return "[" + type + "] " + chr.getName() + " : " + chattext + " ÇöÀç¸Ê : " + chr.getMap().getStreetName() + "-" + chr.getMap().getMapName() + " (" + chr.getMap().getId() + ")";
+		return "[" + type + "] " + chr.getName() + " : " + chattext + " í˜„ì¬ë§µ : " + chr.getMap().getStreetName() + "-" + chr.getMap().getMapName() + " (" + chr.getMap().getId() + ")";
 	}
 }
